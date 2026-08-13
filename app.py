@@ -14,7 +14,6 @@ from supabase import create_client, Client
 # ==========================================
 st.set_page_config(page_title="Sistema de Certidões", layout="centered")
 
-# CSS customizado para compactar a visualização no celular
 st.markdown("""
     <style>
     /* Oculta marcações padrão do Streamlit */
@@ -24,25 +23,8 @@ st.markdown("""
     
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     h1 { font-size: 22px; text-align: center; margin-bottom: 0; padding-bottom: 0;}
-    h2 { font-size: 18px; text-align: center;}
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
     div[role="radiogroup"] { margin-top: -10px; }
-    
-    /* Compactar inputs */
-    .stTextInput>div>div>input {
-        padding: 5px 10px;
-    }
-    
-    /* Compactar espaço entre elementos */
-    .element-container {
-        margin-bottom: 5px;
-    }
-    
-    /* Forçar colunas lado a lado no celular */
-    [data-testid="stColumn"] {
-        flex: 1 1 calc(50% - 1rem) !important;
-        min-width: calc(50% - 1rem) !important;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -202,9 +184,13 @@ elif menu == "📂 Minhas Certidões":
         for item in arquivos:
             c1, c2, c3 = st.columns([1, 4, 3])
             try:
-                # CORREÇÃO DO FUSO HORÁRIO AQUI (-3 HORAS)
-                data_obj = datetime.datetime.fromisoformat(item["created_at"].replace("Z", "+00:00")) - datetime.timedelta(hours=3)
-                data_br = data_obj.strftime("%d/%m/%Y às %H:%M")
+                # Pega a data do banco e ajusta o formato
+                data_str = item["created_at"].replace("Z", "+00:00")
+                data_obj = datetime.datetime.fromisoformat(data_str)
+                
+                # Remove a "etiqueta" do fuso do servidor e subtrai 3 horas cravadas
+                data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
+                data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
             except:
                 data_br = "Data desconhecida"
 
@@ -338,8 +324,7 @@ elif menu == "🛡️ Painel do Administrador":
 # 7. TELA: GERADOR DE CERTIDÃO
 # ==========================================
 elif menu == "📝 Gerar Certidão":
-    st.title("⚖️ Gerador de Certidão Negativa - TJMG")
-    st.divider()
+    st.title("Gerador de Certidão Negativa")
     
     if not dados_usuario.get("nome"):
         st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' no menu lateral e preencha seus dados antes de gerar certidões.")
@@ -347,48 +332,51 @@ elif menu == "📝 Gerar Certidão":
 
     tipo_certidao = st.selectbox(
         "Selecione o Modelo de Certidão:", 
-        ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)"],
-        key="modelo_seletor"
+        ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)"]
     )
     
     st.divider()
 
-    # --- CAMPOS COMPARTILHADOS NO CABEÇALHO (Compactados em colunas) ---
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        mandado = st.text_input("Mandado nº:", placeholder="Ex: 01")
-    with c2:
-        ano = st.text_input("Ano:", placeholder="Ex: 2026")
+    # --- CAMPOS COMPARTILHADOS (Cabeçalho e Datas) ---
+    c_mandado, c_proc = st.columns([1, 3])
+    with c_mandado:
+        mandado = st.text_input("Mandado:", placeholder="Ex: 01")
+    with c_proc:
+        processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
     
-    processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
+    c_ano, c_comarca = st.columns(2)
+    with c_ano:
+        ano = st.text_input("Ano:", placeholder="Ex: 2026")
+    with c_comarca:
+        # NOVO CAMPO: Comarca com padrão 0245
+        comarca = st.text_input("Código Comarca:", value="0245", placeholder="Ex: 0245")
 
-    c1, c2 = st.columns(2)
-    with c1:
+    c_end, c_pes = st.columns(2)
+    with c_end:
         endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'")
-    with c2:
+    with c_pes:
         pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico")
 
     st.markdown("---")
     st.write("**Dias e Horários das Diligências:**")
     
-    # Compactar Dia e Hora lado a lado para cada diligência
-    c1, c2 = st.columns(2)
-    with c1:
-        d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="dia1")
-    with c2:
-        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs", key="hora1")
+    c_d1, c_h1 = st.columns(2)
+    with c_d1:
+        d1 = st.text_input("Dia 1", placeholder="Ex: 08/08")
+    with c_h1:
+        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs")
         
-    c1, c2 = st.columns(2)
-    with c1:
-        d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="dia2")
-    with c2:
-        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs", key="hora2")
+    c_d2, c_h2 = st.columns(2)
+    with c_d2:
+        d2 = st.text_input("Dia 2", placeholder="Ex: 11/08")
+    with c_h2:
+        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs")
         
-    c1, c2 = st.columns(2)
-    with c1:
-        d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="dia3")
-    with c2:
-        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs", key="hora3")
+    c_d3, c_h3 = st.columns(2)
+    with c_d3:
+        d3 = st.text_input("Dia 3", placeholder="Ex: 12/08")
+    with c_h3:
+        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs")
 
     st.divider()
 
@@ -397,11 +385,10 @@ elif menu == "📝 Gerar Certidão":
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
         st.write("**Deixei de cumprir o ato uma vez que:**")
-        
-        c1, c2 = st.columns(2)
-        with c1:
+        sit_c1, sit_c2 = st.columns(2)
+        with sit_c1:
             nao_loc_dest = st.checkbox("O destinatário do mandado não foi localizado")
-        with c2:
+        with sit_c2:
             nao_loc_bens = st.checkbox("O(s) bem(ns) indicados não foi(ram) localizado(s)")
 
         motivos_selecionados = []
@@ -418,11 +405,9 @@ elif menu == "📝 Gerar Certidão":
                 "encontrei no endereço, apenas bens que, \"salvo melhor juízo\", guarnecem a residência amparados pela Lei 8.009/90",
                 "\"salvo melhor juízo\" são insuficientes para saldar o débito e/ou acréscimos legais"
             ]
-            
-            # Dividir motivos em duas colunas para o expansor
-            cols = st.columns(2)
+            cols_mot = st.columns(2)
             for idx, m in enumerate(motivos_list):
-                with cols[idx % 2]:
+                with cols_mot[idx % 2]:
                     if st.checkbox(m, key=f"mot_{idx}"):
                         motivos_selecionados.append(m)
 
@@ -441,11 +426,9 @@ elif menu == "📝 Gerar Certidão":
                 "primo(a)", "transeunte", "viúvo(a)", "ex", "esposo(a)", "companheiro(a)", "sogro(a)", "enteado(a)",
                 "genro", "nora", "cunhado(a)", "concunhado(a)", "amigo(a)"
             ]
-            
-            # Dividir relações em três colunas para o expansor
-            cols = st.columns(3)
+            cols_rel = st.columns(3)
             for idx, r in enumerate(relacoes_list):
-                with cols[idx % 3]:
+                with cols_rel[idx % 3]:
                     if st.checkbox(r, key=f"rel_{idx}"):
                         relacoes_selecionadas.append(r)
 
@@ -456,22 +439,18 @@ elif menu == "📝 Gerar Certidão":
                 "telefone de contato", "dia e nem o horário exato de retorno", "o presídio", 
                 "os dados da certidão de óbito", "previsão de alta"
             ]
-            
-            # Dividir não sabe em duas colunas para o expansor
-            cols = st.columns(2)
+            cols_ns = st.columns(2)
             for idx, ns in enumerate(nao_sabe_list):
-                with cols[idx % 2]:
+                with cols_ns[idx % 2]:
                     if st.checkbox(ns, key=f"ns_{idx}"):
                         nao_sabe_selecionados.append(ns)
 
             st.markdown("---")
             st.write("**Sabendo o informante indicar o:**")
-            
-            # Campos Sabe lado a lado
-            c1, c2 = st.columns(2)
-            with c1:
+            c_sab1, c_sab2 = st.columns(2)
+            with c_sab1:
                 sabe_tel = st.text_input("Telefone indicado:")
-            with c2:
+            with c_sab2:
                 sabe_end = st.text_input("Endereço correto indicado:")
         
         if 'nome_inf' not in locals():
@@ -490,7 +469,7 @@ elif menu == "📝 Gerar Certidão":
 
         st.divider()
 
-        if st.button("Gerar DOCX (Detalhada)", type="primary", use_container_width=True):
+        if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True):
             with st.spinner("Construindo certidão e salvando na nuvem..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_validas = [h for h in [h1, h2, h3] if h]
@@ -506,7 +485,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
                 txt_pessoa = f" de {pessoa}" if pessoa else ""
 
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
@@ -564,7 +543,8 @@ elif menu == "📝 Gerar Certidão":
                 if processo:
                     texto_processo = f"Processo: {processo}"
                     if ano:
-                        texto_processo += f".{ano}.8.13.0245"
+                        # USA O VALOR DO CAMPO COMARCA AQUI
+                        texto_processo += f".{ano}.8.13.{comarca}"
                     doc.add_paragraph(texto_processo)
                     
                 if mandado:
@@ -589,7 +569,6 @@ elif menu == "📝 Gerar Certidão":
                 p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.")
                 p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
-                # CORREÇÃO DO FUSO HORÁRIO AQUI (-3 HORAS)
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 data_extenso = f"Santa Luzia, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}."
@@ -783,7 +762,8 @@ elif menu == "📝 Gerar Certidão":
                 if processo:
                     texto_processo = f"Processo: {processo}"
                     if ano:
-                        texto_processo += f".{ano}.8.13.0245"
+                        # USA O VALOR DO CAMPO COMARCA AQUI TAMBÉM
+                        texto_processo += f".{ano}.8.13.{comarca}"
                     doc.add_paragraph(texto_processo)
                     
                 if mandado:
