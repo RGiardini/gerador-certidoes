@@ -479,7 +479,7 @@ elif menu == "📝 Gerar Certidão":
             # 🚀 MELHORIA ESTRUTURAL 5: Certificações extras agora em duas colunas (Compactação Vertical)
             cert_extras = []
             c_extra1, c_extra2 = st.columns(2)
-with c_extra1:
+            with c_extra1:
                 if st.checkbox("Procurei informações com moradores.", key="cert_vizinhos_det"):
                     cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito")
                 if st.checkbox("Cópia do mandado com informante.", key="cert_copia_det"):
