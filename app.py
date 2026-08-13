@@ -12,64 +12,64 @@ from supabase import create_client, Client
 # ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
 # ==========================================
-st.set_page_config(page_title="Sistema de Certidões", layout="centered")
+# 🚀 CORREÇÃO 2: Mudado layout de "centered" para "wide" para preencher a largura útil no monitor
+st.set_page_config(page_title="Sistema de Certidões", layout="wide")
 
-# --- 🚀 CSS SUPER COMPACTO PARA OTIMIZAÇÃO TOTAL ---
-# Este bloco de CSS força o Streamlit a comprimir todos os espaçamentos, labels e fontes
+# --- 🚀 CSS SUPER COMPACTO E ADAPTADO PARA LAYOUT WIDE (LARGO) ---
 st.markdown("""
     <style>
-    /* 1. Global Page Compaction */
-    /* Remove padding excessivo na área principal de conteúdo */
-    [data-testid="stAppViewContainer"] .main .block-container { padding: 0.5rem 1rem !important; }
-    /* Reduz drasticamente a lacuna vertical padrão do Streamlit (de 1.5rem para 0.15rem) */
-    div[data-testid="stVerticalBlock"] { gap: 0.15rem !important; }
+    /* 1. Global Page Compaction (WIDE Layout) */
+    /* Remove padding excessivo na área principal de conteúdo para preencher mais espaço */
+    [data-testid="stAppViewContainer"] .main .block-container { padding: 0.2rem 1rem !important; }
+    /* Reduz drastically a lacuna vertical padrão do Streamlit (de 1.5rem para 0.1rem) */
+    div[data-testid="stVerticalBlock"] { gap: 0.1rem !important; }
 
     /* 2. Compact Sidebar (Menu and Login) */
-    /* Reduz a largura padrão da barra lateral para economizar espaço horizontal */
+    /* Barra lateral compactada, mas funcional */
     section[data-testid="stSidebar"] { width: 14rem !important; }
-    /* Compacta o menu lateral e login */
-    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] { gap: 0.3rem !important; }
-    section[data-testid="stSidebar"] h1 { font-size: 1.4rem !important; }
-    section[data-testid="stSidebar"] label { font-size: 0.85rem !important; margin-bottom: 0.1rem !important; }
-    section[data-testid="stSidebar"] .stButton > button { padding: 0.3rem 0.6rem; font-size: 0.9rem; }
+    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] { gap: 0.2rem !important; }
+    section[data-testid="stSidebar"] h1 { font-size: 1.2rem !important; margin-top: -1rem !important;}
+    section[data-testid="stSidebar"] label { font-size: 0.8rem !important; margin-bottom: 0.05rem !important; }
+    section[data-testid="stSidebar"] .stButton > button { padding: 0.2rem 0.4rem; font-size: 0.8rem; }
     /* Esconde o label do menu de navegação lateral para poupar altura */
     section[data-testid="stSidebar"] .stRadio label[data-testid="stMarkdownContainer"] { display: none; }
 
     /* 3. Compact Main Content (Form) */
     /* Título principal menor e mais compacto */
-    .main h1 { font-size: 1.8rem !important; margin-top: 0.1rem !important; margin-bottom: 0.4rem !important; text-align: center; }
+    .main h1 { font-size: 1.6rem !important; margin-top: 0.05rem !important; margin-bottom: 0.2rem !important; text-align: center; }
     /* Títulos de seções menores */
-    .main h3 { font-size: 1.1rem !important; margin-top: 0.2rem !important; margin-bottom: 0.1rem !important; }
+    .main h3 { font-size: 1.0rem !important; margin-top: 0.1rem !important; margin-bottom: 0.05rem !important; }
     /* Labels dos campos menores e mais colados ao input */
-    .main label { font-size: 0.8rem !important; margin-bottom: 0.02rem !important; margin-top: -0.1rem !important; }
+    .main label { font-size: 0.75rem !important; margin-bottom: 0.01rem !important; margin-top: -0.05rem !important; }
     /* Compacta os inputs de texto e selectboxes */
-    .main .stTextInput input, .main .stSelectbox > div > div > div { font-size: 0.9rem !important; padding: 0.2rem 0.4rem; }
+    .main .stTextInput input, .main .stSelectbox > div > div > div { font-size: 0.85rem !important; padding: 0.1rem 0.3rem; }
 
-    /* 4. Aggressively Compact and Increase Radio Button Usability */
+    /* 4. Aggressively Compact and Increase Radio Button Usability (Touch and Wide) */
     /* Compacta a lacuna interna do radiogroup */
-    div[role="radiogroup"] { gap: 0.2rem !important; }
+    div[role="radiogroup"] { gap: 0.15rem !important; }
     /* Reduz margem vertical geral dos radios */
-    div[role="radiogroup"] div[class^="st-"] { margin-bottom: 0.1rem !important; }
+    div[role="radiogroup"] div[class^="st-"] { margin-bottom: 0.05rem !important; }
     
     /* Target the radio inputs directly to scale them up */
-    /* Aumenta o tamanho do input (radio button) em si para facilitar o toque (scale 1.6) */
+    /* Aumenta o tamanho do input (radio button) em si para facilitar o toque/clique (scale 1.6) */
     div[role="radiogroup"] div[class^="st-"] > label > div[class^="st-"] > input[type="radio"] { 
         transform: scale(1.6); 
-        margin-top: 0.1rem;
+        margin-top: 0.05rem;
         cursor: pointer;
     }
     /* Ensure the label text doesn't overlap and is readable */
     /* Aumenta a fonte do texto do label e adiciona margem à esquerda para não bater no radio button */
     div[role="radiogroup"] div[class^="st-"] > label > div[data-testid="stMarkdownContainer"] {
-        font-size: 1rem !important; 
-        margin-left: 0.6rem; 
-        line-height: 1.3 !important;
+        font-size: 0.95rem !important; 
+        margin-left: 0.5rem; 
+        line-height: 1.2 !important;
     }
 
     /* 5. Hide Streamlit Branding (cleaner) */
+    /* 🚀 CORREÇÃO 1: REMOVIDO "header { visibility: hidden; }" que escondia o toggle da sidebar */
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
-    header { visibility: hidden; }
+    /* Mantenho o cabeçalho visível para que o botão de abrir/fechar sidebar funcione */
     </style>
 """, unsafe_allow_html=True)
 
@@ -248,6 +248,7 @@ elif menu == "📂 Minhas Certidões":
         for item in arquivos:
             c1, c2, c3 = st.columns([1, 4, 3])
             try:
+                # Pega a data do banco e ajusta o fuso (-3h)
                 data_str = item["created_at"].replace("Z", "+00:00")
                 data_obj = datetime.datetime.fromisoformat(data_str)
                 data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
@@ -303,11 +304,12 @@ elif menu == "🛡️ Painel do Administrador":
         st.stop()
         
     st.title("🛡️ Painel de Administração")
+    st.write("Área restrita para gestão de oficiais e auditoria de certidões em nuvem.")
     
     aba_adm1, aba_adm2 = st.tabs(["👥 Gerenciar Usuários", "📊 Auditoria de Certidões Gerais"])
     
     with aba_adm1:
-        st.subheader("Oficiais Cadastrados")
+        st.subheader("Oficiais Cadastrados no Sistema")
         res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula").execute()
         usuarios_cadastrados = res_todos.data
         
@@ -323,12 +325,12 @@ elif menu == "🛡️ Painel do Administrador":
                             st.success(f"Usuário {u['usuario']} removido com sucesso!")
                             st.rerun()
                     else:
-                        st.caption("*(Administrador principal)*")
+                        st.caption("*(Esta é a sua conta de Administrador principal)*")
         else:
             st.info("Nenhum usuário encontrado.")
 
     with aba_adm2:
-        st.subheader("Auditoria de Certidões Gerais")
+        st.subheader("Certidões Geradas por Todos os Oficiais")
         try:
             pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
         except:
@@ -341,18 +343,23 @@ elif menu == "🛡️ Painel do Administrador":
                 nome_oficial = pasta["name"]
                 if nome_oficial and nome_oficial != ".emptyFolder":
                     st.markdown(f"### 📂 Oficial: `{nome_oficial}`")
+                    
                     try:
                         arquivos_oficial = supabase.storage.from_("certidoes_usuarios").list(nome_oficial)
                     except:
                         arquivos_oficial = []
-                    certidoes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != ""]
+                        
+                    certioes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != ""]
                     
-                    if not certidoes_validas:
-                        st.caption("Nenhuma certidão gerada.")
+                    if not certioes_validas:
+                        st.caption("Nenhuma certidão gerada por este oficial ainda.")
                     else:
-                        for arq in certidoes_validas:
+                        for arq in certioes_validas:
                             c_arq_nome, c_btn_dl, c_btn_del = st.columns([4, 2, 2])
-                            with c_arq_nome: st.text(arq["name"])
+                            
+                            with c_arq_nome:
+                                st.text(arq["name"])
+                                
                             with c_btn_dl:
                                 if st.button("📥 Baixar", key=f"dl_adm_f_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
@@ -361,9 +368,10 @@ elif menu == "🛡️ Painel do Administrador":
                                         data=file_bytes,
                                         file_name=arq["name"],
                                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                        key=f"dl_adm_btn_real_{nome_oficial}_{arq['name']}",
+                                        key=f"btn_dl_real_{nome_oficial}_{arq['name']}",
                                         use_container_width=True
                                     )
+                                    
                             with c_btn_del:
                                 if st.button("🗑️ Excluir", key=f"del_adm_f_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
@@ -372,16 +380,15 @@ elif menu == "🛡️ Painel do Administrador":
                     st.divider()
 
 # ==========================================
-# 7. TELA: GERADOR DE CERTIDÃO (CORAÇÃO DA MELHORIA)
+# 7. TELA: GERADOR DE CERTIDÃO
 # ==========================================
 elif menu == "📝 Gerar Certidão":
     st.title("Gerador de Certidão Negativa")
     
     if not dados_usuario.get("nome"):
-        st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' antes de gerar certidões.")
+        st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' no menu lateral e preencha seus dados antes de gerar certidões.")
         st.stop()
 
-    # --- INPUT DO MODELO ---
     tipo_certidao = st.selectbox(
         "Selecione o Modelo de Certidão:", 
         ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)"]
@@ -389,22 +396,19 @@ elif menu == "📝 Gerar Certidão":
     
     st.divider()
 
-    # --- 📝 FORMULÁRIO GERAL COMPACTADO ---
-    # Linha 1: Mandado e Processo (2 colunas)
-    c_mandado, c_proc = st.columns(2)
+    # --- CAMPOS COMPARTILHADOS (Cabeçalho e Datas) ---
+    c_mandado, c_proc = st.columns([1, 3])
     with c_mandado:
         mandado = st.text_input("Mandado:", placeholder="Ex: 01", key="mandado_geral")
     with c_proc:
         processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16", key="processo_geral")
     
-    # 📝 Linha 2: Ano e Código Comarca (2 colunas - GRUPADO AGRESSIVAMENTE)
     c_ano, c_comarca = st.columns(2)
     with c_ano:
         ano = st.text_input("Ano:", placeholder="Ex: 2026", key="ano_geral")
     with c_comarca:
         comarca = st.text_input("Código Comarca:", value="0245", placeholder="Ex: 0245", key="comarca_geral")
 
-    # 📝 Linha 3: Endereço e Pessoa procurada (2 colunas - GRUPADO AGRESSIVAMENTE)
     c_end, c_pes = st.columns(2)
     with c_end:
         endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'", key="endereco_geral")
@@ -412,23 +416,26 @@ elif menu == "📝 Gerar Certidão":
         pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico", key="pessoa_geral")
 
     st.markdown("---")
-    st.subheader("Dias e Horários das Diligências")
+    st.write("**Dias e Horários das Diligências:**")
     
-    # 📝 Linha 4: Dias e Horários - GRUPADO AGRESSIVAMENTE EM COLUNAS
-    # Diligência 1
+    # Grid para entrada de 3 datas/horas
     c_d1, c_h1 = st.columns(2)
-    with c_d1: d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
-    with c_h1: h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs", key="h1_geral")
+    with c_d1:
+        d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
+    with c_h1:
+        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs", key="h1_geral")
         
-    # Diligência 2
     c_d2, c_h2 = st.columns(2)
-    with c_d2: d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
-    with c_h2: h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs", key="h2_geral")
+    with c_d2:
+        d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
+    with c_h2:
+        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs", key="h2_geral")
         
-    # Diligência 3
     c_d3, c_h3 = st.columns(2)
-    with c_d3: d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
-    with c_h3: h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs", key="h3_geral")
+    with c_d3:
+        d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
+    with c_h3:
+        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs", key="h3_geral")
 
     st.divider()
 
@@ -436,224 +443,332 @@ elif menu == "📝 Gerar Certidão":
     # OPÇÃO A: CERTIDÃO DETALHADA
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
-        st.subheader("Motivos da Negativa")
+        # ... (Toda a lógica e campos da certidão detalhada permanecem iguais à versão estável anterior) ...
+        st.write("**Deixei de cumprir o ato uma vez que:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
-            nao_loc_dest = st.checkbox("Destinatário não localizado", key="nao_loc_dest")
+            nao_loc_dest = st.checkbox("O destinatário do mandado não foi localizado", key="nao_loc_dest")
         with sit_c2:
-            nao_loc_bens = st.checkbox("Bem(ns) não localizado(s)", key="nao_loc_bens")
+            nao_loc_bens = st.checkbox("O(s) bem(ns) indicados não foi(ram) localizado(s)", key="nao_loc_bens")
 
+        # Lista expandível para motivos (seleção múltipla)
         motivos_selecionados = []
-        with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
+        with st.expander("📌 Clique aqui para selecionar os Motivos da Negativa (Opcional)", expanded=False):
             motivos_list = [
                 "mudou-se", "não reside", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
                 "não trabalha no local", "está viajando", "local inabitado", "antigo(a) inquilino(a)", 
                 "antigo(a) morador(a)", "antigo(a) proprietário(a)", "rotatividade de inquilinos",
-                "Repassado para terceiros", "internado", "transferido", "encontra-se preso",
-                "faleceu", "faliu", "não exerce atividades", "local fechado", 
-                "número não localizado", "rua/av não localizada", "ap/bloco não localizado", 
-                "aparece esporadicamente", "utiliza endereço para correspondências",
-                "sem condições psíquicas de entender conteúdo mandado",
-                "guarnecem a residência amparados pela Lei 8.009/90",
-                "são insuficientes para saldar o débito"
+                "foi repassado para terceiros", "encontra-se internado", "foi transferido", "encontra-se preso",
+                "faleceu", "faliu", "não exerce(em) atividades no local", "o local estava fechado", 
+                "o número não foi localizado", "a rua/av não foi localizada", "o ap/bloco não foi localizado", 
+                "aparece por lá esporadicamente", "utiliza o endereço para fins de recebimento de correspondências",
+                "\"salvo melhor juízo\" não tem condições psíquicas de entender o conteúdo do presente mandado",
+                "encontrei no endereço, apenas bens que, \"salvo melhor juízo\", guarnecem a residência amparados pela Lei 8.009/90",
+                "\"salvo melhor juízo\" são insuficientes para saldar o débito e/ou acréscimos legais"
             ]
-            # Motivos em colunas compactas
             cols_mot = st.columns(2)
             for idx, m in enumerate(motivos_list):
                 with cols_mot[idx % 2]:
+                    # Chave única baseada no índice para motivos
                     if st.checkbox(m, key=f"mot_det_{idx}"):
                         motivos_selecionados.append(m)
 
-        st.markdown("---")
-        # Informações sobre o informante
+        # Informações sobre o informante (seleção múltipla)
         relacoes_selecionadas = []
         nao_sabe_selecionados = []
         sabe_tel = ""
         sabe_end = ""
         
-        with st.expander("👤 Informações sobre o Informante", expanded=False):
-            nome_inf_det = st.text_input("Nome do Sr(a):", placeholder="Vazio se não houver informante", key="nome_inf_det")
+        with st.expander("👤 Informações sobre o Informante (Se houver)", expanded=False):
+            nome_inf_det = st.text_input("Nome do Sr(a):", placeholder="Deixe em branco se não houver informante", key="nome_inf_det")
 
             st.caption("Relação / Qualidade:")
             relacoes_list = [
-                "morador", "proprietário", "inquilino", "funcionário", "vizinho", "pai", "mãe",
-                "padrasto", "madrasta", "filho", "irmão", "tio", "avô(ó)", "neto", "sobrinho",
-                "primo", "transeunte", "viúvo", "ex", "esposo", "companheiro", "sogro", "enteado",
-                "genro", "nora", "cunhado", "concunhado", "amigo"
+                "morador(a)", "proprietário(a)", "inquilino(a)", "funcionário(a)", "vizinho(a)", "pai", "mãe",
+                "padrasto", "madrasta", "filho(a)", "irmão(a)", "tio(a)", "avô(ó)", "neto(a)", "sobrinho(a)",
+                "primo(a)", "transeunte", "viúvo(a)", "ex", "esposo(a)", "companheiro(a)", "sogro(a)", "enteado(a)",
+                "genro", "nora", "cunhado(a)", "concunhado(a)", "amigo(a)"
             ]
             cols_rel = st.columns(3)
             for idx, r in enumerate(relacoes_list):
                 with cols_rel[idx % 3]:
+                    # Chave única baseada no índice para relações
                     if st.checkbox(r, key=f"rel_det_{idx}"):
                         relacoes_selecionadas.append(r)
 
-            st.write("**Não sabendo o informante indicar:**")
+            st.markdown("---")
+            st.write("**Não sabendo o informante indicar o(a):**")
             nao_sabe_list = [
-                "endereço completo", "paradeiro", "o dia/horário exato", 
-                "telefone", "dia/horário de retorno", "o presídio", 
-                "dados do óbito", "previsão de alta"
+                "endereço completo", "paradeiro", "o dia e nem o horário exato de localizá-lo(a)", 
+                "telefone de contato", "dia e nem o horário exato de retorno", "o presídio", 
+                "os dados da certidão de óbito", "previsão de alta"
             ]
             cols_ns = st.columns(2)
             for idx, ns in enumerate(nao_sabe_list):
                 with cols_ns[idx % 2]:
+                    # Chave única baseada no índice para 'não sabe'
                     if st.checkbox(ns, key=f"ns_det_{idx}"):
                         nao_sabe_selecionados.append(ns)
 
-            st.write("**Sabendo o informante indicar:**")
-            sabe_tel = st.text_input("Telefone indicado:", key="sabe_tel_det")
-            sabe_end = st.text_input("Endereço correto indicado:", key="sabe_end_det")
+            st.markdown("---")
+            st.write("**Sabendo o informante indicar o:**")
+            c_sab1, c_sab2 = st.columns(2)
+            with c_sab1:
+                sabe_tel = st.text_input("Telefone indicado:", key="sabe_tel_det")
+            with c_sab2:
+                sabe_end = st.text_input("Endereço correto indicado:", key="sabe_end_det")
         
-        with st.expander("📝 Certificações Adicionais", expanded=False):
+        # Garante que a variável exista para a lógica de montagem
+        if 'nome_inf' not in locals():
+            nome_inf = ""
+
+        with st.expander("📝 Certificações Adicionais e Observações", expanded=False):
             cert_extras = []
-            if st.checkbox("Procurei informações com moradores e não obtive êxito.", key="cert_vizinhos_det"):
+            if st.checkbox("Procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito.", key="cert_vizinhos_det"):
                 cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito.")
-            if st.checkbox("Cópia do mandado com informante para ciência do prazo/data.", key="cert_copia_det"):
+            if st.checkbox("Devido à importância do mandado, deixei a cópia para ciência do prazo/data.", key="cert_copia_det"):
                 cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a) para que a parte/testemunha tome ciência do prazo/data que deverá comparecer em juízo.")
-            if st.checkbox("Imóvel residencial contém apenas móveis/utensílios comuns.", key="cert_moveis_det"):
+            if st.checkbox("O imóvel é residencial e contém apenas móveis e utensílios domésticos comuns.", key="cert_moveis_det"):
                 cert_extras.append("o imóvel é residencial e contém apenas móveis e utensílios domésticos que guarnecem a residência do réu.")
 
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det")
 
         st.divider()
 
-        # Botão de Geração
+        # Botão de Geração Detalhada
         if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True, key="btn_gerar_docx_det"):
-            with st.spinner("Gerando detalhada..."):
+            with st.spinner("Construindo certidão detalhada e salvando na nuvem..."):
+                # Lógica de montagem do DOCX detalhado permanece igual à versão funcional anterior
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_validas = [h for h in [h1, h2, h3] if h]
+                
                 texto_data_hora = ""
                 if len(dias_validos) == 1:
                     texto_data_hora = f", por volta das {horas_validas[0]}, do dia {dias_validos[0]},"
                 elif len(dias_validos) > 1:
+                    # Formatação de dias e horas múltiplos
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
                     texto_data_hora = f", por volta das {str_horas}, dos dias {str_dias}, respectivamente,"
+
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
                 txt_pessoa = f" de {pessoa}" if pessoa else ""
+
+                # Parágrafo principal
                 paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
+                
                 sits = []
                 if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
                 if nao_loc_bens: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
-                paragrafo += " e ".join(sits) + ". " if sits else "não foi possível a sua realização. "
+                
+                if sits:
+                    paragrafo += " e ".join(sits) + ". "
+                else:
+                    paragrafo += "não foi possível a sua realização. "
+
                 if motivos_selecionados:
                     paragrafo += f"Constatou-se no local que o(a) mesmo(a) {', '.join(motivos_selecionados)}. "
+
+                # Informante
                 if nome_inf_det or relacoes_selecionadas:
                     nome_str = nome_inf_det if nome_inf_det else "pessoa não identificada"
                     rel_str = f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ""
+                    
                     paragrafo += f"Conforme informações prestadas no local pelo(a) Sr(a). {nome_str}{rel_str} "
+                    
                     if nao_sabe_selecionados:
                         paragrafo += f"este(a) declarou não saber indicar: {', '.join(nao_sabe_selecionados)}. "
                     else:
                         paragrafo += "este(a) prestou as devidas informações no local. "
+                        
                     if sabe_tel or sabe_end:
                         sabes_list = []
                         if sabe_tel: sabes_list.append(f"o telefone de contato {sabe_tel}")
                         if sabe_end: sabes_list.append(f"o endereço atual/correto sendo {sabe_end}")
                         paragrafo += f"Por outro lado, o informante soube indicar {' e '.join(sabes_list)}. "
-                if cert_extras: paragrafo += f"Certifico também que {'; '.join(cert_extras)}. "
-                if observacoes_det: paragrafo += f"{observacoes_det.strip()} "
+
+                if cert_extras:
+                    paragrafo += f"Certifico também que {'; '.join(cert_extras)}. "
+                    
+                if observacoes_det:
+                    paragrafo += f"{observacoes_det.strip()} "
+
+                # Geração do DOCX
                 doc = Document()
-                style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
+                style = doc.styles['Normal']
+                font = style.font
+                font.name = 'Times New Roman'
+                font.size = Pt(12)
+
+                # Busca cabeçalho dinâmico na nuvem
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
-                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
-                except: pass
+                    cabecalho_stream = BytesIO(cabecalho_bytes)
+                    p_img_cabecalho = doc.add_paragraph()
+                    p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run_img_cab = p_img_cabecalho.add_run()
+                    run_img_cab.add_picture(cabecalho_stream, width=Cm(16))
+                except:
+                    pass
+
+                # Processo com Ano e Comarca (Dینâmica)
                 if processo:
                     texto_processo = f"Processo: {processo}"
-                    if ano: texto_processo += f".{ano}.8.13.{comarca}"
+                    if ano:
+                        texto_processo += f".{ano}.8.13.{comarca}"
                     doc.add_paragraph(texto_processo)
-                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
+                    
+                if mandado:
+                    doc.add_paragraph(f"Mandado nº: {mandado}")
+                    
                 doc.add_paragraph("")
-                p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO NEGATIVA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+                p_titulo = doc.add_paragraph()
+                run_titulo = p_titulo.add_run("CERTIDÃO NEGATIVA")
+                run_titulo.bold = True
+                run_titulo.font.size = Pt(16) # Tamanho 16pt
+                p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
                 doc.add_paragraph("")
-                p_corpo = doc.add_paragraph(paragrafo.strip()); p_corpo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; p_corpo.paragraph_format.first_line_indent = Pt(35.4); p_corpo.paragraph_format.line_spacing = 1.5 
+
+                # Corpo do texto com parágrafo formatado
+                p_corpo = doc.add_paragraph(paragrafo.strip())
+                p_corpo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_corpo.paragraph_format.first_line_indent = Pt(35.4) # Indentação 1,25cm
+                p_corpo.paragraph_format.line_spacing = 1.5 # Espaçamento 1,5 linhas
+                
                 doc.add_paragraph("")
-                p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé."); p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
+                p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.")
+                p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                # Data ajustada para UTC-3 (Brasil)
+                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 local_data = dados_usuario.get("matricula", "").split(":")[0].strip() or "Santa Luzia"
-                doc.add_paragraph(f"{local_data}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                data_extenso = f"{local_data}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}."
+                
+                p_data = doc.add_paragraph(data_extenso)
+                p_data.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
                 doc.add_paragraph("")
+                
+                # Assinatura dinâmica da Nuvem
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
-                except: pass 
-                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
-                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
-                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
-                buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
+                    assinatura_stream = BytesIO(assinatura_bytes)
+                    
+                    p_img_assinatura = doc.add_paragraph()
+                    p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run_img_ass = p_img_assinatura.add_run()
+                    run_img_ass.add_picture(assinatura_stream, width=Cm(6))
+                except:
+                    pass 
+                
+                # Rodapé com dados do oficial (tamanho 8)
+                p_assinatura = doc.add_paragraph()
+                p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n")
+                run_nome.bold = True
+                run_nome.font.size = Pt(8)
+                
+                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n")
+                run_cargo.font.size = Pt(8)
+                
+                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}")
+                run_matricula.font.size = Pt(8)
+
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
+
+                # Nomenclatura dinâmica
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Negativa_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Negativa_{data_arquivo}.docx"
-                supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
-            st.success(f"✅ Certidão salva!")
-            st.download_button(label="📥 Baixar DOCX Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_det")
+                
+                # Salva na pasta do oficial na Nuvem
+                caminho_salvamento = f"{usuario_atual}/{nome_arquivo}"
+                
+                supabase.storage.from_("certidoes_usuarios").upload(
+                    file=buffer.getvalue(),
+                    path=caminho_salvamento,
+                    file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+                )
+
+            st.success(f"✅ Certidão detalhada salva na sua conta na Nuvem!")
+            st.download_button(
+                label="📥 Baixar Documento Word Agora",
+                data=buffer,
+                file_name=nome_arquivo,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                type="primary",
+                use_container_width=True,
+                key="btn_dl_det"
+            )
 
     # ==========================================
-    # OPÇÃO B: CERTIDÃO SIMPLES (GRANDE MELHORIA TOUCH)
+    # OPÇÃO B: CERTIDÃO SIMPLES (RESTAURADA COM RADIO E ADAPTADA AO STORAGE)
     # ==========================================
     elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
         
-        # --- 🚀 INPUTS OTIMIZADOS PARA TOUCH (RADIO BUTTONS GRANDES) ---
-        st.subheader("Situação Principal")
-        # CSS especial acima faz estes botões ficarem grandes
+        # --- INPUTS (Restaurada a versão com 'st.radio' baseada no seu exemplo funcional) ---
+
+        # Desfecho Principal
         situacao_simples = st.radio(
-            "Selecione uma opção:", 
+            "Situação Principal:", 
             ["Local Fechado", "Pessoa Não Encontrada", "Não Localizei a Pessoa"],
-            index=None, key="sit_radio_simples"
+            index=None, horizontal=True, key="sit_radio_simples"
         )
 
-        st.markdown("---")
-        # Informante
-        obteve_inf_simples = st.radio("Obteve Informações?", ["Sim", "Não", "NQI"], index=None, key="obteve_inf_radio_simples")
-        nome_inf_simples = st.text_input("Nome informante:", disabled=(obteve_inf_simples != "Sim"), key="nome_inf_input_simples")
+        st.divider()
+        c_inf1, c_inf2 = st.columns([1, 2])
+        with c_inf1:
+            # Opções de Informações Obtidas (NQI = Não Quis se Identificar)
+            obteve_inf_simples = st.radio("Obteve Informações?", ["Sim", "Não", "NQI"], index=None, horizontal=True, key="obteve_inf_radio_simples")
+        with c_inf2:
+            # O campo de nome fica habilitado apenas se obteve_inf_simples for "Sim"
+            nome_inf_simples = st.text_input("Nome do Informante:", disabled=(obteve_inf_simples != "Sim"), key="nome_inf_input_simples")
 
-        st.markdown("---")
-        st.write("**Detalhes do informante:**")
-        # Motivo
-        st.caption("Motivo")
-        motivo_simples = st.radio(
-            "Selecione:", 
-            ["Mudou-se", "Não Reside", "Não fica ali", "Não trabalha ali", "Falecido"], 
-            index=None, key="motivo_radio_simples"
-        )
-        
-        # Não sabe
-        st.caption("O que não sabe?")
-        nao_sabe_simples = st.radio(
-            "Selecione:", 
-            ["Não Conhece", "Não sabe informar", "Não sabe endereço"], 
-            index=None, key="naosabe_radio_simples"
-        )
-        
-        # Paradeiro
-        st.caption("Paradeiro")
-        paradeiro_simples = st.radio(
-            "Selecione:", 
-            ["Não sabe o paradeiro", "Incerto e Não Sabido"], 
-            index=None, key="paradeiro_radio_simples"
-        )
+        # Motivos e Paradeiro
+        st.write("**Detalhes das Informações Obtidas:**")
+        c_m1, c_m2 = st.columns(2)
+        with c_m1:
+            motivo_simples = st.radio(
+                "Motivo:", 
+                ["Mudou-se", "Não Reside no Local", "Não fica ali", "Não trabalha ali", "Falecido"], 
+                index=None, key="motivo_radio_simples"
+            )
+        with c_m2:
+            nao_sabe_simples = st.radio(
+                "O que não sabe?", 
+                ["Não Conhece ele", "Não sabe informar", "Não sabe seu endereço"], 
+                index=None, key="naosabe_radio_simples"
+            )
+            paradeiro_simples = st.radio(
+                "Paradeiro:", 
+                ["Não sabe o paradeiro", "Incerto e Não Sabido"], 
+                index=None, key="paradeiro_radio_simples"
+            )
 
-        st.markdown("---")
-        st.write("**Condições Extras**")
-        # Condições do local
+        st.divider()
         condicao_simples = st.radio(
-            "Selecione:", 
+            "Condições do Local:", 
             ["Local Perigoso", "Medo Processo", "Zona Rural", "Blocos", "Chuva"], 
-            index=None, key="condicao_radio_simples"
+            index=None, horizontal=True, key="condicao_radio_simples"
         )
 
         st.markdown("---")
-        # Observações (Área de texto compacta)
-        observacoes_simples = st.text_area("Observações Extras:", height=60, key="obs_simples")
+        # Campo de observações mantido para compatibilidade com o Storage
+        observacoes_simples = st.text_area("Observações Extras:", height=68, key="obs_simples_text_area")
         st.divider()
 
-        # --- LÓGICA DO BOTÃO GERAR SIMPLES (Restaurada do seu exemplo funcional) ---
+        # --- LÓGICA DO BOTÃO GERAR SIMPLES (RESTAURADA E ADAPTADA AO STORAGE) ---
         if st.button("Salvar na Nuvem / Gerar DOCX (Simples)", type="primary", use_container_width=True, key="btn_gerar_simples"):
-            with st.spinner("Gerando simples..."):
+            with st.spinner("Construindo certidão simples e salvando na nuvem..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_validas = [h for h in [h1, h2, h3] if h]
+                
                 texto_data_hora = ""
                 if len(dias_validos) == 1:
                     texto_data_hora = f", onde às {horas_validas[0]}, do dia {dias_validos[0]},"
@@ -661,53 +776,176 @@ elif menu == "📝 Gerar Certidão":
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
                     texto_data_hora = f", onde às {str_horas}, dos dias {str_dias},"
+
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
                 txt_pessoa = f" a pessoa, Sr(a). {pessoa}" if pessoa else "a pessoa referida no mandado"
+
                 txt_situacao = ""
-                if situacao_simples == "Local Fechado": txt_situacao = "porque o local foi encontrado fechado e mesmo após chamar várias vezes, ninguém atendeu. "
-                elif situacao_simples == "Pessoa Não Encontrada": txt_situacao = "porque não a encontrei no local. "
-                elif situacao_simples == "Não Localizei a Pessoa": txt_situacao = "porque não a localizei. "
-                paragrafo_unico = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}{texto_data_hora} deixei de citar/intimar/notificar {txt_pessoa}, {txt_situacao}"
-                if obteve_inf_simples == "Sim": paragrafo_unico += f"Conforme informações obtidas no local com Sr.(a) {nome_inf_simples}, informou que, "
-                elif obteve_inf_simples == "Não": paragrafo_unico += "Procurei obter informações junto aos moradores vizinhos locais, e não obtive êxito, uma vez que ninguém forneceu informações. "
-                elif obteve_inf_simples == "NQI": paragrafo_unico += "Conforme informações prestadas pelo seu vizinho(a), que não quis se identificar, este afirmou que "
+                if situacao_simples == "Local Fechado":
+                    txt_situacao = "porque o local foi encontrado fechado e mesmo após chamar várias vezes, ninguém atendeu. "
+                elif situacao_simples == "Pessoa Não Encontrada":
+                    txt_situacao = "porque não a encontrei no local. "
+                elif situacao_simples == "Não Localizei a Pessoa":
+                    txt_situacao = "porque não a localizei. "
+
+                paragrafo_unico = (
+                    f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}{texto_data_hora} "
+                    f"e, deixei de citar/intimar/notificar {txt_pessoa}, {txt_situacao}"
+                )
+
+                if obteve_inf_simples == "Sim":
+                    paragrafo_unico += f"Conforme informações obtidas no local com Sr.(a) {nome_inf_simples}, informou que, "
+                elif obteve_inf_simples == "Não":
+                    paragrafo_unico += "Procurei obter informações junto aos moradores vizinhos locais, e não obtive êxito, uma vez que ninguém forneceu informações. "
+                elif obteve_inf_simples == "NQI":
+                    paragrafo_unico += "Conforme informações prestadas pelo seu vizinho(a), que não quis se identificar, este afirmou que "
+
                 if obteve_inf_simples in ["Sim", "NQI"]:
-                    if motivo_simples == "Mudou-se": paragrafo_unico += "a pessoa procurada não reside mais no local, tendo se mudado sem deixar meios para contato; "
-                    elif motivo_simples == "Não Reside": paragrafo_unico += "a pessoa procurada não reside no local referido; "
-                    elif motivo_simples == "Não fica ali": paragrafo_unico += "a pessoa procurada reside no local, mas quase não fica no mesmo, onde nos dias e horários acima não foi localizada; "
-                    elif motivo_simples == "Não trabalha ali": paragrafo_unico += "a pessoa procurada não trabalha no local; "
-                    elif motivo_simples == "Falecido": paragrafo_unico += "a pessoa procurada já se encontra falecida. "
-                    if nao_sabe_simples == "Não Conhece": paragrafo_unico += "não conhece a pessoa procurada, não sabendo informar o local/horário para encontrá-la. "
-                    elif nao_sabe_simples == "Não sabe informar": paragrafo_unico += "que não sabe informar o dia e horário para encontrá-lo(a). "
-                    elif nao_sabe_simples == "Não sabe endereço": paragrafo_unico += "que não sabe informar o endereço para encontrá-lo(a). "
-                    if paradeiro_simples == "Não sabe o paradeiro": paragrafo_unico += "não sabe informar seu paradeiro, bem como o local para encontrá-lo. "
-                    elif paradeiro_simples == "Incerto e Não Sabido": paragrafo_unico += "Certifico assim, que PESSOA PROCURADA SE ENCONTRA EM LOCAL INCERTO E NÃO SABIDO. "
+                    if motivo_simples == "Mudou-se":
+                        paragrafo_unico += "a pessoa procurada não reside mais no local, tendo se mudado sem deixar meios para contato; "
+                    elif motivo_simples == "Não Reside no Local":
+                        paragrafo_unico += "a pessoa procurada não reside no local referido; "
+                    elif motivo_simples == "Não fica ali":
+                        paragrafo_unico += "a pessoa procurada reside no local, mas quase não fica no mesmo, onde nos dias e horários acima não foi localizada; "
+                    elif motivo_simples == "Não trabalha ali":
+                        paragrafo_unico += "a pessoa procurada não trabalha no local; "
+                    elif motivo_simples == "Falecido":
+                        paragrafo_unico += "a pessoa procurada já se encontra falecida. "
+
+                    if nao_sabe_simples == "Não Conhece ele":
+                        paragrafo_unico += "não conhece a pessoa procurada, não sabendo informar o local/horário para encontrá-la. "
+                    elif nao_sabe_simples == "Não sabe informar":
+                        paragrafo_unico += "que não sabe informar o dia e horário para encontrá-lo(a). "
+                    elif nao_sabe_simples == "Não sabe seu endereço":
+                        paragrafo_unico += "que não sabe informar o endereço para encontrá-lo(a). "
+
+                    if paradeiro_simples == "Não sabe o paradeiro":
+                        paragrafo_unico += "não sabe informar seu paradeiro, bem como o local para encontrá-lo. "
+                    elif paradeiro_simples == "Incerto e Não Sabido":
+                        paragrafo_unico += "Certifico assim, que, com relação ao presente mandado, endereço fornecido e informações obtidas no local, A PESSOA PROCURADA SE ENCONTRA EM LOCAL INCERTO E NÃO SABIDO. "
+
                 obs_extra = ""
-                if condicao_simples == "Chuva": obs_extra = "Certifico que execução restou dificultada por adversas condições meteorológicas no momento do ato, precipitation pluviométrica. "
-                elif condicao_simples == "Local Perigoso": obs_extra = "local é de grande periculosidade, moradores ficam receosos de envolvimento. "
-                elif condicao_simples == "Zona Rural": obs_extra = "zona rural com difícil acesso, localização difícil, numeração irregular. "
-                elif condicao_simples == "Blocos": obs_extra = "condomínio com blocos, portaria vazia, interfone não funciona. "
-                elif condicao_simples == "Medo Processo": obs_extra = "moradores receosos de envolvimento com o processo. "
-                if obs_extra or observacoes_simples: paragrafo_unico += obs_extra + (" " + observacoes_simples if observacoes_simples else "")
-                doc = Document(); doc.styles['Normal'].font.name = 'Times New Roman'; doc.styles['Normal'].font.size = Pt(12)
-                try: doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph().add_run().add_picture(BytesIO(supabase.storage.from_("imagens_sistema").download("cabecalho.png")), width=Cm(16))
-                except: pass
-                if processo: doc.add_paragraph(f"Processo: {processo}.{ano or '2026'}.8.13.{comarca}")
-                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
-                doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                doc.add_paragraph(paragrafo_unico.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"{dados_usuario.get('matricula', '').split(':')[0].strip() or 'Santa Luzia'}, {hoje.day} mes {hoje.month - 1} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                try: doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph().add_run().add_picture(BytesIO(supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")), width=Cm(6))
-                except: pass 
-                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
-                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
-                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
-                buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
+                if condicao_simples == "Chuva":
+                    obs_extra = "Certifico que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento. "
+                elif condicao_simples == "Local Perigoso":
+                    obs_extra = "Informo também que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada. "
+                elif condicao_simples == "Zona Rural":
+                    obs_extra = "Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrá-la. "
+                elif condicao_simples == "Blocos":
+                    obs_extra = "Informo também que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la. "
+                elif condicao_simples == "Medo Processo":
+                    obs_extra = "Procurei informações com vizinhos sobre o horário/local para encontrar a pessoa procurada, mas os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada. "
+
+                if obs_extra or observacoes_simples:
+                    paragrafo_unico += obs_extra + (" " + observacoes_simples if observacoes_simples else "")
+
+                # --- CRIAÇÃO DO DOCX (Adaptada para compatibilidade com rodapé do Perfil e Storage) ---
+                doc = Document()
+                style = doc.styles['Normal']
+                font = style.font
+                font.name = 'Times New Roman'
+                font.size = Pt(12)
+
+                # Cabeçalho dinâmico da Nuvem
+                try:
+                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    cabecalho_stream = BytesIO(cabecalho_bytes)
+                    p_img_cabecalho = doc.add_paragraph()
+                    p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run_img_cab = p_img_cabecalho.add_run()
+                    run_img_cab.add_picture(cabecalho_stream, width=Cm(16))
+                except:
+                    pass
+
+                if processo:
+                    texto_processo = f"Processo: {processo}"
+                    if ano:
+                        texto_processo += f".{ano}.8.13.{comarca}"
+                    doc.add_paragraph(texto_processo)
+                    
+                if mandado:
+                    doc.add_paragraph(f"Mandado nº: {mandado}")
+                    
+                doc.add_paragraph("")
+
+                p_titulo = doc.add_paragraph()
+                run_titulo = p_titulo.add_run("CERTIDÃO")
+                run_titulo.bold = True
+                run_titulo.font.size = Pt(16) # Tamanho aumentado para 16pt
+                p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                doc.add_paragraph("")
+
+                p_corpo = doc.add_paragraph(paragrafo_unico.strip())
+                p_corpo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_corpo.paragraph_format.first_line_indent = Pt(35.4) # Indentação 1,25cm
+                
+                doc.add_paragraph("")
+
+                p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.")
+                p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                # Data ajustada para UTC-3 (Brasil)
+                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                local_data = dados_usuario.get("matricula", "").split(":")[0].strip() or "Santa Luzia"
+                data_extenso = f"{local_data}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}."
+                
+                p_data = doc.add_paragraph(data_extenso)
+                p_data.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+                doc.add_paragraph("")
+                
+                # Assinatura dinâmica da Nuvem
+                try:
+                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    assinatura_stream = BytesIO(assinatura_bytes)
+                    
+                    p_img_assinatura = doc.add_paragraph()
+                    p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run_img_ass = p_img_assinatura.add_run()
+                    run_img_ass.add_picture(assinatura_stream, width=Cm(6))
+                except:
+                    pass 
+                
+                # Dados do Oficial (Tamanho 8 - Dinâmico do Perfil)
+                p_assinatura = doc.add_paragraph()
+                p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n")
+                run_nome.bold = True
+                run_nome.font.size = Pt(8)
+                
+                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n")
+                run_cargo.font.size = Pt(8)
+                
+                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}")
+                run_matricula.font.size = Pt(8)
+
+                buffer = BytesIO()
+                doc.save(buffer)
+                buffer.seek(0)
+
+                # Nomenclatura dinâmica
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
-                supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
-            st.success(f"✅ Certidão salva!")
-            st.download_button(label="📥 Baixar DOCX Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_simples")
+                
+                # Salva na pasta do usuário na Nuvem
+                caminho_salvamento = f"{usuario_atual}/{nome_arquivo}"
+                
+                supabase.storage.from_("certidoes_usuarios").upload(
+                    file=buffer.getvalue(),
+                    path=caminho_salvamento,
+                    file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+                )
+
+            st.success(f"✅ Certidão simples salva na sua conta na Nuvem!")
+            st.download_button(
+                label="📥 Baixar Documento Word Agora",
+                data=buffer,
+                file_name=nome_arquivo,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                type="primary",
+                use_container_width=True,
+                key="btn_dl_simples"
+            )
