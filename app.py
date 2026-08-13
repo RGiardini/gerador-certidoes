@@ -479,11 +479,11 @@ elif menu == "📝 Gerar Certidão":
             # 🚀 MELHORIA ESTRUTURAL 5: Certificações extras agora em duas colunas (Compactação Vertical)
             cert_extras = []
             c_extra1, c_extra2 = st.columns(2)
-            with c_extra1:
+with c_extra1:
                 if st.checkbox("Procurei informações com moradores.", key="cert_vizinhos_det"):
-                    cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito.")
+                    cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito")
                 if st.checkbox("Cópia do mandado com informante.", key="cert_copia_det"):
-                    cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a) para que a parte/testemunha tome ciência do prazo/data que deverá comparecer em juízo.")
+                    cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a) para que a parte/testemunha tome ciência do prazo/data que deverá comparecer em juízo")
             with c_extra2:
                 if st.checkbox("Imóvel contém apenas bens domésticos.", key="cert_moveis_det"):
                     cert_extras.append("o imóvel é residencial e contém apenas móveis e utensílios domésticos que guarnecem a residência do réu.")
@@ -512,7 +512,27 @@ elif menu == "📝 Gerar Certidão":
                 if nao_loc_bens: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
                 paragrafo += " e ".join(sits) + ". " if sits else "não foi possível a sua realização. "
                 if motivos_selecionados:
-                    paragrafo += f"Constatou-se no local que o(a) mesmo(a) {', '.join(motivos_selecionados)}. "
+                    frases_motivos = []
+                    for m in motivos_selecionados:
+                        if m == "local fechado": frases_motivos.append("o imóvel encontrava-se fechado")
+                        elif m == "local inabitado": frases_motivos.append("o local encontra-se inabitado")
+                        elif m == "número não localizado": frases_motivos.append("o número indicado não foi localizado")
+                        elif m == "rua/av não localizada": frases_motivos.append("a via indicada não foi localizada")
+                        elif m == "ap/bloco não localizado": frases_motivos.append("o apartamento/bloco não foi localizado")
+                        elif m == "rotatividade de inquilinos": frases_motivos.append("há alta rotatividade de inquilinos no endereço")
+                        elif m == "guarnecem a residência amparados pela Lei 8.009/90": frases_motivos.append("os bens que guarnecem a residência estão amparados pela Lei 8.009/90")
+                        elif m == "são insuficientes para saldar o débito": frases_motivos.append("os bens encontrados são insuficientes para saldar o débito")
+                        elif m in ["antigo inquilino", "antigo morador", "antigo proprietário"]: frases_motivos.append(f"a pessoa procurada trata-se de um {m}")
+                        elif m == "Repassado para terceiros": frases_motivos.append("o imóvel foi repassado para terceiros")
+                        else: frases_motivos.append(f"a pessoa procurada {m}")
+                    
+                    if len(frases_motivos) > 1:
+                        # Se tiver mais de uma opção, une as últimas com "e que" para a frase ficar natural
+                        texto_motivos = ", e que ".join([", ".join(frases_motivos[:-1]), frases_motivos[-1]])
+                    else:
+                        texto_motivos = frases_motivos[0]
+                        
+                    paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
                 if nome_inf_det or relacoes_selecionadas:
                     nome_str = nome_inf_det if nome_inf_det else "pessoa não identificada"
                     rel_str = f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ""
