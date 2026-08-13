@@ -4,7 +4,6 @@ import hashlib
 import zipfile
 from io import BytesIO
 import datetime
-import uuid  # Para gerar as chaves únicas
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
@@ -41,66 +40,12 @@ supabase: Client = iniciar_conexao()
 def gerar_hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
-# === FUNÇÕES DE PERSISTÊNCIA DE LOGIN POR URL ===
-
-def criar_sessao_segura(usuario):
-    """Gera uma chave única, salva no banco e retorna"""
-    chave = str(uuid.uuid4()) # Gera um ID único aleatório (ex: 550e8400-e29b...)
-    # Define expiração para 30 dias a partir de agora (UTC)
-    expira = datetime.datetime.utcnow() + datetime.timedelta(days=30)
-    
-    # Salva na tabela banco_sessoes
-    supabase.table("banco_sessoes").insert({
-        "usuario": usuario,
-        "chave_acesso": chave,
-        "expira_em": expira.isoformat()
-    }).execute()
-    
-    return chave
-
-def verificar_sessao_url():
-    """Lê a chave da URL e tenta logar o usuário"""
-    # Pega os parâmetros da URL (ex: ?access_key=...)
-    params = st.query_params
-    
-    if "access_key" in params:
-        chave_url = params["access_key"]
-        
-        # Busca a chave no banco de dados
-        agora = datetime.datetime.utcnow().isoformat()
-        resposta = supabase.table("banco_sessoes").select("usuario").eq("chave_acesso", chave_url).gt("expira_em", agora).execute()
-        
-        if len(resposta.data) > 0:
-            # Chave válida e não expirada! Loga o usuário na sessão do Streamlit
-            st.session_state["usuario_logado"] = resposta.data[0]["usuario"]
-            return True
-    return False
-
-def encerrar_sessao():
-    """Remove a chave da URL e limpa o login"""
-    params = st.query_params
-    if "access_key" in params:
-        chave_url = params["access_key"]
-        # Deleta do banco de dados (opcional, mas boa prática)
-        supabase.table("banco_sessoes").delete().eq("chave_acesso", chave_url).execute()
-    
-    # Limpa o parâmetro da URL no navegador
-    st.query_params.clear()
-    # Limpa a sessão do Streamlit
-    st.session_state["usuario_logado"] = None
-
 # ==========================================
 # 2. CONTROLE DE SESSÃO E LOGIN
 # ==========================================
 if "usuario_logado" not in st.session_state:
     st.session_state["usuario_logado"] = None
 
-# Tenta recuperar o login pela URL antes de mostrar a tela de login
-if st.session_state["usuario_logado"] is None:
-    if verificar_sessao_url():
-        st.rerun() # Recarrega a página já logado
-
-# Se ainda não estiver logado, mostra a tela de login
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões - TJMG")
     
@@ -111,31 +56,20 @@ if st.session_state["usuario_logado"] is None:
         usuario_login = st.text_input("Usuário:", key="log_usr").lower().strip()
         senha_login = st.text_input("Senha:", type="password", key="log_pwd")
         
-        # Checkbox opcional para o usuário decidir se quer manter logado
-        manter_logado = st.checkbox("Manter-me logado neste dispositivo (30 dias)", value=True)
-        
         if st.button("Entrar", type="primary", use_container_width=True):
             if usuario_login and senha_login:
-                with st.spinner("Autenticando..."):
-                    resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_login).execute()
-                    
-                    if len(resposta.data) > 0:
-                        dados_bd = resposta.data[0]
-                        senha_criptografada = gerar_hash_senha(senha_login)
-                        if dados_bd["senha"] == senha_criptografada:
-                            # Login com senha correto!
-                            st.session_state["usuario_logado"] = usuario_login
-                            
-                            if manter_logado:
-                                # Gera a chave, salva no banco e injeta na URL
-                                nova_chave = criar_sessao_segura(usuario_login)
-                                st.query_params["access_key"] = nova_chave
-                            
-                            st.rerun()
-                        else:
-                            st.error("Senha incorreta!")
+                resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_login).execute()
+                
+                if len(resposta.data) > 0:
+                    dados_bd = resposta.data[0]
+                    senha_criptografada = gerar_hash_senha(senha_login)
+                    if dados_bd["senha"] == senha_criptografada:
+                        st.session_state["usuario_logado"] = usuario_login
+                        st.rerun()
                     else:
-                        st.error("Usuário não encontrado. Vá na aba 'Criar Nova Conta'.")
+                        st.error("Senha incorreta!")
+                else:
+                    st.error("Usuário não encontrado. Vá na aba 'Criar Nova Conta'.")
             else:
                 st.warning("Preencha usuário e senha.")
                 
@@ -146,36 +80,28 @@ if st.session_state["usuario_logado"] is None:
         
         if st.button("Criar Conta", use_container_width=True):
             if novo_usuario and nova_senha:
-                with st.spinner("Criando conta..."):
-                    checar = supabase.table("banco_usuarios").select("*").eq("usuario", novo_usuario).execute()
-                    if len(checar.data) > 0:
-                        st.error("⚠️ Este nome de usuário já está em uso. Escolha outro.")
-                    else:
-                        supabase.table("banco_usuarios").insert({
-                            "usuario": novo_usuario,
-                            "senha": gerar_hash_senha(nova_senha),
-                            "nome": "",
-                            "cargo": "Oficial de Justiça Avaliador",
-                            "matricula": ""
-                        }).execute()
-                        st.success("✅ Conta criada com sucesso! Vá na aba 'Entrar' para acessar o sistema.")
+                checar = supabase.table("banco_usuarios").select("*").eq("usuario", novo_usuario).execute()
+                if len(checar.data) > 0:
+                    st.error("⚠️ Este nome de usuário já está em uso. Escolha outro.")
+                else:
+                    supabase.table("banco_usuarios").insert({
+                        "usuario": novo_usuario,
+                        "senha": gerar_hash_senha(nova_senha),
+                        "nome": "",
+                        "cargo": "Oficial de Justiça Avaliador",
+                        "matricula": ""
+                    }).execute()
+                    st.success("✅ Conta criada com sucesso! Vá na aba 'Entrar' para acessar o sistema.")
             else:
                 st.error("Preencha o usuário e a senha para criar a conta.")
                 
-    st.stop() # Interrompe o script aqui se não estiver logado
+    st.stop()
 
 # ==========================================
-# 3. DADOS DO USUÁRIO E MENU LATERAL (SÓ ENTRA AQUI SE LOGADO)
+# 3. DADOS DO USUÁRIO E MENU LATERAL
 # ==========================================
 usuario_atual = st.session_state["usuario_logado"]
-
-# Busca dados do usuário (garantindo que ele ainda existe)
 resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
-if len(resposta_usuario.data) == 0:
-    # Usuário foi deletado do banco, força logout
-    encerrar_sessao()
-    st.rerun()
-
 dados_usuario = resposta_usuario.data[0]
 
 with st.sidebar:
@@ -190,12 +116,9 @@ with st.sidebar:
         
     menu = st.radio("Navegação:", opcoes_menu)
     st.divider()
-    
-    # Botão de Sair atualizado para limpar a URL
-    if st.button("Sair (Logout)", use_container_width=True):
-        with st.spinner("Saindo..."):
-            encerrar_sessao()
-            st.rerun()
+    if st.button("Sair (Logout)"):
+        st.session_state["usuario_logado"] = None
+        st.rerun()
 
 # ==========================================
 # 4. TELA: MEU PERFIL
@@ -212,28 +135,24 @@ if menu == "⚙️ Meu Perfil":
     arquivo_assinatura = st.file_uploader("Envie a foto da sua assinatura", type=["png", "jpg", "jpeg"])
     
     if st.button("💾 Salvar Perfil", type="primary"):
-        with st.spinner("Salvando..."):
-            supabase.table("banco_usuarios").update({
-                "nome": novo_nome,
-                "cargo": novo_cargo,
-                "matricula": nova_matricula
-            }).eq("usuario", usuario_atual).execute()
-            
-            if arquivo_assinatura is not None:
-                try:
-                    # Tenta remover a antiga (pode falhar se não existir)
-                    supabase.storage.from_("assinaturas_usuarios").remove([f"{usuario_atual}.png"])
-                except:
-                    pass
-                # Upload da nova assinatura
-                supabase.storage.from_("assinaturas_usuarios").upload(
-                    file=arquivo_assinatura.getvalue(),
-                    path=f"{usuario_atual}.png",
-                    file_options={"content-type": arquivo_assinatura.type}
-                )
-                    
-            st.success("Perfil atualizado e salvo na nuvem com sucesso!")
-            st.rerun() # Recarrega para atualizar os dados na sidebar
+        supabase.table("banco_usuarios").update({
+            "nome": novo_nome,
+            "cargo": novo_cargo,
+            "matricula": nova_matricula
+        }).eq("usuario", usuario_atual).execute()
+        
+        if arquivo_assinatura is not None:
+            try:
+                supabase.storage.from_("assinaturas_usuarios").remove([f"{usuario_atual}.png"])
+            except:
+                pass
+            supabase.storage.from_("assinaturas_usuarios").upload(
+                file=arquivo_assinatura.getvalue(),
+                path=f"{usuario_atual}.png",
+                file_options={"content-type": arquivo_assinatura.type}
+            )
+                
+        st.success("Perfil atualizado e salvo na nuvem com sucesso!")
 
 # ==========================================
 # 5. TELA: MINHAS CERTIDÕES
@@ -242,18 +161,16 @@ elif menu == "📂 Minhas Certidões":
     st.title("📂 Minhas Certidões Salvas")
     st.write("Baixe ou exclua seus arquivos salvos na nuvem.")
     
-    with st.spinner("Carregando lista de arquivos..."):
-        try:
-            arquivos_nuvem = supabase.storage.from_("certidoes_usuarios").list(usuario_atual)
-        except:
-            arquivos_nuvem = []
+    try:
+        arquivos_nuvem = supabase.storage.from_("certidoes_usuarios").list(usuario_atual)
+    except:
+        arquivos_nuvem = []
     
     arquivos = [arq for arq in arquivos_nuvem if arq["name"] != ".emptyFolder" and arq["name"] != ""]
     
     if not arquivos:
         st.info("Nenhuma certidão salva ainda.")
     else:
-        # Ordena por data de criação (mais recente primeiro)
         arquivos.sort(key=lambda x: x["created_at"], reverse=True)
         
         c_sel, c_nome, c_data = st.columns([1, 4, 3])
@@ -267,7 +184,7 @@ elif menu == "📂 Minhas Certidões":
         for item in arquivos:
             c1, c2, c3 = st.columns([1, 4, 3])
             try:
-                # Pega a data do banco e ajusta o formato (UTC -> Brasília -3h)
+                # Pega a data do banco e ajusta o formato
                 data_str = item["created_at"].replace("Z", "+00:00")
                 data_obj = datetime.datetime.fromisoformat(data_str)
                 
@@ -297,11 +214,8 @@ elif menu == "📂 Minhas Certidões":
                         zip_buffer = BytesIO()
                         with zipfile.ZipFile(zip_buffer, "w") as zip_file:
                             for arq in arquivos_selecionados:
-                                try:
-                                    arquivo_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{usuario_atual}/{arq}")
-                                    zip_file.writestr(arq, arquivo_bytes)
-                                except:
-                                    st.error(f"Falha ao baixar o arquivo: {arq}")
+                                arquivo_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{usuario_atual}/{arq}")
+                                zip_file.writestr(arq, arquivo_bytes)
                                 
                         st.download_button(
                             label="✔️ Clique aqui para baixar o ZIP",
@@ -313,11 +227,10 @@ elif menu == "📂 Minhas Certidões":
             
             with c_btn2:
                 if st.button("🗑️ Excluir Selecionadas", use_container_width=True):
-                    with st.spinner("Excluindo arquivos..."):
-                        caminhos_para_excluir = [f"{usuario_atual}/{arq}" for arq in arquivos_selecionados]
-                        supabase.storage.from_("certidoes_usuarios").remove(caminhos_para_excluir)
-                        st.success("Arquivos excluídos da nuvem com sucesso!")
-                        st.rerun()
+                    caminhos_para_excluir = [f"{usuario_atual}/{arq}" for arq in arquivos_selecionados]
+                    supabase.storage.from_("certidoes_usuarios").remove(caminhos_para_excluir)
+                    st.success("Arquivos excluídos da nuvem com sucesso!")
+                    st.rerun()
 
 # ==========================================
 # 6. TELA: PAINEL DO ADMINISTRADOR
@@ -335,9 +248,8 @@ elif menu == "🛡️ Painel do Administrador":
     # ABA 1: GERENCIAR USUÁRIOS
     with aba_adm1:
         st.subheader("Oficiais Cadastrados no Sistema")
-        with st.spinner("Buscando usuários..."):
-            res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula").execute()
-            usuarios_cadastrados = res_todos.data
+        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula").execute()
+        usuarios_cadastrados = res_todos.data
         
         if usuarios_cadastrados:
             for u in usuarios_cadastrados:
@@ -347,12 +259,9 @@ elif menu == "🛡️ Painel do Administrador":
                     
                     if u['usuario'] != usuario_atual:
                         if st.button(f"🗑️ Excluir usuário {u['usuario']}", key=f"del_usr_{u['usuario']}"):
-                            with st.spinner("Excluindo..."):
-                                supabase.table("banco_usuarios").delete().eq("usuario", u['usuario']).execute()
-                                # Limpa as sessões ativas desse usuário para deslogá-lo imediatamente
-                                supabase.table("banco_sessoes").delete().eq("usuario", u['usuario']).execute()
-                                st.success(f"Usuário {u['usuario']} removido com sucesso!")
-                                st.rerun()
+                            supabase.table("banco_usuarios").delete().eq("usuario", u['usuario']).execute()
+                            st.success(f"Usuário {u['usuario']} removido com sucesso!")
+                            st.rerun()
                     else:
                         st.caption("*(Esta é a sua conta de Administrador principal)*")
         else:
@@ -363,11 +272,10 @@ elif menu == "🛡️ Painel do Administrador":
         st.subheader("Certidões Geradas por Todos os Oficiais")
         st.write("Inspecione, baixe ou exclua os arquivos salvos por qualquer oficial.")
         
-        with st.spinner("Buscando pastas de oficiais..."):
-            try:
-                pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
-            except:
-                pastas_usuarios = []
+        try:
+            pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
+        except:
+            pastas_usuarios = []
             
         if not pastas_usuarios:
             st.info("Nenhuma pasta de certidão encontrada na nuvem.")
@@ -388,7 +296,6 @@ elif menu == "🛡️ Painel do Administrador":
                         st.caption("Nenhuma certidão gerada por este oficial ainda.")
                     else:
                         for arq in certioes_validas:
-                            # Colunas ajustadas para acomodar Nome, Download e Excluir
                             c_arq_nome, c_btn_dl, c_btn_del = st.columns([4, 2, 2])
                             
                             with c_arq_nome:
@@ -396,28 +303,20 @@ elif menu == "🛡️ Painel do Administrador":
                                 
                             with c_btn_dl:
                                 if st.button("📥 Baixar", key=f"dl_adm_{nome_oficial}_{arq['name']}", use_container_width=True):
-                                    with st.spinner("Baixando..."):
-                                        try:
-                                            file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
-                                            st.download_button(
-                                                label="Confirmar",
-                                                data=file_bytes,
-                                                file_name=arq["name"],
-                                                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                                                key=f"btn_dl_real_{nome_oficial}_{arq['name']}"
-                                            )
-                                        except:
-                                            st.error("Falha ao baixar.")
+                                    file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
+                                    st.download_button(
+                                        label="Confirmar",
+                                        data=file_bytes,
+                                        file_name=arq["name"],
+                                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        key=f"btn_dl_real_{nome_oficial}_{arq['name']}"
+                                    )
                                     
                             with c_btn_del:
                                 if st.button("🗑️ Excluir", key=f"del_adm_{nome_oficial}_{arq['name']}", use_container_width=True):
-                                    with st.spinner("Excluindo..."):
-                                        try:
-                                            supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
-                                            st.success("Excluído!")
-                                            st.rerun()
-                                        except:
-                                            st.error("Falha ao excluir.")
+                                    supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
+                                    st.success("Excluído!")
+                                    st.rerun()
                     st.divider()
 
 # ==========================================
@@ -656,7 +555,7 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO NEGATIVA")
                 run_titulo.bold = True
-                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE DO TÍTULO AQUI
+                run_titulo.font.size = Pt(16) # ALTERAÇÃO AQUI: Tamanho aumentado para 16pt
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
@@ -841,7 +740,7 @@ elif menu == "📝 Gerar Certidão":
                 if local_perigoso: conds.append("Informo também que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
                 if zona_rural: conds.append("Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
                 if chuva: conds.append("Certifico que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
-                if blocos: conds.append("Informo também que o local é um condomínio de edifícios com vários blocks de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
+                if blocos: conds.append("Informo também que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
                 if receio: conds.append("Procurei informações com vizinhos sobre o horário/local para encontrar a pessoa procurada, mas os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
                 
                 if conds:
@@ -882,7 +781,7 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO")
                 run_titulo.bold = True
-                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE DO TÍTULO AQUI
+                run_titulo.font.size = Pt(16) # ALTERAÇÃO AQUI: Tamanho aumentado para 16pt
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
