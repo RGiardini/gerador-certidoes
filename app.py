@@ -215,7 +215,7 @@ elif menu == "📂 Minhas Certidões":
                     st.rerun()
 
 # ==========================================
-# 6. TELA: GERADOR DE CERTIDÃO (OTIMIZADO)
+# 6. TELA: GERADOR DE CERTIDÃO (OTIMIZADO PARA MOBILE)
 # ==========================================
 elif menu == "📝 Gerar Certidão":
     st.title("Certidão Negativa (Detalhada)")
@@ -224,13 +224,13 @@ elif menu == "📝 Gerar Certidão":
         st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' no menu lateral e preencha seus dados antes de gerar certidões.")
         st.stop()
 
-    # --- DADOS PRINCIPAIS (Sempre Visíveis) ---
-    col_mandado, col_proc, col_ano = st.columns([1, 2, 1])
-    with col_mandado:
+    # --- CAMPOS PRINCIPAIS: Lado a lado (Mandado + Processo + Ano) ---
+    c_mandado, c_proc, c_ano = st.columns([1, 2.5, 1])
+    with c_mandado:
         mandado = st.text_input("Mandado nº:", placeholder="Ex: 01")
-    with col_proc:
+    with c_proc:
         processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
-    with col_ano:
+    with c_ano:
         ano = st.text_input("Ano:", placeholder="Ex: 2026")
 
     c_end, c_pes = st.columns(2)
@@ -239,16 +239,26 @@ elif menu == "📝 Gerar Certidão":
     with c_pes:
         pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico")
 
+    st.markdown("---")
     st.write("**Dias e Horários das Diligências:**")
-    c_d1, c_d2, c_d3 = st.columns(3)
+    
+    # --- DIAS E HORAS: Emparelhados perfeitamente lado a lado por dia ---
+    c_d1, c_h1 = st.columns(2)
     with c_d1:
         d1 = st.text_input("Dia 1", placeholder="Ex: 08/08")
+    with c_h1:
         h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs")
+        
+    c_d2, c_h2 = st.columns(2)
     with c_d2:
         d2 = st.text_input("Dia 2", placeholder="Ex: 11/08")
+    with c_h2:
         h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs")
+        
+    c_d3, c_h3 = st.columns(2)
     with c_d3:
         d3 = st.text_input("Dia 3", placeholder="Ex: 12/08")
+    with c_h3:
         h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs")
 
     st.divider()
@@ -259,7 +269,7 @@ elif menu == "📝 Gerar Certidão":
     with sit_c2:
         nao_loc_bens = st.checkbox("O(s) bem(ns) indicados não foi(ram) localizado(s)")
 
-    # --- BLOCOS RETRÁTEIS / COMPACTOS PARA O CELULAR ---
+    # --- BLOCOS RETRÁTEIS (Expansores) ---
     
     motivos_selecionados = []
     with st.expander("📌 Clique aqui para selecionar os Motivos da Negativa (Opcional)", expanded=False):
@@ -275,7 +285,7 @@ elif menu == "📝 Gerar Certidão":
             "encontrei no endereço, apenas bens que, \"salvo melhor juízo\", guarnecem a residência amparados pela Lei 8.009/90",
             "\"salvo melhor juízo\" são insuficientes para saldar o débito e/ou acréscimos legais"
         ]
-        cols_mot = st.columns(2) # Ajustado para 2 colunas para ficar excelente tanto no PC quanto no celular
+        cols_mot = st.columns(2)
         for idx, m in enumerate(motivos_list):
             with cols_mot[idx % 2]:
                 if st.checkbox(m, key=f"mot_{idx}"):
@@ -319,11 +329,10 @@ elif menu == "📝 Gerar Certidão":
         st.write("**Sabendo o informante indicar o:**")
         c_sab1, c_sab2 = st.columns(2)
         with c_sab1:
-            sabe_tel = st.text_input("Telefone de contato do indicação:")
+            sabe_tel = st.text_input("Telefone indicado:")
         with c_sab2:
-            sabe_end = st.text_input("Endereço atual/correto indicado:")
+            sabe_end = st.text_input("Endereço correto indicado:")
     
-    # Caso não abra o expander e venha vazio, garantimos a variável
     if 'nome_inf' not in locals():
         nome_inf = ""
 
