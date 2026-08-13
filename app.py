@@ -723,11 +723,12 @@ with st.expander("📝 Certificações Adicionais", expanded=False):
                 run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
-                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
+                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}_{mandado}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
             st.success(f"✅ Certidão simples salva na sua conta na Nuvem!")
             st.download_button(label="📥 Baixar Documento Word Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_simples")
-            # ==========================================
+    
+    # ==========================================
     # OPÇÃO C: CERTIDÃO POSITIVA
     # ==========================================
     elif tipo_certidao == "Certidão Positiva":
