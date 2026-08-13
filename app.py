@@ -435,7 +435,7 @@ elif menu == "📝 Gerar Certidão":
             st.markdown("---")
             st.write("**Não sabendo o informante indicar o(a):**")
             nao_sabe_list = [
-                "endereço completo", "paradeiro", "o dia e nem o horário exato de localizá-lo(a)", 
+                "endereço completo", "seu paradeiro", "o dia e nem o horário exato de localizá-lo(a)", 
                 "telefone de contato", "dia e nem o horário exato de retorno", "o presídio", 
                 "os dados da certidão de óbito", "previsão de alta"
             ]
@@ -485,7 +485,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
                 txt_pessoa = f" de {pessoa}" if pessoa else ""
 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
@@ -826,7 +826,7 @@ elif menu == "📝 Gerar Certidão":
                 buffer.seek(0)
 
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
-                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
+                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}_{mandado}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 
                 caminho_salvamento = f"{usuario_atual}/{nome_arquivo}"
                 
