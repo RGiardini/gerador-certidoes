@@ -369,7 +369,7 @@ elif menu == "📝 Gerar Certidão":
     with c_proc:
         processo = st.text_input("Processo:", placeholder="Ex: 4400281-16", key="processo_geral")
     with c_ano:
-        ano = st.text_input("Ano:", placeholder="Ex: 2026", key="ano_geral")
+        ano = st.text_input("Ano:", value="2026", placeholder="Ex: 2026", key="ano_geral")
     with c_comarca:
         comarca = st.text_input("Cód. Comarca:", value="0245", placeholder="Ex: 0245", key="comarca_geral")
 
