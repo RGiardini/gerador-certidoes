@@ -20,7 +20,6 @@ st.markdown("""
     /* Oculta marcações padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     h1 { font-size: 22px; text-align: center; margin-bottom: 0; padding-bottom: 0;}
