@@ -13,7 +13,7 @@ from supabase import create_client, Client
 # 1. CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
 # ==========================================
 # 🚀 CORREÇÃO 2: Mantido layout centralizado para estabilidade
-st.set_page_config(page_title="Sistema de Certidões", layout="centered")
+st.set_page_config(page_title="Sistema de Certidões", layout="wide")
 
 # --- 🚀 CSS SUPER LIMPO E SEGURO (NÃO QUEBRA O LAYOUT E REPARA A SIDEBAR) ---
 st.markdown("""
@@ -430,9 +430,9 @@ elif menu == "📝 Gerar Certidão":
                 "guarnecem a residência amparados pela Lei 8.009/90",
                 "são insuficientes para saldar o débito"
             ]
-            cols_mot = st.columns(2)
+            cols_mot = st.columns(3)
             for idx, m in enumerate(motivos_list):
-                with cols_mot[idx % 2]:
+                with cols_mot[idx % 3]:
                     if st.checkbox(m, key=f"mot_det_{idx}"):
                         motivos_selecionados.append(m)
 
