@@ -353,7 +353,7 @@ elif menu == "📝 Gerar Certidão":
 
     tipo_certidao = st.selectbox(
         "Selecione o Modelo de Certidão:", 
-        ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)"]
+        ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)", "Certidão Positiva"]
     )
     
     st.divider()
@@ -727,3 +727,105 @@ with st.expander("📝 Certificações Adicionais", expanded=False):
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
             st.success(f"✅ Certidão simples salva na sua conta na Nuvem!")
             st.download_button(label="📥 Baixar Documento Word Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_simples")
+            # ==========================================
+    # OPÇÃO C: CERTIDÃO POSITIVA
+    # ==========================================
+    elif tipo_certidao == "Certidão Positiva":
+        
+        st.subheader("Detalhes da Diligência Positiva")
+        
+        # Opções compactas divididas em 3 colunas
+        c_mod, c_contra, c_ass = st.columns(3)
+        with c_mod:
+            st.caption("Modalidade")
+            mod_pos = st.radio("Como foi o contato?", ["Presencial", "Telefone/WhatsApp"], key="mod_pos")
+        with c_contra:
+            st.caption("Contrafé")
+            contrafe_pos = st.radio("Aceitou a contrafé?", ["Sim", "Não"], key="contra_pos")
+        with c_ass:
+            st.caption("Assinatura")
+            ass_pos = st.radio("Colheu assinatura?", ["Sim", "Não", "Covid-19"], key="ass_pos")
+            
+        st.markdown("---")
+        
+        # Opções secundárias divididas em 2 colunas
+        c_adv, c_obs = st.columns([1, 2])
+        with c_adv:
+            st.caption("Situação de Advogado")
+            adv_pos = st.radio(
+                "Perguntou sobre advogado?", 
+                ["Não Perguntado", "Tem condições", "Não tem condições"], 
+                key="adv_pos"
+            )
+        with c_obs:
+            st.caption("Observações Adicionais")
+            obs_pos = st.text_area("Digite aqui (Opcional)...", height=110, key="obs_pos")
+            
+        st.divider()
+        
+        # Lógica do Botão Gerar
+        if st.button("Salvar na Nuvem / Gerar DOCX (Positiva)", type="primary", use_container_width=True, key="btn_gerar_positiva"):
+            with st.spinner("Gerando certidão positiva..."):
+                txt_pessoa = f" a pessoa referida no mandado, Sr(a). {pessoa}" if pessoa else " a pessoa referida no mandado"
+                
+                # Modalidade e Contrafé adaptadas do PowerApps
+                if mod_pos == "Telefone/WhatsApp":
+                    txt_inicio = "por via remota, através de ligação telefônica/aplicativo de mensagens,"
+                    txt_contrafe = f"encaminhando-lhe a contrafé mediante aplicativo de mensagens, a qual {'aceitou' if contrafe_pos == 'Sim' else 'não aceitou'}"
+                else:
+                    txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
+                    txt_inicio = f"dirigi-me {txt_endereco},"
+                    txt_contrafe = f"entregando-lhe a contrafé, a qual {'aceitou' if contrafe_pos == 'Sim' else 'não aceitou'}"
+                
+                # Assinatura
+                if ass_pos == "Sim": txt_ass = "colhendo sua assinatura no mandado."
+                elif ass_pos == "Não": txt_ass = "não exarando sua assinatura no mandado."
+                else: txt_ass = "deixando de colher sua assinatura no mandado, como forma de prevenção ao Covid-19."
+                
+                # Advogado
+                txt_adv = ""
+                if adv_pos == "Tem condições": txt_adv = " Informou também que tem condição de contratar um advogado."
+                elif adv_pos == "Não tem condições": txt_adv = " Informou também que não tem condição de contratar um advogado e precisa que seja nomeado um para lhe defender."
+                
+                # Data e Hora puxados do "Dia 1" e "Hora 1" do Cabeçalho Geral
+                dia_pos = d1 if d1 else "___/___"
+                hora_pos = h1 if h1 else "___:___"
+                
+                # Construção do Parágrafo Inteligente
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, {txt_inicio} onde no dia {dia_pos}, às {hora_pos}, CITEI/INTIMEI/NOTIFIQUEI{txt_pessoa}, lendo-lhe o mandado e {txt_contrafe}, {txt_ass}{txt_adv}"
+                if obs_pos: paragrafo += f" {obs_pos.strip()}"
+                
+                # Geração do Arquivo DOCX
+                doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
+                try:
+                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
+                except: pass
+                if processo:
+                    texto_processo = f"Processo: {processo}"
+                    if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
+                    doc.add_paragraph(texto_processo)
+                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
+                doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
+                
+                # Fechamento com indentação padrão do sistema
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                cidade_assinatura = "Santa Luzia"
+                doc.add_paragraph(f"{cidade_assinatura}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                try:
+                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
+                except: pass 
+                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
+                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
+                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
+                
+                buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
+                data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
+                nome_arquivo = f"Certidao_Positiva_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
+                supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
+            st.success(f"✅ Certidão positiva salva na sua conta na Nuvem!")
+            st.download_button(label="📥 Baixar Documento Word Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_positiva")
