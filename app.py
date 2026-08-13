@@ -14,6 +14,7 @@ from supabase import create_client, Client
 # ==========================================
 st.set_page_config(page_title="Sistema de Certidões", layout="centered")
 
+# CSS customizado para compactar a visualização no celular
 st.markdown("""
     <style>
     /* Oculta marcações padrão do Streamlit */
@@ -23,8 +24,25 @@ st.markdown("""
     
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     h1 { font-size: 22px; text-align: center; margin-bottom: 0; padding-bottom: 0;}
+    h2 { font-size: 18px; text-align: center;}
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
     div[role="radiogroup"] { margin-top: -10px; }
+    
+    /* Compactar inputs */
+    .stTextInput>div>div>input {
+        padding: 5px 10px;
+    }
+    
+    /* Compactar espaço entre elementos */
+    .element-container {
+        margin-bottom: 5px;
+    }
+    
+    /* Forçar colunas lado a lado no celular */
+    [data-testid="stColumn"] {
+        flex: 1 1 calc(50% - 1rem) !important;
+        min-width: calc(50% - 1rem) !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -184,13 +202,9 @@ elif menu == "📂 Minhas Certidões":
         for item in arquivos:
             c1, c2, c3 = st.columns([1, 4, 3])
             try:
-                # Pega a data do banco e ajusta o formato
-                data_str = item["created_at"].replace("Z", "+00:00")
-                data_obj = datetime.datetime.fromisoformat(data_str)
-                
-                # Remove a "etiqueta" do fuso do servidor e subtrai 3 horas cravadas
-                data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
-                data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
+                # CORREÇÃO DO FUSO HORÁRIO AQUI (-3 HORAS)
+                data_obj = datetime.datetime.fromisoformat(item["created_at"].replace("Z", "+00:00")) - datetime.timedelta(hours=3)
+                data_br = data_obj.strftime("%d/%m/%Y às %H:%M")
             except:
                 data_br = "Data desconhecida"
 
@@ -267,7 +281,7 @@ elif menu == "🛡️ Painel do Administrador":
         else:
             st.info("Nenhum usuário encontrado.")
 
-    # ABA 2: AUDITORIA DE CERTIDÕES (COM EXCLUSÃO)
+    # ABA 2: AUDITORIA DE CERTIDÕES
     with aba_adm2:
         st.subheader("Certidões Geradas por Todos os Oficiais")
         st.write("Inspecione, baixe ou exclua os arquivos salvos por qualquer oficial.")
@@ -324,7 +338,8 @@ elif menu == "🛡️ Painel do Administrador":
 # 7. TELA: GERADOR DE CERTIDÃO
 # ==========================================
 elif menu == "📝 Gerar Certidão":
-    st.title("Gerador de Certidão Negativa")
+    st.title("⚖️ Gerador de Certidão Negativa - TJMG")
+    st.divider()
     
     if not dados_usuario.get("nome"):
         st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' no menu lateral e preencha seus dados antes de gerar certidões.")
@@ -332,46 +347,48 @@ elif menu == "📝 Gerar Certidão":
 
     tipo_certidao = st.selectbox(
         "Selecione o Modelo de Certidão:", 
-        ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)"]
+        ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)"],
+        key="modelo_seletor"
     )
     
     st.divider()
 
-    # --- CAMPOS COMPARTILHADOS (Cabeçalho e Datas) ---
-    c_mandado, c_proc, c_ano = st.columns([1, 2.5, 1])
-    with c_mandado:
+    # --- CAMPOS COMPARTILHADOS NO CABEÇALHO (Compactados em colunas) ---
+    c1, c2 = st.columns([2, 1])
+    with c1:
         mandado = st.text_input("Mandado nº:", placeholder="Ex: 01")
-    with c_proc:
-        processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
-    with c_ano:
+    with c2:
         ano = st.text_input("Ano:", placeholder="Ex: 2026")
+    
+    processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
 
-    c_end, c_pes = st.columns(2)
-    with c_end:
+    c1, c2 = st.columns(2)
+    with c1:
         endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'")
-    with c_pes:
+    with c2:
         pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico")
 
     st.markdown("---")
     st.write("**Dias e Horários das Diligências:**")
     
-    c_d1, c_h1 = st.columns(2)
-    with c_d1:
-        d1 = st.text_input("Dia 1", placeholder="Ex: 08/08")
-    with c_h1:
-        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs")
+    # Compactar Dia e Hora lado a lado para cada diligência
+    c1, c2 = st.columns(2)
+    with c1:
+        d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="dia1")
+    with c2:
+        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs", key="hora1")
         
-    c_d2, c_h2 = st.columns(2)
-    with c_d2:
-        d2 = st.text_input("Dia 2", placeholder="Ex: 11/08")
-    with c_h2:
-        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs")
+    c1, c2 = st.columns(2)
+    with c1:
+        d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="dia2")
+    with c2:
+        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs", key="hora2")
         
-    c_d3, c_h3 = st.columns(2)
-    with c_d3:
-        d3 = st.text_input("Dia 3", placeholder="Ex: 12/08")
-    with c_h3:
-        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs")
+    c1, c2 = st.columns(2)
+    with c1:
+        d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="dia3")
+    with c2:
+        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs", key="hora3")
 
     st.divider()
 
@@ -380,10 +397,11 @@ elif menu == "📝 Gerar Certidão":
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
         st.write("**Deixei de cumprir o ato uma vez que:**")
-        sit_c1, sit_c2 = st.columns(2)
-        with sit_c1:
+        
+        c1, c2 = st.columns(2)
+        with c1:
             nao_loc_dest = st.checkbox("O destinatário do mandado não foi localizado")
-        with sit_c2:
+        with c2:
             nao_loc_bens = st.checkbox("O(s) bem(ns) indicados não foi(ram) localizado(s)")
 
         motivos_selecionados = []
@@ -400,9 +418,11 @@ elif menu == "📝 Gerar Certidão":
                 "encontrei no endereço, apenas bens que, \"salvo melhor juízo\", guarnecem a residência amparados pela Lei 8.009/90",
                 "\"salvo melhor juízo\" são insuficientes para saldar o débito e/ou acréscimos legais"
             ]
-            cols_mot = st.columns(2)
+            
+            # Dividir motivos em duas colunas para o expansor
+            cols = st.columns(2)
             for idx, m in enumerate(motivos_list):
-                with cols_mot[idx % 2]:
+                with cols[idx % 2]:
                     if st.checkbox(m, key=f"mot_{idx}"):
                         motivos_selecionados.append(m)
 
@@ -421,9 +441,11 @@ elif menu == "📝 Gerar Certidão":
                 "primo(a)", "transeunte", "viúvo(a)", "ex", "esposo(a)", "companheiro(a)", "sogro(a)", "enteado(a)",
                 "genro", "nora", "cunhado(a)", "concunhado(a)", "amigo(a)"
             ]
-            cols_rel = st.columns(3)
+            
+            # Dividir relações em três colunas para o expansor
+            cols = st.columns(3)
             for idx, r in enumerate(relacoes_list):
-                with cols_rel[idx % 3]:
+                with cols[idx % 3]:
                     if st.checkbox(r, key=f"rel_{idx}"):
                         relacoes_selecionadas.append(r)
 
@@ -434,18 +456,22 @@ elif menu == "📝 Gerar Certidão":
                 "telefone de contato", "dia e nem o horário exato de retorno", "o presídio", 
                 "os dados da certidão de óbito", "previsão de alta"
             ]
-            cols_ns = st.columns(2)
+            
+            # Dividir não sabe em duas colunas para o expansor
+            cols = st.columns(2)
             for idx, ns in enumerate(nao_sabe_list):
-                with cols_ns[idx % 2]:
+                with cols[idx % 2]:
                     if st.checkbox(ns, key=f"ns_{idx}"):
                         nao_sabe_selecionados.append(ns)
 
             st.markdown("---")
             st.write("**Sabendo o informante indicar o:**")
-            c_sab1, c_sab2 = st.columns(2)
-            with c_sab1:
+            
+            # Campos Sabe lado a lado
+            c1, c2 = st.columns(2)
+            with c1:
                 sabe_tel = st.text_input("Telefone indicado:")
-            with c_sab2:
+            with c2:
                 sabe_end = st.text_input("Endereço correto indicado:")
         
         if 'nome_inf' not in locals():
@@ -464,7 +490,7 @@ elif menu == "📝 Gerar Certidão":
 
         st.divider()
 
-        if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True):
+        if st.button("Gerar DOCX (Detalhada)", type="primary", use_container_width=True):
             with st.spinner("Construindo certidão e salvando na nuvem..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_validas = [h for h in [h1, h2, h3] if h]
@@ -563,7 +589,8 @@ elif menu == "📝 Gerar Certidão":
                 p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.")
                 p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
-                hoje = datetime.datetime.now()
+                # CORREÇÃO DO FUSO HORÁRIO AQUI (-3 HORAS)
+                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 data_extenso = f"Santa Luzia, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}."
                 
@@ -617,57 +644,64 @@ elif menu == "📝 Gerar Certidão":
                 data=buffer,
                 file_name=nome_arquivo,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                type="primary"
+                type="primary",
+                use_container_width=True
             )
 
     # ==========================================
     # OPÇÃO B: CERTIDÃO SIMPLES
     # ==========================================
     elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
-        situacao = st.radio(
-            "Situação Principal:", 
-            ["Local Fechado", "Pessoa Não Encontrada", "Não Localizei a Pessoa"],
-            index=None, horizontal=True
-        )
+        
+        # Situação Principal em colunas lado a lado
+        c1, c2 = st.columns(2)
+        with c1:
+            local_fechado = st.checkbox("Local Fechado", key="sit1")
+        with c2:
+            pessoa_nao_enc = st.checkbox("Pessoa Não Encontrada", key="sit2")
+            
+        c1, c2 = st.columns(2)
+        with c1:
+            nao_localizei = st.checkbox("Não Localizei a Pessoa", key="sit3")
+        with c2:
+            st.empty() # Espaço vazio para alinhar
 
         st.divider()
-        c_inf1, c_inf2 = st.columns([1, 2])
+        
+        c_inf1, c_inf2 = st.columns([2, 1])
         with c_inf1:
-            obteve_inf = st.radio("Obteve Informações?", ["Sim", "Não", "NQI"], index=None, horizontal=True)
+            nome_inf = st.text_input("Nome do Informante:", key="inf_nome")
         with c_inf2:
-            nome_inf = st.text_input("Nome do Informante:", disabled=(obteve_inf != "Sim"))
+            obteve_inf = st.checkbox("Obteve Informações?", key="inf_sim", value=True)
 
         st.write("**Detalhes das Informações Obtidas:**")
         c_m1, c_m2 = st.columns(2)
         with c_m1:
-            motivo = st.radio(
-                "Motivo:", 
-                ["Mudou-se", "Não Reside no Local", "Não fica ali", "Não trabalha ali", "Falecido"], 
-                index=None
-            )
+            mudou_se = st.checkbox("Mudou-se", key="mot1")
+            nao_reside = st.checkbox("Não Reside no Local", key="mot2")
+            nao_fica = st.checkbox("Não fica ali", key="mot3")
         with c_m2:
-            nao_sabe = st.radio(
-                "O que não sabe?", 
-                ["Não Conhece ele", "Não sabe informar", "Não sabe seu endereço"], 
-                index=None
-            )
-            paradeiro = st.radio(
-                "Paradeiro:", 
-                ["Não sabe o paradeiro", "Incerto e Não Sabido"], 
-                index=None
-            )
+            nao_trabalha = st.checkbox("Não trabalha ali", key="mot4")
+            falecido = st.checkbox("Falecido", key="mot5")
+            st.empty()
 
         st.divider()
-        condicao = st.radio(
-            "Condições do Local:", 
-            ["Local Perigoso", "Medo Processo", "Zona Rural", "Blocos", "Chuva"], 
-            index=None, horizontal=True
-        )
+        st.write("**Condições do Local:**")
+        c1, c2 = st.columns(2)
+        with c1:
+            local_perigoso = st.checkbox("Local Perigoso", key="cond1")
+            zona_rural = st.checkbox("Zona Rural", key="cond2")
+            chuva = st.checkbox("Chuva/Meteorológico", key="cond3")
+        with c2:
+            blocos = st.checkbox("Blocos/Portaria Vazia", key="cond4")
+            receio = st.checkbox("Medo/Receio do Processo", key="cond5")
+            st.empty()
 
-        observacoes = st.text_area("Observações Extras:", height=68)
+        st.markdown("---")
+        observacoes = st.text_area("Observações Extras:", height=68, key="obs_simples")
         st.divider()
 
-        if st.button("Salvar / Gerar DOCX (Simples)", type="primary", use_container_width=True):
+        if st.button("Gerar DOCX (Simples)", type="primary", use_container_width=True):
             with st.spinner("Construindo certidão simples e salvando na nuvem..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_validas = [h for h in [h1, h2, h3] if h]
@@ -683,64 +717,51 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
                 txt_pessoa = f" a pessoa, Sr(a). {pessoa}" if pessoa else "a pessoa referida no mandado"
 
+                sits = []
+                if local_fechado: sits.append("porque o local foi encontrado fechado e mesmo após chamar várias vezes, ninguém atendeu")
+                if pessoa_nao_enc: sits.append("porque não a encontrei no local")
+                if nao_localizei: sits.append("porque não a localizei")
+                
                 txt_situacao = ""
-                if situacao == "Local Fechado":
-                    txt_situacao = "porque o local foi encontrado fechado e mesmo após chamar várias vezes, ninguém atendeu. "
-                elif situacao == "Pessoa Não Encontrada":
-                    txt_situacao = "porque não a encontrei no local. "
-                elif situacao == "Não Localizei a Pessoa":
-                    txt_situacao = "porque não a localizei. "
+                if sits:
+                    txt_situacao = ", ".join(sits[:-1]) + (" e " + sits[-1] if len(sits) > 1 else sits[0]) + ". "
+                else:
+                    txt_situacao = "não foi possível a sua realização. "
 
                 paragrafo_unico = (
                     f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}{texto_data_hora} "
                     f"e, deixei de citar/intimar/notificar {txt_pessoa}, {txt_situacao}"
                 )
 
-                if obteve_inf == "Sim":
+                if obteve_inf and nome_inf:
                     paragrafo_unico += f"Conforme informações obtidas no local com Sr.(a) {nome_inf}, informou que, "
-                elif obteve_inf == "Não":
+                elif obteve_inf and not nome_inf:
+                    paragrafo_unico += "Conforme informações prestadas no local por pessoa que não quis se identificar, informou que, "
+                else:
                     paragrafo_unico += "Procurei obter informações junto aos moradores vizinhos locais, e não obtive êxito, uma vez que ninguém forneceu informações. "
-                elif obteve_inf == "NQI":
-                    paragrafo_unico += "Conforme informações prestadas pelo seu vizinho(a), que não quis se identificar, este afirmou que "
 
-                if obteve_inf in ["Sim", "NQI"]:
-                    if motivo == "Mudou-se":
-                        paragrafo_unico += "a pessoa procurada não reside mais no local, tendo se mudado sem deixar meios para contato; "
-                    elif motivo == "Não Reside no Local":
-                        paragrafo_unico += "a pessoa procurada não reside no local referido; "
-                    elif motivo == "Não fica ali":
-                        paragrafo_unico += "a pessoa procurada reside no local, mas quase não fica no mesmo, onde nos dias e horários acima não foi localizada; "
-                    elif motivo == "Não trabalha ali":
-                        paragrafo_unico += "a pessoa procurada não trabalha no local; "
-                    elif motivo == "Falecido":
-                        paragrafo_unico += "a pessoa procurada já se encontra falecida. "
+                mots = []
+                if mudou_se: mots.append("a pessoa procurada não reside mais no local, tendo se mudado sem deixar meios para contato")
+                if nao_reside: mots.append("a pessoa procurada não reside no local referido")
+                if nao_fica: mots.append("a pessoa procurada reside no local, mas quase não fica no mesmo, onde nos dias e horários acima não foi localizada")
+                if nao_trabalha: mots.append("a pessoa procurada não trabalha no local")
+                if falecido: mots.append("a pessoa procurada já se encontra falecida")
+                
+                if obteve_inf and mots:
+                    paragrafo_unico += ", ".join(mots[:-1]) + (" e " + mots[-1] if len(mots) > 1 else mots[0]) + ". "
 
-                    if nao_sabe == "Não Conhece ele":
-                        paragrafo_unico += "não conhece a pessoa procurada, não sabendo informar o local/horário para encontrá-la. "
-                    elif nao_sabe == "Não sabe informar":
-                        paragrafo_unico += "que não sabe informar o dia e horário para encontrá-lo(a). "
-                    elif nao_sabe == "Não sabe seu endereço":
-                        paragrafo_unico += "que não sabe informar o endereço para encontrá-lo(a). "
+                conds = []
+                if local_perigoso: conds.append("Informo também que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
+                if zona_rural: conds.append("Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
+                if chuva: conds.append("Certifico que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
+                if blocos: conds.append("Informo também que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
+                if receio: conds.append("Procurei informações com vizinhos sobre o horário/local para encontrar a pessoa procurada, mas os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
+                
+                if conds:
+                    paragrafo_unico += ". ".join(conds) + ". "
 
-                    if paradeiro == "Não sabe o paradeiro":
-                        paragrafo_unico += "não sabe informar seu paradeiro, bem como o local para encontrá-lo. "
-                    elif paradeiro == "Incerto e Não Sabido":
-                        paragrafo_unico += "Certifico assim, que, com relação ao presente mandado, endereço fornecido e informações obtidas no local, A PESSOA PROCURADA SE ENCONTRA EM LOCAL INCERTO E NÃO SABIDO. "
-
-                obs_extra = ""
-                if condicao == "Chuva":
-                    obs_extra = "Certifico que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento. "
-                elif condicao == "Local Perigoso":
-                    obs_extra = "Informo também que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada. "
-                elif condicao == "Zona Rural":
-                    obs_extra = "Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada. "
-                elif condicao == "Blocos":
-                    obs_extra = "Informo também que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la. "
-                elif condicao == "Medo Processo":
-                    obs_extra = "Procurei informações com vizinhos sobre o horário/local para encontrar a pessoa procurada, mas os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada. "
-
-                if obs_extra or observacoes:
-                    paragrafo_unico += obs_extra + (" " + observacoes if observacoes else "")
+                if observacoes:
+                    paragrafo_unico += observacoes.strip() + " "
 
                 doc = Document()
                 style = doc.styles['Normal']
@@ -786,7 +807,8 @@ elif menu == "📝 Gerar Certidão":
                 p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.")
                 p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
-                hoje = datetime.datetime.now()
+                # CORREÇÃO DO FUSO HORÁRIO AQUI (-3 HORAS)
+                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 data_extenso = f"Santa Luzia, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}."
                 
@@ -840,5 +862,6 @@ elif menu == "📝 Gerar Certidão":
                 data=buffer,
                 file_name=nome_arquivo,
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                type="primary"
+                type="primary",
+                use_container_width=True
             )
