@@ -358,20 +358,20 @@ elif menu == "📝 Gerar Certidão":
     
     st.divider()
 
-    # --- CAMPOS COMPARTILHADOS (CABEÇALHO) ---
-    # 🚀 MELHORIA ESTRUTURAL 1: Agrupamento Mandado/Processo Mantido
-    c_mandado, c_proc = st.columns([1, 3])
+  # --- CAMPOS COMPARTILHADOS (CABEÇALHO) ---
+    # 🚀 Nova estruturação: Mandado, Processo, Ano e Comarca na mesma linha
+    # A lista [1, 2.5, 1, 1] define o tamanho relativo de cada coluna. 
+    # O Processo fica um pouco maior para caber o número, os demais ficam pequenos.
+    c_mandado, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
+    
     with c_mandado:
         mandado = st.text_input("Mandado:", placeholder="Ex: 01", key="mandado_geral")
     with c_proc:
-        processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16", key="processo_geral")
-    
-    # 🚀 MELHORIA ESTRUTURAL 2: Ano e Código Comarca agora em uma única linha (Compactação Vertical)
-    c_ano, c_comarca = st.columns(2)
+        processo = st.text_input("Processo:", placeholder="Ex: 4400281-16", key="processo_geral")
     with c_ano:
         ano = st.text_input("Ano:", placeholder="Ex: 2026", key="ano_geral")
     with c_comarca:
-        comarca = st.text_input("Código Comarca:", value="0245", placeholder="Ex: 0245", key="comarca_geral")
+        comarca = st.text_input("Cód. Comarca:", value="0245", placeholder="Ex: 0245", key="comarca_geral")
 
     # 🚀 MELHORIA ESTRUTURAL 3: Endereço e Pessoa procurada agora em uma única linha (Compactação Vertical)
     c_end, c_pes = st.columns(2)
