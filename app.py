@@ -475,18 +475,30 @@ elif menu == "📝 Gerar Certidão":
             sabe_tel = st.text_input("Telefone indicado:", key="sabe_tel_det")
             sabe_end = st.text_input("Endereço correto indicado:", key="sabe_end_det")
         
-        with st.expander("📝 Certificações Adicionais", expanded=False):
-            # 🚀 MELHORIA ESTRUTURAL 5: Certificações extras agora em duas colunas (Compactação Vertical)
+with st.expander("📝 Certificações Adicionais", expanded=False):
             cert_extras = []
+            # Dividindo as 8 opções em 2 colunas para manter o layout compacto
             c_extra1, c_extra2 = st.columns(2)
+            
             with c_extra1:
-                if st.checkbox("Procurei informações com moradores.", key="cert_vizinhos_det"):
+                if st.checkbox("Procurei informações com moradores", key="cert_vizinhos_det"):
                     cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito")
-                if st.checkbox("Cópia do mandado com informante.", key="cert_copia_det"):
+                if st.checkbox("Cópia do mandado com informante", key="cert_copia_det"):
                     cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a) para que a parte/testemunha tome ciência do prazo/data que deverá comparecer em juízo")
+                if st.checkbox("Local Perigoso", key="cert_perigoso_det"):
+                    cert_extras.append("o local é conhecidamente de grande periculosidade, onde os moradores ficam receosos de envolvimento")
+                if st.checkbox("Medo do Processo", key="cert_medo_det"):
+                    cert_extras.append("procurei informações com vizinhos, mas os moradores ficam receosos de envolvimento com o processo")
+
             with c_extra2:
-                if st.checkbox("Imóvel contém apenas bens domésticos.", key="cert_moveis_det"):
-                    cert_extras.append("o imóvel é residencial e contém apenas móveis e utensílios domésticos que guarnecem a residência do réu.")
+                if st.checkbox("Apenas bens domésticos", key="cert_moveis_det"):
+                    cert_extras.append("o imóvel é residencial e contém apenas móveis e utensílios domésticos que guarnecem a residência do réu")
+                if st.checkbox("Zona Rural", key="cert_rural_det"):
+                    cert_extras.append("o local é uma zona rural com difícil acesso, possuindo numeração irregular com muitas casas sem números")
+                if st.checkbox("Condomínio de Blocos", key="cert_blocos_det"):
+                    cert_extras.append("o local é um condomínio com blocos, com portaria vazia, e o interfone aparentemente não está funcionando")
+                if st.checkbox("Chuva Forte", key="cert_chuva_det"):
+                    cert_extras.append("a execução restou dificultada em virtude das adversas condições meteorológicas, caracterizadas por intensa precipitação pluviométrica, o que ocasiona o recolhimento dos moradores e obstaculiza a percepção do chamamento, impedindo o atendimento")
 
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det")
 
