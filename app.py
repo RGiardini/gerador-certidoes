@@ -16,7 +16,7 @@ st.set_page_config(page_title="Sistema de Certidões", layout="centered")
 
 st.markdown("""
     <style>
-    /* Esconde o menu hamburguer do canto superior direito e o rodapé "Made with Streamlit" */
+    /* Oculta marcações padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -24,9 +24,9 @@ st.markdown("""
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     h1 { font-size: 22px; text-align: center; margin-bottom: 0; padding-bottom: 0;}
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
+    div[role="radiogroup"] { margin-top: -10px; }
     </style>
 """, unsafe_allow_html=True)
-
 
 # Conexão com o Supabase
 @st.cache_resource
@@ -107,14 +107,21 @@ dados_usuario = resposta_usuario.data[0]
 with st.sidebar:
     st.write(f"👤 Olá, **{usuario_atual.title()}**!")
     st.divider()
-    menu = st.radio("Navegação:", ["📝 Gerar Certidão", "📂 Minhas Certidões", "⚙️ Meu Perfil"])
+    
+    opcoes_menu = ["📝 Gerar Certidão", "📂 Minhas Certidões", "⚙️ Meu Perfil"]
+    
+    # Adiciona o menu de administrador se o usuário for '10228429'
+    if usuario_atual == "10228429":
+        opcoes_menu.append("🛡️ Painel do Administrador")
+        
+    menu = st.radio("Navegação:", opcoes_menu)
     st.divider()
     if st.button("Sair (Logout)"):
         st.session_state["usuario_logado"] = None
         st.rerun()
 
 # ==========================================
-# 4. TELA: MEU PERFIL (NUVEM)
+# 4. TELA: MEU PERFIL
 # ==========================================
 if menu == "⚙️ Meu Perfil":
     st.title("⚙️ Configurar Meu Perfil")
@@ -221,7 +228,86 @@ elif menu == "📂 Minhas Certidões":
                     st.rerun()
 
 # ==========================================
-# 6. TELA: GERADOR DE CERTIDÃO
+# 6. TELA: PAINEL DO ADMINISTRADOR
+# ==========================================
+elif menu == "🛡️ Painel do Administrador":
+    if usuario_atual != "10228429":
+        st.error("Acesso restrito apenas ao Administrador.")
+        st.stop()
+        
+    st.title("🛡️ Painel de Administração")
+    st.write("Área restrita para gestão de oficiais e auditoria de certidões em nuvem.")
+    
+    aba_adm1, aba_adm2 = st.tabs(["👥 Gerenciar Usuários", "📊 Auditoria de Certidões Gerais"])
+    
+    # ABA 1: GERENCIAR USUÁRIOS
+    with aba_adm1:
+        st.subheader("Oficiais Cadastrados no Sistema")
+        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula").execute()
+        usuarios_cadastrados = res_todos.data
+        
+        if usuarios_cadastrados:
+            for u in usuarios_cadastrados:
+                with st.expander(f"👤 Usuário: {u['usuario']} — Nome: {u.get('nome') or 'Não preenchido'}"):
+                    st.write(f"**Cargo:** {u.get('cargo')}")
+                    st.write(f"**Matrícula:** {u.get('matricula')}")
+                    
+                    if u['usuario'] != usuario_atual:
+                        if st.button(f"🗑️ Excluir usuário {u['usuario']}", key=f"del_usr_{u['usuario']}"):
+                            supabase.table("banco_usuarios").delete().eq("usuario", u['usuario']).execute()
+                            st.success(f"Usuário {u['usuario']} removido com sucesso!")
+                            st.rerun()
+                    else:
+                        st.caption("*(Esta é a sua conta de Administrador principal)*")
+        else:
+            st.info("Nenhum usuário encontrado.")
+
+    # ABA 2: AUDITORIA DE CERTIDÕES
+    with aba_adm2:
+        st.subheader("Certidões Geradas por Todos os Oficiais")
+        st.write("Inspecione e baixe os arquivos salvos por qualquer oficial.")
+        
+        try:
+            pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
+        except:
+            pastas_usuarios = []
+            
+        if not pastas_usuarios:
+            st.info("Nenhuma pasta de certidão encontrada na nuvem.")
+        else:
+            for pasta in pastas_usuarios:
+                nome_oficial = pasta["name"]
+                if nome_oficial and nome_oficial != ".emptyFolder":
+                    st.markdown(f"### 📂 Oficial: `{nome_oficial}`")
+                    
+                    try:
+                        arquivos_oficial = supabase.storage.from_("certidoes_usuarios").list(nome_oficial)
+                    except:
+                        arquivos_oficial = []
+                        
+                    certioes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != ""]
+                    
+                    if not certioes_validas:
+                        st.caption("Nenhuma certidão gerada por este oficial ainda.")
+                    else:
+                        for arq in certioes_validas:
+                            c_arq_nome, c_arq_btn = st.columns([3, 1])
+                            with c_arq_nome:
+                                st.text(arq["name"])
+                            with c_arq_btn:
+                                if st.button("📥 Baixar", key=f"dl_adm_{nome_oficial}_{arq['name']}"):
+                                    file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
+                                    st.download_button(
+                                        label="Confirmar Download",
+                                        data=file_bytes,
+                                        file_name=arq["name"],
+                                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                                        key=f"btn_dl_real_{nome_oficial}_{arq['name']}"
+                                    )
+                    st.divider()
+
+# ==========================================
+# 7. TELA: GERADOR DE CERTIDÃO
 # ==========================================
 elif menu == "📝 Gerar Certidão":
     st.title("Gerador de Certidão Negativa")
@@ -230,7 +316,6 @@ elif menu == "📝 Gerar Certidão":
         st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' no menu lateral e preencha seus dados antes de gerar certidões.")
         st.stop()
 
-    # --- SELETOR DE MODELO (Detalhada ou Simples) ---
     tipo_certidao = st.selectbox(
         "Selecione o Modelo de Certidão:", 
         ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)"]
@@ -238,46 +323,48 @@ elif menu == "📝 Gerar Certidão":
     
     st.divider()
 
+    # --- CAMPOS COMPARTILHADOS (Cabeçalho e Datas) ---
+    c_mandado, c_proc, c_ano = st.columns([1, 2.5, 1])
+    with c_mandado:
+        mandado = st.text_input("Mandado nº:", placeholder="Ex: 01")
+    with c_proc:
+        processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
+    with c_ano:
+        ano = st.text_input("Ano:", placeholder="Ex: 2026")
+
+    c_end, c_pes = st.columns(2)
+    with c_end:
+        endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'")
+    with c_pes:
+        pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico")
+
+    st.markdown("---")
+    st.write("**Dias e Horários das Diligências:**")
+    
+    c_d1, c_h1 = st.columns(2)
+    with c_d1:
+        d1 = st.text_input("Dia 1", placeholder="Ex: 08/08")
+    with c_h1:
+        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs")
+        
+    c_d2, c_h2 = st.columns(2)
+    with c_d2:
+        d2 = st.text_input("Dia 2", placeholder="Ex: 11/08")
+    with c_h2:
+        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs")
+        
+    c_d3, c_h3 = st.columns(2)
+    with c_d3:
+        d3 = st.text_input("Dia 3", placeholder="Ex: 12/08")
+    with c_h3:
+        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs")
+
+    st.divider()
+
     # ==========================================
     # OPÇÃO A: CERTIDÃO DETALHADA
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
-        c_mandado, c_proc, c_ano = st.columns([1, 2.5, 1])
-        with c_mandado:
-            mandado = st.text_input("Mandado nº:", placeholder="Ex: 01")
-        with c_proc:
-            processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
-        with c_ano:
-            ano = st.text_input("Ano:", placeholder="Ex: 2026")
-
-        c_end, c_pes = st.columns(2)
-        with c_end:
-            endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'")
-        with c_pes:
-            pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico")
-
-        st.markdown("---")
-        st.write("**Dias e Horários das Diligências:**")
-        
-        c_d1, c_h1 = st.columns(2)
-        with c_d1:
-            d1 = st.text_input("Dia 1", placeholder="Ex: 08/08")
-        with c_h1:
-            h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs")
-            
-        c_d2, c_h2 = st.columns(2)
-        with c_d2:
-            d2 = st.text_input("Dia 2", placeholder="Ex: 11/08")
-        with c_h2:
-            h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs")
-            
-        c_d3, c_h3 = st.columns(2)
-        with c_d3:
-            d3 = st.text_input("Dia 3", placeholder="Ex: 12/08")
-        with c_h3:
-            h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs")
-
-        st.divider()
         st.write("**Deixei de cumprir o ato uma vez que:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
@@ -416,6 +503,7 @@ elif menu == "📝 Gerar Certidão":
                 if observacoes:
                     paragrafo += f"{observacoes.strip()} "
 
+                # Geração do DOCX
                 doc = Document()
                 style = doc.styles['Normal']
                 font = style.font
@@ -519,29 +607,9 @@ elif menu == "📝 Gerar Certidão":
             )
 
     # ==========================================
-    # OPÇÃO B: CERTIDÃO SIMPLES (FORMULÁRIO RÁPIDO)
+    # OPÇÃO B: CERTIDÃO SIMPLES
     # ==========================================
     elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
-        col_mandado, col_proc, col_ano = st.columns([1, 2, 1])
-        with col_mandado:
-            mandado = st.text_input("Mandado nº:", placeholder="Ex: 01")
-        with col_proc:
-            processo = st.text_input("Informe o Processo:", placeholder="Ex: 4400281-16")
-        with col_ano:
-            ano = st.text_input("Ano:", placeholder="Ex: 2026")
-
-        st.write("**Informe os Dias e Horários:**")
-        c_d1, c_d2, c_d3 = st.columns(3)
-        with c_d1:
-            d1 = st.text_input("Dia 1", placeholder="Ex: 08/08")
-            h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs")
-        with c_d2:
-            d2 = st.text_input("Dia 2", placeholder="Ex: 11/08")
-            h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs")
-        with c_d3:
-            d3 = st.text_input("Dia 3", placeholder="Ex: 12/08")
-            h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs")
-
         situacao = st.radio(
             "Situação Principal:", 
             ["Local Fechado", "Pessoa Não Encontrada", "Não Localizei a Pessoa"],
@@ -583,12 +651,6 @@ elif menu == "📝 Gerar Certidão":
         )
 
         observacoes = st.text_area("Observações Extras:", height=68)
-        c_end, c_pes = st.columns(2)
-        with c_end:
-            endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio, usará 'informado no mesmo'")
-        with c_pes:
-            pessoa = st.text_input("Pessoa procurada:", placeholder="Nome do destinatário...")
-
         st.divider()
 
         if st.button("Salvar / Gerar DOCX (Simples)", type="primary", use_container_width=True):
