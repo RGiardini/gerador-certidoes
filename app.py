@@ -1,4 +1,3 @@
-
 import streamlit as st
 import os
 import hashlib
@@ -132,8 +131,10 @@ if menu == "⚙️ Meu Perfil":
     novo_cargo = st.text_input("Cargo:", value=dados_usuario.get("cargo", ""))
     nova_matricula = st.text_input("Matrícula (ex: PJPI: 12345):", value=dados_usuario.get("matricula", ""))
     
-    st.write("**Sua Assinatura (Fundo branco ou transparente):```python
-    # (Este código substitui os botões anteriores de download e exclusão)
+    # --- CORREÇÃO AQUI (ASPAS FECHADAS CORRETAMENTE E UPLOADER RESTAURADO) ---
+    st.write("**Sua Assinatura (Fundo branco ou transparente):**")
+    arquivo_assinatura = st.file_uploader("Envie a foto da sua assinatura", type=["png", "jpg", "jpeg"], key="uploader_perfil")
+    
     if st.button("💾 Salvar Perfil", type="primary"):
         supabase.table("banco_usuarios").update({
             "nome": novo_nome,
@@ -143,11 +144,9 @@ if menu == "⚙️ Meu Perfil":
         
         if arquivo_assinatura is not None:
             try:
-                # Tenta remover assinatura antiga se existir
                 supabase.storage.from_("assinaturas_usuarios").remove([f"{usuario_atual}.png"])
             except:
                 pass
-            # Faz upload da nova assinatura
             supabase.storage.from_("assinaturas_usuarios").upload(
                 file=arquivo_assinatura.getvalue(),
                 path=f"{usuario_atual}.png",
@@ -173,7 +172,6 @@ elif menu == "📂 Minhas Certidões":
     if not arquivos:
         st.info("Nenhuma certidão salva ainda.")
     else:
-        # Ordena por data de criação (mais recente primeiro)
         arquivos.sort(key=lambda x: x["created_at"], reverse=True)
         
         c_sel, c_nome, c_data = st.columns([1, 4, 3])
@@ -187,18 +185,15 @@ elif menu == "📂 Minhas Certidões":
         for item in arquivos:
             c1, c2, c3 = st.columns([1, 4, 3])
             try:
-                # Pega a data do banco (UTC) e ajusta o formato
+                # Pega a data do banco e ajusta o fuso (-3h)
                 data_str = item["created_at"].replace("Z", "+00:00")
                 data_obj = datetime.datetime.fromisoformat(data_str)
-                
-                # CORREÇÃO DE FUSO HORÁRIO: Subtrai 3 horas cravadas para fuso do Brasil
                 data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
                 data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
             except:
                 data_br = "Data desconhecida"
 
             with c1:
-                # Define chave única para o checkbox baseada no nome do arquivo
                 if st.checkbox("", key=f"chk_{item['name']}"):
                     arquivos_selecionados.append(item['name'])
             with c2:
@@ -231,7 +226,6 @@ elif menu == "📂 Minhas Certidões":
             
             with c_btn2:
                 if st.button("🗑️ Excluir Selecionadas", use_container_width=True):
-                    # Cria caminhos completos para exclusão no Storage
                     caminhos_para_excluir = [f"{usuario_atual}/{arq}" for arq in arquivos_selecionados]
                     supabase.storage.from_("certidoes_usuarios").remove(caminhos_para_excluir)
                     st.success("Arquivos excluídos da nuvem com sucesso!")
@@ -250,25 +244,20 @@ elif menu == "🛡️ Painel do Administrador":
     
     aba_adm1, aba_adm2 = st.tabs(["👥 Gerenciar Usuários", "📊 Auditoria de Certidões Gerais"])
     
-    # ABA 1: GERENCIAR USUÁRIOS
     with aba_adm1:
         st.subheader("Oficiais Cadastrados no Sistema")
-        # Busca dados básicos de todos os usuários
         res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula").execute()
         usuarios_cadastrados = res_todos.data
         
         if usuarios_cadastrados:
             for u in usuarios_cadastrados:
-                # Usa expansores para organizar informações de cada usuário
                 with st.expander(f"👤 Usuário: {u['usuario']} — Nome: {u.get('nome') or 'Não preenchido'}"):
                     st.write(f"**Cargo:** {u.get('cargo')}")
                     st.write(f"**Matrícula:** {u.get('matricula')}")
                     
-                    # Impede que o administrador se exclua
                     if u['usuario'] != usuario_atual:
                         if st.button(f"🗑️ Excluir usuário {u['usuario']}", key=f"del_usr_{u['usuario']}"):
                             supabase.table("banco_usuarios").delete().eq("usuario", u['usuario']).execute()
-                            # NOTA: Idealmente removeria também a pasta no Storage, mas operação não é simples via API
                             st.success(f"Usuário {u['usuario']} removido com sucesso!")
                             st.rerun()
                     else:
@@ -276,13 +265,9 @@ elif menu == "🛡️ Painel do Administrador":
         else:
             st.info("Nenhum usuário encontrado.")
 
-    # ABA 2: AUDITORIA DE CERTIDÕES
     with aba_adm2:
         st.subheader("Certidões Geradas por Todos os Oficiais")
-        st.write("Inspecione, baixe ou exclua os arquivos salvos por qualquer oficial.")
-        
         try:
-            # Lista as pastas (usuários) na raiz do bucket certidoes_usuarios
             pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
         except:
             pastas_usuarios = []
@@ -292,17 +277,14 @@ elif menu == "🛡️ Painel do Administrador":
         else:
             for pasta in pastas_usuarios:
                 nome_oficial = pasta["name"]
-                # Filtra pastas inválidas ou do sistema
                 if nome_oficial and nome_oficial != ".emptyFolder":
                     st.markdown(f"### 📂 Oficial: `{nome_oficial}`")
                     
                     try:
-                        # Lista arquivos dentro da pasta do oficial específico
                         arquivos_oficial = supabase.storage.from_("certidoes_usuarios").list(nome_oficial)
                     except:
                         arquivos_oficial = []
                         
-                    # Filtra arquivos válidos
                     certioes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != ""]
                     
                     if not certioes_validas:
@@ -315,7 +297,6 @@ elif menu == "🛡️ Painel do Administrador":
                                 st.text(arq["name"])
                                 
                             with c_btn_dl:
-                                # Define chave única baseada no oficial e nome do arquivo
                                 if st.button("📥 Baixar", key=f"dl_adm_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
                                     st.download_button(
@@ -327,7 +308,6 @@ elif menu == "🛡️ Painel do Administrador":
                                     )
                                     
                             with c_btn_del:
-                                # Define chave única para botão de exclusão
                                 if st.button("🗑️ Excluir", key=f"del_adm_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
                                     st.success("Excluído!")
@@ -340,7 +320,6 @@ elif menu == "🛡️ Painel do Administrador":
 elif menu == "📝 Gerar Certidão":
     st.title("Gerador de Certidão Negativa")
     
-    # Bloqueia geração se perfil não estiver configurado
     if not dados_usuario.get("nome"):
         st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' no menu lateral e preencha seus dados antes de gerar certidões.")
         st.stop()
@@ -352,7 +331,7 @@ elif menu == "📝 Gerar Certidão":
     
     st.divider()
 
-    # --- CAMPOS COMPARTILHADOS (Cabeçalho e Datas) ---
+    # --- CAMPOS COMPARTILHADOS ---
     c_mandado, c_proc = st.columns([1, 3])
     with c_mandado:
         mandado = st.text_input("Mandado:", placeholder="Ex: 01", key="mandado_geral")
@@ -363,7 +342,6 @@ elif menu == "📝 Gerar Certidão":
     with c_ano:
         ano = st.text_input("Ano:", placeholder="Ex: 2026", key="ano_geral")
     with c_comarca:
-        # Novo campo Comarca com padrão 0245
         comarca = st.text_input("Código Comarca:", value="0245", placeholder="Ex: 0245", key="comarca_geral")
 
     c_end, c_pes = st.columns(2)
@@ -375,7 +353,6 @@ elif menu == "📝 Gerar Certidão":
     st.markdown("---")
     st.write("**Dias e Horários das Diligências:**")
     
-    # Grid para entrada de 3 datas/horas
     c_d1, c_h1 = st.columns(2)
     with c_d1:
         d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
@@ -407,10 +384,8 @@ elif menu == "📝 Gerar Certidão":
         with sit_c2:
             nao_loc_bens = st.checkbox("O(s) bem(ns) indicados não foi(ram) localizado(s)", key="nao_loc_bens")
 
-        # Lista expandível para motivos (seleção múltipla)
         motivos_selecionados = []
         with st.expander("📌 Clique aqui para selecionar os Motivos da Negativa (Opcional)", expanded=False):
-            # ... (lista de motivos permanece igual à versão funcional anterior) ...
             motivos_list = [
                 "mudou-se", "não reside", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
                 "não trabalha no local", "está viajando", "local inabitado", "antigo(a) inquilino(a)", 
@@ -426,21 +401,18 @@ elif menu == "📝 Gerar Certidão":
             cols_mot = st.columns(2)
             for idx, m in enumerate(motivos_list):
                 with cols_mot[idx % 2]:
-                    # Chave única baseada no índice para motivos
                     if st.checkbox(m, key=f"mot_det_{idx}"):
                         motivos_selecionados.append(m)
 
-        # Informações sobre o informante (seleção múltipla)
         relacoes_selecionadas = []
         nao_sabe_selecionados = []
         sabe_tel = ""
         sabe_end = ""
         
         with st.expander("👤 Informações sobre o Informante (Se houver)", expanded=False):
-            nome_inf = st.text_input("Nome do Sr(a):", placeholder="Deixe em branco se não houver informante", key="nome_inf_det")
+            nome_inf_det = st.text_input("Nome do Sr(a):", placeholder="Deixe em branco se não houver informante", key="nome_inf_det")
 
             st.caption("Relação / Qualidade:")
-            # ... (lista de relações permanece igual) ...
             relacoes_list = [
                 "morador(a)", "proprietário(a)", "inquilino(a)", "funcionário(a)", "vizinho(a)", "pai", "mãe",
                 "padrasto", "madrasta", "filho(a)", "irmão(a)", "tio(a)", "avô(ó)", "neto(a)", "sobrinho(a)",
@@ -450,7 +422,6 @@ elif menu == "📝 Gerar Certidão":
             cols_rel = st.columns(3)
             for idx, r in enumerate(relacoes_list):
                 with cols_rel[idx % 3]:
-                    # Chave única baseada no índice para relações
                     if st.checkbox(r, key=f"rel_det_{idx}"):
                         relacoes_selecionadas.append(r)
 
@@ -464,7 +435,6 @@ elif menu == "📝 Gerar Certidão":
             cols_ns = st.columns(2)
             for idx, ns in enumerate(nao_sabe_list):
                 with cols_ns[idx % 2]:
-                    # Chave única baseada no índice para 'não sabe'
                     if st.checkbox(ns, key=f"ns_det_{idx}"):
                         nao_sabe_selecionados.append(ns)
 
@@ -476,27 +446,21 @@ elif menu == "📝 Gerar Certidão":
             with c_sab2:
                 sabe_end = st.text_input("Endereço correto indicado:", key="sabe_end_det")
         
-        # Garante que a variável exista para a lógica de montagem
-        if 'nome_inf' not in locals():
-            nome_inf = ""
-
         with st.expander("📝 Certificações Adicionais e Observações", expanded=False):
             cert_extras = []
-            if st.checkbox("Procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito.", key="cert_extra_vizinhos"):
+            if st.checkbox("Procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito.", key="cert_vizinhos"):
                 cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito.")
-            if st.checkbox("Devido à importância do mandado, deixei a cópia para ciência do prazo/data.", key="cert_extra_copia"):
+            if st.checkbox("Devido à importância do mandado, deixei a cópia para ciência do prazo/data.", key="cert_copia"):
                 cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a) para que a parte/testemunha tome ciência do prazo/data que deverá comparecer em juízo.")
-            if st.checkbox("O imóvel é residencial e contém apenas móveis e utensílios domésticos comuns.", key="cert_extra_moveis"):
+            if st.checkbox("O imóvel é residencial e contém apenas móveis e utensílios domésticos comuns.", key="cert_moveis"):
                 cert_extras.append("o imóvel é residencial e contém apenas móveis e utensílios domésticos que guarnecem a residência do réu.")
 
-            observacoes = st.text_area("Observações Livres:", key="obs_livres_det")
+            observacoes_det = st.text_area("Observações Livres:", key="obs_det")
 
         st.divider()
 
-        # ... (lógica do botão de gerar detalhada permanece igual à versão funcional anterior) ...
-        if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True, key="btn_gerar_detalhada"):
+        if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True, key="btn_gerar_det"):
             with st.spinner("Construindo certidão e salvando na nuvem..."):
-                # Lógica de montagem do texto
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_validas = [h for h in [h1, h2, h3] if h]
                 
@@ -504,7 +468,6 @@ elif menu == "📝 Gerar Certidão":
                 if len(dias_validos) == 1:
                     texto_data_hora = f", por volta das {horas_validas[0]}, do dia {dias_validos[0]},"
                 elif len(dias_validos) > 1:
-                    # Formatação de dias e horas múltiplos
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
                     texto_data_hora = f", por volta das {str_horas}, dos dias {str_dias}, respectivamente,"
@@ -512,7 +475,6 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
                 txt_pessoa = f" de {pessoa}" if pessoa else ""
 
-                # Parágrafo principal
                 paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
                 
                 sits = []
@@ -527,11 +489,9 @@ elif menu == "📝 Gerar Certidão":
                 if motivos_selecionados:
                     paragrafo += f"Constatou-se no local que o(a) mesmo(a) {', '.join(motivos_selecionados)}. "
 
-                # Informante
-                if nome_inf or relacoes_selecionadas:
-                    nome_str = nome_inf if nome_inf else "pessoa não identificada"
+                if nome_inf_det or relacoes_selecionadas:
+                    nome_str = nome_inf_det if nome_inf_det else "pessoa não identificada"
                     rel_str = f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ""
-                    
                     paragrafo += f"Conforme informações prestadas no local pelo(a) Sr(a). {nome_str}{rel_str} "
                     
                     if nao_sabe_selecionados:
@@ -548,17 +508,15 @@ elif menu == "📝 Gerar Certidão":
                 if cert_extras:
                     paragrafo += f"Certifico também que {'; '.join(cert_extras)}. "
                     
-                if observacoes:
-                    paragrafo += f"{observacoes.strip()} "
+                if observacoes_det:
+                    paragrafo += f"{observacoes_det.strip()} "
 
-                # Geração do DOCX
                 doc = Document()
                 style = doc.styles['Normal']
                 font = style.font
                 font.name = 'Times New Roman'
                 font.size = Pt(12)
 
-                # Busca cabeçalho dinâmico na nuvem
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
                     cabecalho_stream = BytesIO(cabecalho_bytes)
@@ -569,7 +527,6 @@ elif menu == "📝 Gerar Certidão":
                 except:
                     pass
 
-                # Processo com Ano e Comarca (Dینâmica)
                 if processo:
                     texto_processo = f"Processo: {processo}"
                     if ano:
@@ -584,26 +541,23 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO NEGATIVA")
                 run_titulo.bold = True
-                run_titulo.font.size = Pt(16) # Tamanho 16pt
+                run_titulo.font.size = Pt(16)
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
 
-                # Corpo do texto com parágrafo formatado
                 p_corpo = doc.add_paragraph(paragrafo.strip())
                 p_corpo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                p_corpo.paragraph_format.first_line_indent = Pt(35.4) # Indentação 1,25cm
-                p_corpo.paragraph_format.line_spacing = 1.5 # Espaçamento 1,5 linhas
+                p_corpo.paragraph_format.first_line_indent = Pt(35.4)
+                p_corpo.paragraph_format.line_spacing = 1.5 
                 
                 doc.add_paragraph("")
 
                 p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.")
                 p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
-                # Data ajustada para UTC-3 (Brasil)
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                # Local padrão Santa Luzia (matricula ex: PJPI: 12345, pegaria Santa Luzia se tiver antes)
                 local_data = dados_usuario.get("matricula", "").split(":")[0].strip() or "Santa Luzia"
                 data_extenso = f"{local_data}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}."
                 
@@ -612,11 +566,9 @@ elif menu == "📝 Gerar Certidão":
 
                 doc.add_paragraph("")
                 
-                # Assinatura dinâmica da Nuvem
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     assinatura_stream = BytesIO(assinatura_bytes)
-                    
                     p_img_assinatura = doc.add_paragraph()
                     p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     run_img_ass = p_img_assinatura.add_run()
@@ -624,7 +576,6 @@ elif menu == "📝 Gerar Certidão":
                 except:
                     pass 
                 
-                # Rodapé com dados do oficial (tamanho 8)
                 p_assinatura = doc.add_paragraph()
                 p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
@@ -642,11 +593,9 @@ elif menu == "📝 Gerar Certidão":
                 doc.save(buffer)
                 buffer.seek(0)
 
-                # Nomenclatura dinâmica
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Negativa_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Negativa_{data_arquivo}.docx"
                 
-                # Salva na pasta do oficial na Nuvem
                 caminho_salvamento = f"{usuario_atual}/{nome_arquivo}"
                 
                 supabase.storage.from_("certidoes_usuarios").upload(
@@ -663,70 +612,63 @@ elif menu == "📝 Gerar Certidão":
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 type="primary",
                 use_container_width=True,
-                key="btn_download_real_det"
+                key="btn_dl_det"
             )
 
     # ==========================================
-    # OPÇÃO B: CERTIDÃO SIMPLES (RESTAURADA)
+    # OPÇÃO B: CERTIDÃO SIMPLES (RESTAURADA E CORRIGIDA)
     # ==========================================
     elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
         
-        # --- INPUTS (Restaurada a versão com 'st.radio' fornecida pelo usuário) ---
+        # --- INPUTS (Restaurada a versão com 'st.radio' que o usuário gosta) ---
 
-        # Desfecho Principal
         situacao = st.radio(
             "Situação Principal:", 
             ["Local Fechado", "Pessoa Não Encontrada", "Não Localizei a Pessoa"],
-            index=None, horizontal=True, key="sit_radio_simples"
+            index=None, horizontal=True, key="sit_simples"
         )
 
-        # Informante
         st.divider()
         c_inf1, c_inf2 = st.columns([1, 2])
         with c_inf1:
-            obteve_inf = st.radio("Obteve Informações?", ["Sim", "Não", "NQI"], index=None, horizontal=True, key="obteve_inf_radio_simples")
+            obteve_inf = st.radio("Obteve Informações?", ["Sim", "Não", "NQI"], index=None, horizontal=True, key="obteve_inf_simples")
         with c_inf2:
-            # O campo de nome fica habilitado apenas se obteve_inf for "Sim"
-            nome_inf = st.text_input("Nome do Informante:", disabled=(obteve_inf != "Sim"), key="nome_inf_input_simples")
+            nome_inf_simples = st.text_input("Nome do Informante:", disabled=(obteve_inf != "Sim"), key="nome_inf_simples")
 
-        # Motivos e Paradeiro
         st.write("**Detalhes das Informações Obtidas:**")
         c_m1, c_m2 = st.columns(2)
         with c_m1:
             motivo = st.radio(
                 "Motivo:", 
                 ["Mudou-se", "Não Reside no Local", "Não fica ali", "Não trabalha ali", "Falecido"], 
-                index=None, key="motivo_radio_simples"
+                index=None, key="motivo_simples"
             )
         with c_m2:
             nao_sabe = st.radio(
                 "O que não sabe?", 
                 ["Não Conhece ele", "Não sabe informar", "Não sabe seu endereço"], 
-                index=None, key="naosabe_radio_simples"
+                index=None, key="naosabe_simples"
             )
             paradeiro = st.radio(
                 "Paradeiro:", 
                 ["Não sabe o paradeiro", "Incerto e Não Sabido"], 
-                index=None, key="paradeiro_radio_simples"
+                index=None, key="paradeiro_simples"
             )
 
-        # Condições Extras
         st.divider()
         condicao = st.radio(
             "Condições do Local:", 
             ["Local Perigoso", "Medo Processo", "Zona Rural", "Blocos", "Chuva"], 
-            index=None, horizontal=True, key="condicao_radio_simples"
+            index=None, horizontal=True, key="condicao_simples"
         )
 
-        # Observações Extras (Mantida da versão funcional para compatibilidade com o Storage)
         st.markdown("---")
-        observacoes = st.text_area("Observações Extras:", height=68, key="obs_simples_text_area")
+        observacoes_simples = st.text_area("Observações Extras:", height=68, key="obs_simples")
         st.divider()
 
-        # --- LÓGICA DO BOTÃO GERAR SIMPLES (RESTAURADA E ADAPTADA AO STORAGE) ---
+        # --- LÓGICA DO BOTÃO GERAR SIMPLES (Restaurada do código fornecido) ---
         if st.button("Salvar na Nuvem / Gerar DOCX (Simples)", type="primary", use_container_width=True, key="btn_gerar_simples"):
             with st.spinner("Construindo certidão simples e salvando na nuvem..."):
-                # Lógica de montagem do texto (Exatamente do código fornecido)
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_validas = [h for h in [h1, h2, h3] if h]
                 
@@ -755,7 +697,7 @@ elif menu == "📝 Gerar Certidão":
                 )
 
                 if obteve_inf == "Sim":
-                    paragrafo_unico += f"Conforme informações obtidas no local com Sr.(a) {nome_inf}, informou que, "
+                    paragrafo_unico += f"Conforme informações obtidas no local com Sr.(a) {nome_inf_simples}, informou que, "
                 elif obteve_inf == "Não":
                     paragrafo_unico += "Procurei obter informações junto aos moradores vizinhos locais, e não obtive êxito, uma vez que ninguém forneceu informações. "
                 elif obteve_inf == "NQI":
@@ -797,10 +739,10 @@ elif menu == "📝 Gerar Certidão":
                 elif condicao == "Medo Processo":
                     obs_extra = "Procurei informações com vizinhos sobre o horário/local para encontrar a pessoa procurada, mas os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada. "
 
-                if obs_extra or observacoes:
-                    paragrafo_unico += obs_extra + (" " + observacoes if observacoes else "")
+                if obs_extra or observacoes_simples:
+                    paragrafo_unico += obs_extra + (" " + observacoes_simples if observacoes_simples else "")
 
-                # --- CRIAÇÃO DO DOCX (Adaptada para compatibilidade com o rodapé de Perfil) ---
+                # --- CRIAÇÃO DO DOCX (Restaurada e Dinâmica) ---
                 doc = Document()
                 style = doc.styles['Normal']
                 font = style.font
@@ -821,7 +763,6 @@ elif menu == "📝 Gerar Certidão":
                 if processo:
                     texto_processo = f"Processo: {processo}"
                     if ano:
-                        # USA O VALOR DO CAMPO COMARCA AQUI TAMBÉM
                         texto_processo += f".{ano}.8.13.{comarca}"
                     doc.add_paragraph(texto_processo)
                     
@@ -833,24 +774,23 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO")
                 run_titulo.bold = True
-                run_titulo.font.size = Pt(16) # Tamanho aumentado para 16pt
+                run_titulo.font.size = Pt(16)
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
 
                 p_corpo = doc.add_paragraph(paragrafo_unico.strip())
                 p_corpo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                p_corpo.paragraph_format.first_line_indent = Pt(35.4) # Indentação 1,25cm
+                p_corpo.paragraph_format.first_line_indent = Pt(35.4) 
                 
                 doc.add_paragraph("")
 
                 p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.")
                 p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
-                # Data ajustada para UTC-3 (Brasil)
+                # Data e Local dinâmicos do Perfil (UTC-3 Brasil)
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                # Local data dinâmico baseado no perfil
                 local_data = dados_usuario.get("matricula", "").split(":")[0].strip() or "Santa Luzia"
                 data_extenso = f"{local_data}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}."
                 
@@ -863,7 +803,6 @@ elif menu == "📝 Gerar Certidão":
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     assinatura_stream = BytesIO(assinatura_bytes)
-                    
                     p_img_assinatura = doc.add_paragraph()
                     p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     run_img_ass = p_img_assinatura.add_run()
@@ -871,7 +810,7 @@ elif menu == "📝 Gerar Certidão":
                 except:
                     pass 
                 
-                # Dados do Oficial (Tamanho 8 - Dinâmico do Perfil)
+                # Dados do Oficial (Dinâmico do Perfil - Tamanho 8)
                 p_assinatura = doc.add_paragraph()
                 p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
@@ -893,7 +832,6 @@ elif menu == "📝 Gerar Certidão":
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 
-                # Salva na pasta do usuário na Nuvem
                 caminho_salvamento = f"{usuario_atual}/{nome_arquivo}"
                 
                 supabase.storage.from_("certidoes_usuarios").upload(
@@ -910,5 +848,5 @@ elif menu == "📝 Gerar Certidão":
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 type="primary",
                 use_container_width=True,
-                key="btn_download_real_simples"
+                key="btn_dl_simples"
             )
