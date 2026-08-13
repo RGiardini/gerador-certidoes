@@ -506,7 +506,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
                 txt_pessoa = f" de {pessoa}" if pessoa else ""
 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
