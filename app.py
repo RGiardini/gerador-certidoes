@@ -419,7 +419,7 @@ elif menu == "📝 Gerar Certidão":
         with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
             # ... (Lista de motivos compactada pelo CSS global, mas estrutura original mantida)
             motivos_list = [
-                "mudou-se", "não reside", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
+                "mudou-se", "não reside no local", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
                 "não trabalha no local", "está viajando", "local inabitado", "antigo inquilino", 
                 "antigo morador", "antigo proprietário", "rotatividade de inquilinos",
                 "Repassado para terceiros", "internado", "transferido", "encontra-se preso",
@@ -623,7 +623,7 @@ elif menu == "📝 Gerar Certidão":
         st.caption("Motivo")
         motivo_simples = st.radio(
             "Selecione uma opção:", 
-            ["Mudou-se", "Não Reside", "Não fica ali", "Não trabalha ali", "Falecido"], 
+            ["Mudou-se", "Não Reside no Local", "Não fica ali", "Não trabalha ali", "Falecido"], 
             index=None, key="motivo_radio_simples"
         )
         
