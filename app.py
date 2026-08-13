@@ -8,7 +8,6 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from supabase import create_client, Client
-import extra_streamlit_components as stx
 
 # ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
@@ -17,9 +16,11 @@ st.set_page_config(page_title="Sistema de Certidões", layout="centered")
 
 st.markdown("""
     <style>
+    /* Oculta marcações padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     h1 { font-size: 22px; text-align: center; margin-bottom: 0; padding-bottom: 0;}
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
@@ -27,6 +28,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Conexão com o Supabase
 @st.cache_resource
 def iniciar_conexao():
     url = st.secrets["SUPABASE_URL"]
@@ -39,19 +41,10 @@ def gerar_hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
 # ==========================================
-# 2. CONTROLE DE SESSÃO COM COOKIES
+# 2. CONTROLE DE SESSÃO E LOGIN
 # ==========================================
-# Inicializa o gerenciador de cookies
-cookie_manager = stx.CookieManager()
-
-# Busca se já existe um cookie de login salvo no navegador
-usuario_salvo = cookie_manager.get(cookie="usuario_logado")
-
 if "usuario_logado" not in st.session_state:
-    if usuario_salvo:
-        st.session_state["usuario_logado"] = usuario_salvo
-    else:
-        st.session_state["usuario_logado"] = None
+    st.session_state["usuario_logado"] = None
 
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões - TJMG")
@@ -72,8 +65,6 @@ if st.session_state["usuario_logado"] is None:
                     senha_criptografada = gerar_hash_senha(senha_login)
                     if dados_bd["senha"] == senha_criptografada:
                         st.session_state["usuario_logado"] = usuario_login
-                        # Salva o usuário no cookie para resistir ao F5 (dura 30 dias)
-                        cookie_manager.set("usuario_logado", usuario_login, max_age=30*24*60*60)
                         st.rerun()
                     else:
                         st.error("Senha incorreta!")
@@ -110,15 +101,8 @@ if st.session_state["usuario_logado"] is None:
 # 3. DADOS DO USUÁRIO E MENU LATERAL
 # ==========================================
 usuario_atual = st.session_state["usuario_logado"]
-
-try:
-    resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
-    dados_usuario = resposta_usuario.data[0]
-except:
-    # Prevenção caso o cookie tente acessar um usuário que foi deletado do banco
-    cookie_manager.delete("usuario_logado")
-    st.session_state["usuario_logado"] = None
-    st.rerun()
+resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
+dados_usuario = resposta_usuario.data[0]
 
 with st.sidebar:
     st.write(f"👤 Olá, **{usuario_atual.title()}**!")
@@ -126,14 +110,13 @@ with st.sidebar:
     
     opcoes_menu = ["📝 Gerar Certidão", "📂 Minhas Certidões", "⚙️ Meu Perfil"]
     
-    # Adiciona o menu de administrador se o usuário for o seu
+    # Adiciona o menu de administrador se o usuário for '10228429'
     if usuario_atual == "10228429":
         opcoes_menu.append("🛡️ Painel do Administrador")
         
     menu = st.radio("Navegação:", opcoes_menu)
     st.divider()
     if st.button("Sair (Logout)"):
-        cookie_manager.delete("usuario_logado") # Apaga o cookie ao sair
         st.session_state["usuario_logado"] = None
         st.rerun()
 
