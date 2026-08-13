@@ -1,4 +1,3 @@
-
 import streamlit as st
 import os
 import hashlib
@@ -657,7 +656,7 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO NEGATIVA")
                 run_titulo.bold = True
-                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE AQUI
+                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE DO TÍTULO AQUI
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
@@ -883,7 +882,7 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO")
                 run_titulo.bold = True
-                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE AQUI
+                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE DO TÍTULO AQUI
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
