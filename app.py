@@ -475,7 +475,7 @@ elif menu == "📝 Gerar Certidão":
             sabe_tel = st.text_input("Telefone indicado:", key="sabe_tel_det")
             sabe_end = st.text_input("Endereço correto indicado:", key="sabe_end_det")
         
-with st.expander("📝 Certificações Adicionais", expanded=False):
+        with st.expander("📝 Certificações Adicionais", expanded=False):
             cert_extras = []
             # Dividindo as 8 opções em 2 colunas para manter o layout compacto
             c_extra1, c_extra2 = st.columns(2)
