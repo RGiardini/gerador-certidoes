@@ -788,9 +788,12 @@ elif menu == "📝 Gerar Certidão":
                 if adv_pos == "Tem condições": txt_adv = " Informou também que tem condição de contratar um advogado."
                 elif adv_pos == "Não tem condições": txt_adv = " Informou também que não tem condição de contratar um advogado e precisa que seja nomeado um para lhe defender."
                 
-                # Data e Hora puxados do "Dia 1" e "Hora 1" do Cabeçalho Geral
-                dia_pos = d1 if d1 else "___/___"
-                hora_pos = h1 if h1 else "___:___"
+                # Data e Hora (Busca sempre a última diligência preenchida)
+                dias_validos = [d for d in [d1, d2, d3] if d]
+                horas_validas = [h for h in [h1, h2, h3] if h]
+                
+                dia_pos = dias_validos[-1] if dias_validos else "___/___"
+                hora_pos = horas_validas[-1] if horas_validas else "___:___"
                 
                 # Construção do Parágrafo Inteligente
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, {txt_inicio} onde no dia {dia_pos}, às {hora_pos}, CITEI/INTIMEI/NOTIFIQUEI{txt_pessoa}, lendo-lhe o mandado e {txt_contrafe}, {txt_ass}{txt_adv}"
