@@ -502,7 +502,7 @@ with st.expander("📝 Certificações Adicionais", expanded=False):
 
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det")
 
-            st.divider()
+st.divider()
 
         # Botão de Geração Detalhada
         if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True, key="btn_gerar_docx_det"):
