@@ -1,3 +1,4 @@
+
 import streamlit as st
 import os
 import hashlib
@@ -656,6 +657,7 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO NEGATIVA")
                 run_titulo.bold = True
+                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE AQUI
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
@@ -840,7 +842,7 @@ elif menu == "📝 Gerar Certidão":
                 if local_perigoso: conds.append("Informo também que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
                 if zona_rural: conds.append("Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
                 if chuva: conds.append("Certifico que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
-                if blocos: conds.append("Informo também que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
+                if blocos: conds.append("Informo também que o local é um condomínio de edifícios com vários blocks de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
                 if receio: conds.append("Procurei informações com vizinhos sobre o horário/local para encontrar a pessoa procurada, mas os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
                 
                 if conds:
@@ -881,6 +883,7 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO")
                 run_titulo.bold = True
+                run_titulo.font.size = Pt(16) # AUMENTO DA FONTE AQUI
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 doc.add_paragraph("")
