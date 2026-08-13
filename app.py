@@ -184,8 +184,13 @@ elif menu == "📂 Minhas Certidões":
         for item in arquivos:
             c1, c2, c3 = st.columns([1, 4, 3])
             try:
-                data_obj = datetime.datetime.fromisoformat(item["created_at"].replace("Z", "+00:00"))
-                data_br = data_obj.strftime("%d/%m/%Y às %H:%M")
+                # Pega a data do banco e ajusta o formato
+                data_str = item["created_at"].replace("Z", "+00:00")
+                data_obj = datetime.datetime.fromisoformat(data_str)
+                
+                # Remove a "etiqueta" do fuso do servidor e subtrai 3 horas cravadas
+                data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
+                data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
             except:
                 data_br = "Data desconhecida"
 
