@@ -265,7 +265,7 @@ elif menu == "🛡️ Painel do Administrador":
     # ABA 2: AUDITORIA DE CERTIDÕES
     with aba_adm2:
         st.subheader("Certidões Geradas por Todos os Oficiais")
-        st.write("Inspecione e baixe os arquivos salvos por qualquer oficial.")
+        st.write("Inspecione, baixe ou exclua os arquivos salvos por qualquer oficial.")
         
         try:
             pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
@@ -291,19 +291,29 @@ elif menu == "🛡️ Painel do Administrador":
                         st.caption("Nenhuma certidão gerada por este oficial ainda.")
                     else:
                         for arq in certioes_validas:
-                            c_arq_nome, c_arq_btn = st.columns([3, 1])
+                            # Divide em 3 colunas: Nome do arquivo, Botão Baixar, Botão Excluir
+                            c_arq_nome, c_btn_dl, c_btn_del = st.columns([4, 2, 2])
+                            
                             with c_arq_nome:
                                 st.text(arq["name"])
-                            with c_arq_btn:
-                                if st.button("📥 Baixar", key=f"dl_adm_{nome_oficial}_{arq['name']}"):
+                                
+                            with c_btn_dl:
+                                if st.button("📥 Baixar", key=f"dl_adm_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
                                     st.download_button(
-                                        label="Confirmar Download",
+                                        label="Confirmar",
                                         data=file_bytes,
                                         file_name=arq["name"],
                                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                                         key=f"btn_dl_real_{nome_oficial}_{arq['name']}"
                                     )
+                                    
+                            with c_btn_del:
+                                if st.button("🗑️ Excluir", key=f"del_adm_{nome_oficial}_{arq['name']}", use_container_width=True):
+                                    # Deleta o arquivo específico na pasta do oficial
+                                    supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
+                                    st.success("Excluído!")
+                                    st.rerun()
                     st.divider()
 
 # ==========================================
@@ -810,7 +820,7 @@ elif menu == "📝 Gerar Certidão":
                 buffer.seek(0)
 
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
-                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
+                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}_{mandado}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 
                 caminho_salvamento = f"{usuario_atual}/{nome_arquivo}"
                 
