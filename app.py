@@ -8,6 +8,7 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from supabase import create_client, Client
+import extra_streamlit_components as stx
 
 # ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
@@ -16,11 +17,9 @@ st.set_page_config(page_title="Sistema de Certidões", layout="centered")
 
 st.markdown("""
     <style>
-    /* Oculta marcações padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     h1 { font-size: 22px; text-align: center; margin-bottom: 0; padding-bottom: 0;}
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
@@ -28,7 +27,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Conexão com o Supabase
 @st.cache_resource
 def iniciar_conexao():
     url = st.secrets["SUPABASE_URL"]
@@ -41,10 +39,19 @@ def gerar_hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
 # ==========================================
-# 2. CONTROLE DE SESSÃO E LOGIN
+# 2. CONTROLE DE SESSÃO COM COOKIES
 # ==========================================
+# Inicializa o gerenciador de cookies
+cookie_manager = stx.CookieManager()
+
+# Busca se já existe um cookie de login salvo no navegador
+usuario_salvo = cookie_manager.get(cookie="usuario_logado")
+
 if "usuario_logado" not in st.session_state:
-    st.session_state["usuario_logado"] = None
+    if usuario_salvo:
+        st.session_state["usuario_logado"] = usuario_salvo
+    else:
+        st.session_state["usuario_logado"] = None
 
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões - TJMG")
@@ -65,6 +72,8 @@ if st.session_state["usuario_logado"] is None:
                     senha_criptografada = gerar_hash_senha(senha_login)
                     if dados_bd["senha"] == senha_criptografada:
                         st.session_state["usuario_logado"] = usuario_login
+                        # Salva o usuário no cookie para resistir ao F5 (dura 30 dias)
+                        cookie_manager.set("usuario_logado", usuario_login, max_age=30*24*60*60)
                         st.rerun()
                     else:
                         st.error("Senha incorreta!")
@@ -101,8 +110,15 @@ if st.session_state["usuario_logado"] is None:
 # 3. DADOS DO USUÁRIO E MENU LATERAL
 # ==========================================
 usuario_atual = st.session_state["usuario_logado"]
-resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
-dados_usuario = resposta_usuario.data[0]
+
+try:
+    resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
+    dados_usuario = resposta_usuario.data[0]
+except:
+    # Prevenção caso o cookie tente acessar um usuário que foi deletado do banco
+    cookie_manager.delete("usuario_logado")
+    st.session_state["usuario_logado"] = None
+    st.rerun()
 
 with st.sidebar:
     st.write(f"👤 Olá, **{usuario_atual.title()}**!")
@@ -110,13 +126,14 @@ with st.sidebar:
     
     opcoes_menu = ["📝 Gerar Certidão", "📂 Minhas Certidões", "⚙️ Meu Perfil"]
     
-    # Adiciona o menu de administrador se o usuário for '10228429'
+    # Adiciona o menu de administrador se o usuário for o seu
     if usuario_atual == "10228429":
         opcoes_menu.append("🛡️ Painel do Administrador")
         
     menu = st.radio("Navegação:", opcoes_menu)
     st.divider()
     if st.button("Sair (Logout)"):
+        cookie_manager.delete("usuario_logado") # Apaga o cookie ao sair
         st.session_state["usuario_logado"] = None
         st.rerun()
 
@@ -262,7 +279,7 @@ elif menu == "🛡️ Painel do Administrador":
         else:
             st.info("Nenhum usuário encontrado.")
 
-    # ABA 2: AUDITORIA DE CERTIDÕES
+    # ABA 2: AUDITORIA DE CERTIDÕES (COM EXCLUSÃO)
     with aba_adm2:
         st.subheader("Certidões Geradas por Todos os Oficiais")
         st.write("Inspecione, baixe ou exclua os arquivos salvos por qualquer oficial.")
@@ -291,7 +308,7 @@ elif menu == "🛡️ Painel do Administrador":
                         st.caption("Nenhuma certidão gerada por este oficial ainda.")
                     else:
                         for arq in certioes_validas:
-                            # Divide em 3 colunas: Nome do arquivo, Botão Baixar, Botão Excluir
+                            # Colunas ajustadas para acomodar Nome, Download e Excluir
                             c_arq_nome, c_btn_dl, c_btn_del = st.columns([4, 2, 2])
                             
                             with c_arq_nome:
@@ -310,7 +327,6 @@ elif menu == "🛡️ Painel do Administrador":
                                     
                             with c_btn_del:
                                 if st.button("🗑️ Excluir", key=f"del_adm_{nome_oficial}_{arq['name']}", use_container_width=True):
-                                    # Deleta o arquivo específico na pasta do oficial
                                     supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
                                     st.success("Excluído!")
                                     st.rerun()
@@ -820,7 +836,7 @@ elif menu == "📝 Gerar Certidão":
                 buffer.seek(0)
 
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
-                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}_{mandado}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
+                nome_arquivo = f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 
                 caminho_salvamento = f"{usuario_atual}/{nome_arquivo}"
                 
