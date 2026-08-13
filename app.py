@@ -680,9 +680,9 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 cidade_assinatura = "Santa Luzia" # Se precisar, é só mudar o nome da cidade aqui
-doc.add_paragraph(f"{cidade_assinatura}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
+                doc.add_paragraph(f"{cidade_assinatura}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
                 except: pass 
                 p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
