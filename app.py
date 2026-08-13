@@ -18,12 +18,12 @@ st.set_page_config(page_title="Sistema de Certidões", layout="centered")
 # --- 🚀 CSS SUPER LIMPO E SEGURO (NÃO QUEBRA O LAYOUT E REPARA A SIDEBAR) ---
 st.markdown("""
     <style>
-    /* Oculta marcações padrão desnecessárias do Streamlit (Exceto o Header para o toggle funcionar) */
+    /* Oculta marcações padrão do Streamlit (Exceto o Header para o toggle funcionar) */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    /* 🚀 CORREÇÃO DEFINITIVA 1: Removido "header {visibility: hidden;}" para que o botão de toggle da sidebar funcione */
+    /* header {visibility: hidden;} */ /* 🚀 CORREÇÃO 1: Mantido header visível para o toggle da sidebar */
     
-    /* 🚀 MELHORIA: Redução sutil nos espaçamentos gerais para compactação padrão */
+    /* 🚀 MELHORIA: Compactação Sutil dos espaçamentos gerais */
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     div[data-testid="stVerticalBlock"] { gap: 0.8rem !important; }
 
@@ -34,7 +34,7 @@ st.markdown("""
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
     div[role="radiogroup"] { margin-top: -10px; }
 
-    /* 🚀 MELHORIA TOUCH: Ligeiro aumento sutil no tamanho dos inputs de rádio para toque no tablet */
+    /* 🚀 MELHORIA TOUCH: Aumento sutil no tamanho dos inputs de rádio para toque no tablet */
     div[role="radiogroup"] div[class^="st-"] > label > div[class^="st-"] > input[type="radio"] { 
         transform: scale(1.15); 
         cursor: pointer;
@@ -80,21 +80,17 @@ if st.session_state["usuario_logado"] is None:
     
     with aba_login:
         st.write("Acesse sua conta para gerar certidões.")
-        # Chaves únicas para os inputs da aba de login
         usuario_login = st.text_input("Usuário:", key="log_usr_input").lower().strip()
         senha_login = st.text_input("Senha:", type="password", key="log_pwd_input")
         
         if st.button("Entrar", type="primary", use_container_width=True, key="btn_entrar"):
             if usuario_login and senha_login:
-                # Busca usuário no banco
                 resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_login).execute()
                 
                 if len(resposta.data) > 0:
                     dados_bd = resposta.data[0]
-                    # Criptografa a senha digitada e compara com a do banco
                     senha_criptografada = gerar_hash_senha(senha_login)
                     if dados_bd["senha"] == senha_criptografada:
-                        # Define o usuário logado no session_state e recarrega a página
                         st.session_state["usuario_logado"] = usuario_login
                         st.rerun()
                     else:
@@ -106,22 +102,19 @@ if st.session_state["usuario_logado"] is None:
                 
     with aba_cadastro:
         st.write("Primeiro acesso? Crie seu usuário e senha abaixo.")
-        # Chaves únicas para os inputs da aba de cadastro
         novo_usuario = st.text_input("Novo Usuário (sem espaços):", key="cad_usr_input").lower().strip()
         nova_senha = st.text_input("Crie uma Senha:", type="password", key="cad_pwd_input")
         
         if st.button("Criar Conta", use_container_width=True, key="btn_criar_conta"):
             if novo_usuario and nova_senha:
-                # Checa se o usuário já existe
                 checar = supabase.table("banco_usuarios").select("*").eq("usuario", novo_usuario).execute()
                 if len(checar.data) > 0:
                     st.error("⚠️ Este nome de usuário já está em uso. Escolha outro.")
                 else:
-                    # Insere o novo usuário com cargo padrão
                     supabase.table("banco_usuarios").insert({
                         "usuario": novo_usuario,
                         "senha": gerar_hash_senha(nova_senha),
-                        "nome": "", # Dados do perfil ficam vazios inicialmente
+                        "nome": "",
                         "cargo": "Oficial de Justiça Avaliador",
                         "matricula": ""
                     }).execute()
@@ -129,7 +122,6 @@ if st.session_state["usuario_logado"] is None:
             else:
                 st.error("Preencha o usuário e a senha para criar a conta.")
                 
-    # Interrompe a execução aqui se não estiver logado
     st.stop()
 
 # ==========================================
@@ -144,17 +136,13 @@ with st.sidebar:
     st.write(f"👤 Olá, **{usuario_atual.title()}**!")
     st.divider()
     
-    # Opções padrão do menu
     opcoes_menu = ["📝 Gerar Certidão", "📂 Minhas Certidões", "⚙️ Meu Perfil"]
-    
-    # Adiciona o menu de administrador se o usuário for o específico (Rafael)
     if usuario_atual == "10228429":
         opcoes_menu.append("🛡️ Painel do Administrador")
         
     menu = st.radio("Navegação:", opcoes_menu)
     st.divider()
     
-    # Botão de Logout
     if st.button("Sair (Logout)", key="btn_logout"):
         st.session_state["usuario_logado"] = None
         st.rerun()
@@ -166,7 +154,6 @@ if menu == "⚙️ Meu Perfil":
     st.title("⚙️ Configurar Meu Perfil")
     st.write("Estes dados serão inseridos no final das suas certidões (Fonte tamanho 8).")
     
-    # Inputs pré-preenchidos com os dados atuais do banco
     novo_nome = st.text_input("Nome Completo:", value=dados_usuario.get("nome", ""), key="input_perfil_nome")
     novo_cargo = st.text_input("Cargo:", value=dados_usuario.get("cargo", ""), key="input_perfil_cargo")
     nova_matricula = st.text_input("Matrícula (ex: PJPI: 12345):", value=dados_usuario.get("matricula", ""), key="input_perfil_matricula")
@@ -225,7 +212,6 @@ elif menu == "📂 Minhas Certidões":
         for item in arquivos:
             c1, c2, c3 = st.columns([1, 4, 3])
             try:
-                # Pega a data do banco e ajusta o fuso (-3h)
                 data_str = item["created_at"].replace("Z", "+00:00")
                 data_obj = datetime.datetime.fromisoformat(data_str)
                 data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
@@ -320,18 +306,23 @@ elif menu == "🛡️ Painel do Administrador":
                 nome_oficial = pasta["name"]
                 if nome_oficial and nome_oficial != ".emptyFolder":
                     st.markdown(f"### 📂 Oficial: `{nome_oficial}`")
+                    
                     try:
                         arquivos_oficial = supabase.storage.from_("certidoes_usuarios").list(nome_oficial)
                     except:
                         arquivos_oficial = []
-                    certidoes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != ""]
+                        
+                    certioes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != ""]
                     
-                    if not certidoes_validas:
-                        st.caption("Nenhuma certidão gerada.")
+                    if not certioes_validas:
+                        st.caption("Nenhuma certidão gerada por este oficial ainda.")
                     else:
-                        for arq in certidoes_validas:
+                        for arq in certioes_validas:
                             c_arq_nome, c_btn_dl, c_btn_del = st.columns([4, 2, 2])
-                            with c_arq_nome: st.text(arq["name"])
+                            
+                            with c_arq_nome:
+                                st.text(arq["name"])
+                                
                             with c_btn_dl:
                                 if st.button("📥 Baixar", key=f"dl_adm_f_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
@@ -342,6 +333,7 @@ elif menu == "🛡️ Painel do Administrador":
                                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                                         key=f"btn_dl_real_{nome_oficial}_{arq['name']}"
                                     )
+                                    
                             with c_btn_del:
                                 if st.button("🗑️ Excluir", key=f"del_adm_f_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
@@ -366,7 +358,7 @@ elif menu == "📝 Gerar Certidão":
     
     st.divider()
 
-    # --- CAMPOS COMPARTILHADOS (Cabeçalho e Datas) ---
+    # --- CAMPOS COMPARTILHADOS (CABEÇALHO) ---
     # 🚀 MELHORIA ESTRUTURAL 1: Agrupamento Mandado/Processo Mantido
     c_mandado, c_proc = st.columns([1, 3])
     with c_mandado:
@@ -389,25 +381,25 @@ elif menu == "📝 Gerar Certidão":
         pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico", key="pessoa_geral")
 
     st.markdown("---")
-    st.write("**Dias e Horários das Diligências:**")
+    st.subheader("Dias e Horários das Diligências")
     
-    # Grid para entrada de 3 datas/horas (Preservado estrutura funcional anterior)
-    c_d1, c_h1 = st.columns(2)
-    with c_d1:
+    # 🚀 MELHORIA ESTRUTURAL 4: Re-organização para 3 colunas compactas (Compactação Vertical)
+    # Criamos 3 colunas: uma para cada diligência (Dia+Hora)
+    cd1, cd2, cd3 = st.columns(3)
+
+    with cd1:
+        st.write("**Diligência 1**")
         d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
-    with c_h1:
         h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs", key="h1_geral")
         
-    c_d2, c_h2 = st.columns(2)
-    with c_d2:
+    with cd2:
+        st.write("**Diligência 2**")
         d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
-    with c_h2:
         h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs", key="h2_geral")
         
-    c_d3, c_h3 = st.columns(2)
-    with c_d3:
+    with cd3:
+        st.write("**Diligência 3**")
         d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
-    with c_h3:
         h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs", key="h3_geral")
 
     st.divider()
@@ -419,17 +411,17 @@ elif menu == "📝 Gerar Certidão":
         st.write("**Deixei de cumprir o ato uma vez que:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
-            nao_loc_dest = st.checkbox("O destinatário do mandado não foi localizado", key="nao_loc_dest")
+            nao_loc_dest = st.checkbox("O destinatário não foi localizado", key="nao_loc_dest")
         with sit_c2:
-            nao_loc_bens = st.checkbox("O(s) bem(ns) indicados não foi(ram) localizado(s)", key="nao_loc_bens")
+            nao_loc_bens = st.checkbox("Bem(ns) não localizado(s)", key="nao_loc_bens")
 
         motivos_selecionados = []
-        with st.expander("📌 Clique aqui para selecionar os Motivos da Negativa (Opcional)", expanded=False):
+        with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
             # ... (Lista de motivos compactada pelo CSS global, mas estrutura original mantida)
             motivos_list = [
                 "mudou-se", "não reside", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
-                "não trabalha no local", "está viajando", "local inabitado", "antigo(a) inquilino(a)", 
-                "antigo(a) morador(a)", "antigo(a) proprietário(a)", "rotatividade de inquilinos",
+                "não trabalha no local", "está viajando", "local inabitado", "antigo inquilino", 
+                "antigo morador", "antigo proprietário", "rotatividade de inquilinos",
                 "Repassado para terceiros", "internado", "transferido", "encontra-se preso",
                 "faleceu", "faliu", "não exerce atividades", "local fechado", 
                 "número não localizado", "rua/av não localizada", "ap/bloco não localizado", 
@@ -451,8 +443,8 @@ elif menu == "📝 Gerar Certidão":
         sabe_tel = ""
         sabe_end = ""
         
-        with st.expander("👤 Informações sobre o Informante (Se houver)", expanded=False):
-            nome_inf_det = st.text_input("Nome do Sr(a):", placeholder="Deixe em branco se não houver informante", key="nome_inf_det")
+        with st.expander("👤 Informações sobre o Informante", expanded=False):
+            nome_inf_det = st.text_input("Nome do Sr(a):", placeholder="Vazio se não houver informante", key="nome_inf_det")
 
             st.caption("Relação / Qualidade:")
             relacoes_list = [
@@ -484,23 +476,23 @@ elif menu == "📝 Gerar Certidão":
             sabe_end = st.text_input("Endereço correto indicado:", key="sabe_end_det")
         
         with st.expander("📝 Certificações Adicionais", expanded=False):
-            # 🚀 MELHORIA ESTRUTURAL 4: Certificações extras agora em duas colunas (Compactação Vertical)
+            # 🚀 MELHORIA ESTRUTURAL 5: Certificações extras agora em duas colunas (Compactação Vertical)
             cert_extras = []
             c_extra1, c_extra2 = st.columns(2)
             with c_extra1:
-                if st.checkbox("Procurei informações com vizinhos/moradores.", key="cert_vizinhos_det"):
+                if st.checkbox("Procurei informações com moradores.", key="cert_vizinhos_det"):
                     cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito.")
-                if st.checkbox("Cópia do mandado deixada com informante.", key="cert_copia_det"):
+                if st.checkbox("Cópia do mandado com informante.", key="cert_copia_det"):
                     cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a) para que a parte/testemunha tome ciência do prazo/data que deverá comparecer em juízo.")
             with c_extra2:
-                if st.checkbox("Imóvel contém apenas bens domésticos comuns.", key="cert_moveis_det"):
+                if st.checkbox("Imóvel contém apenas bens domésticos.", key="cert_moveis_det"):
                     cert_extras.append("o imóvel é residencial e contém apenas móveis e utensílios domésticos que guarnecem a residência do réu.")
 
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det")
 
         st.divider()
 
-        # Botão de Geração
+        # Botão de Geração Detalhada
         if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True, key="btn_gerar_docx_det"):
             with st.spinner("Gerando detalhada..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
@@ -629,7 +621,7 @@ elif menu == "📝 Gerar Certidão":
         )
 
         st.markdown("---")
-        # Observações (Área de texto compactada pelo CSS global)
+        # Observações Extra Compacta (Área de texto compactada pelo CSS global)
         observacoes_simples = st.text_area("Observações Extras:", height=60, key="obs_simples")
         st.divider()
 
