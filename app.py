@@ -16,11 +16,17 @@ st.set_page_config(page_title="Sistema de Certidões", layout="centered")
 
 st.markdown("""
     <style>
+    /* Esconde o menu hamburguer do canto superior direito e o rodapé "Made with Streamlit" */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     h1 { font-size: 22px; text-align: center; margin-bottom: 0; padding-bottom: 0;}
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
     </style>
 """, unsafe_allow_html=True)
+
 
 # Conexão com o Supabase
 @st.cache_resource
