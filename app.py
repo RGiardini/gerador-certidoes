@@ -453,9 +453,9 @@ elif menu == "📝 Gerar Certidão":
                 "primo", "transeunte", "viúvo", "ex", "esposo", "companheiro", "sogro", "enteado",
                 "genro", "nora", "cunhado", "concunhado", "amigo"
             ]
-            cols_rel = st.columns(3)
+            cols_rel = st.columns(4)
             for idx, r in enumerate(relacoes_list):
-                with cols_rel[idx % 3]:
+                with cols_rel[idx % 4]:
                     if st.checkbox(r, key=f"rel_det_{idx}"):
                         relacoes_selecionadas.append(r)
 
@@ -465,9 +465,9 @@ elif menu == "📝 Gerar Certidão":
                 "telefone", "dia/horário de retorno", "o presídio", 
                 "dados do óbito", "previsão de alta"
             ]
-            cols_ns = st.columns(2)
+            cols_ns = st.columns(3)
             for idx, ns in enumerate(nao_sabe_list):
-                with cols_ns[idx % 2]:
+                with cols_ns[idx % 3]:
                     if st.checkbox(ns, key=f"ns_det_{idx}"):
                         nao_sabe_selecionados.append(ns)
 
