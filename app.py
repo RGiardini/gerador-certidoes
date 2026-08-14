@@ -600,8 +600,8 @@ elif menu == "📝 Gerar Certidão":
                         # Condições do Local
                         elif m == "local fechado": frases_motivos.append("o imóvel encontrava-se fechado nas ocasiões das diligências")
                         elif m == "local inabitado": frases_motivos.append("o local encontra-se inabitado/abandonado")
-                        elif m == "número não localizado": frases_motivos.append("o número indicado no mandado não foi localizado na via")
-                        elif m == "rua/av não localizada": frases_motivos.append("a via (rua/avenida) indicada não foi localizada")
+                        elif m == "número não localizado": frases_motivos.append("o número indicado no mandado não foi localizado no logradouro pertencente ao bairro referido")
+                        elif m == "rua/av não localizada": frases_motivos.append("a via (rua/avenida) indicada no mandado não foi localizada no bairro referido")
                         elif m == "ap/bloco não localizado": frases_motivos.append("o apartamento ou bloco indicado não foi localizado no condomínio")
                         
                         # Terceiros e Situações Específicas
