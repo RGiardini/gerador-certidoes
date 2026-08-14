@@ -440,11 +440,12 @@ elif menu == "📝 Gerar Certidão":
 
     st.divider()
 
-    # ==========================================
+   # ==========================================
     # OPÇÃO A: CERTIDÃO DETALHADA
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
-        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA (Antes de desenhar os campos) ---
+        
+        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_detalhada'):
             for k in list(st.session_state.keys()):
                 if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens", "nome_inf_det", "sabe_tel_det", "sabe_end_det", "obs_livres_det"]:
@@ -717,7 +718,7 @@ elif menu == "📝 Gerar Certidão":
                 key="btn_dl_det_ready"
             )
             
-    # ==========================================
+# ==========================================
     # OPÇÃO B: CERTIDÃO SIMPLES (RESTAURADA E ADAPTADA)
     # ==========================================
     elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
@@ -879,12 +880,15 @@ elif menu == "📝 Gerar Certidão":
                 nome_arquivo = f"Certidao_Simples_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
+                # --- NOVO: Salvando na sessão e limpando a tela da Simples ---
                 st.session_state['doc_simples'] = buffer.getvalue()
                 st.session_state['nome_simples'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
                 st.session_state['limpar_simples'] = True # Avisa o sistema para limpar na próxima rodada
                 
-                st.rerun()
+                st.rerun() # Atualiza a tela instantaneamente
+
+        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
                 
                 # Lista de campos da Certidão Simples para resetar
                 chaves_limpar_simples = [
@@ -1035,12 +1039,15 @@ elif menu == "📝 Gerar Certidão":
                 nome_arquivo = f"Certidao_Positiva_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Positiva_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
+                # --- NOVO: Salvando na sessão e limpando a tela da Positiva ---
                 st.session_state['doc_positiva'] = buffer.getvalue()
                 st.session_state['nome_positiva'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
                 st.session_state['limpar_positiva'] = True # Avisa o sistema para limpar na próxima rodada
                 
-                st.rerun()
+                st.rerun() # Atualiza a tela instantaneamente
+
+        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
                 
                 # Lista de campos da Certidão Positiva para resetar
                 chaves_limpar_positiva = ["mod_pos", "contra_pos", "ass_pos", "adv_pos", "obs_pos"]
