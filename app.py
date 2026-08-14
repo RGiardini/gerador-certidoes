@@ -687,24 +687,43 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
                 txt_pessoa = f" a pessoa, Sr(a). {pessoa}" if pessoa else "a pessoa referida no mandado"
                 txt_situacao = ""
-                if situacao_simples == "Local Fechado": txt_situacao = "porque o local foi encontrado fechado e mesmo após chamar várias vezes, ninguém atendeu. "
-                elif situacao_simples == "Pessoa Não Encontrada": txt_situacao = "porque não a encontrei no local. "
-                elif situacao_simples == "Não Localizei a Pessoa": txt_situacao = "porque não a localizei. "
-                paragrafo_unico = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}{texto_data_hora} e, deixei de citar/intimar/notificar {txt_pessoa}, {txt_situacao}"
-                if obteve_inf_simples == "Sim": paragrafo_unico += f"Conforme informações obtidas no local com Sr.(a) {nome_inf_simples}, informou que, "
-                elif obteve_inf_simples == "Não": paragrafo_unico += "Procurei obter informações junto aos moradores vizinhos locais, e não obtive êxito, uma vez que ninguém forneceu informações. "
-                elif obteve_inf_simples == "NQI": paragrafo_unico += "Conforme informações prestadas pelo seu vizinho(a), que não quis se identificar, este afirmou que "
+                if situacao_simples == "Local Fechado": txt_situacao = "porque o local foi encontrado fechado e, mesmo após chamar várias vezes, ninguém atendeu."
+                elif situacao_simples == "Pessoa Não Encontrada": txt_situacao = "porque não a encontrei no local."
+                elif situacao_simples == "Não Localizei a Pessoa": txt_situacao = "porque não a localizei."
+                
+                # Remove a vírgula sobrando no final da data/hora e arruma a conexão com o 'deixei'
+                texto_data_hora_limpo = texto_data_hora.rstrip(",") 
+                paragrafo_unico = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}{texto_data_hora_limpo} e deixei de citar/intimar/notificar{txt_pessoa}, {txt_situacao} "
+                
+                if obteve_inf_simples == "Sim": 
+                    paragrafo_unico += f"Conforme informações obtidas no local com o(a) Sr.(a) {nome_inf_simples}, este(a) informou que "
+                elif obteve_inf_simples == "Não": 
+                    paragrafo_unico += "Procurei obter informações junto aos moradores e vizinhos, não obtendo êxito, uma vez que ninguém forneceu informações. "
+                elif obteve_inf_simples == "NQI": 
+                    paragrafo_unico += "Conforme informações prestadas por um vizinho(a) que não quis se identificar, este(a) afirmou que "
+                
+                # Agrupa os motivos de forma inteligente, usando conectivos corretos ao invés de jogar pontos no meio da frase
                 if obteve_inf_simples in ["Sim", "NQI"]:
-                    if motivo_simples == "Mudou-se": paragrafo_unico += "a pessoa procurada não reside mais no local, tendo se mudado sem deixar meios para contato; "
-                    elif motivo_simples == "Não Reside": paragrafo_unico += "a pessoa procurada não reside no local referido; "
-                    elif motivo_simples == "Não fica ali": paragrafo_unico += "a pessoa procurada reside no local, mas quase não fica no mesmo, onde nos dias e horários acima não foi localizada; "
-                    elif motivo_simples == "Não trabalha ali": paragrafo_unico += "a pessoa procurada não trabalha no local; "
-                    elif motivo_simples == "Falecido": paragrafo_unico += "a pessoa procurada já se encontra falecida. "
-                    if nao_sabe_simples == "Não Conhece": paragrafo_unico += "não conhece a pessoa procurada, não sabendo informar o local/horário para encontrá-la. "
-                    elif nao_sabe_simples == "Não sabe informar": paragrafo_unico += "que não sabe informar o dia e horário para encontrá-lo(a). "
-                    elif nao_sabe_simples == "Não sabe endereço": paragrafo_unico += "que não sabe informar o endereço para encontrá-lo(a). "
-                    if paradeiro_simples == "Não sabe o paradeiro": paragrafo_unico += "não sabe informar seu paradeiro, bem como o local para encontrá-lo. "
-                    elif paradeiro_simples == "Incerto e Não Sabido": paragrafo_unico += "Certifico assim, que PESSOA PROCURADA SE ENCONTRA EM LOCAL INCERTO E NÃO SABIDO. "
+                    infos = []
+                    if motivo_simples == "Mudou-se": infos.append("a pessoa procurada não reside mais no local, tendo se mudado sem deixar meios para contato")
+                    elif motivo_simples == "Não Reside": infos.append("a pessoa procurada não reside no local referido")
+                    elif motivo_simples == "Não fica ali": infos.append("a pessoa procurada reside no local, mas quase não fica lá")
+                    elif motivo_simples == "Não trabalha ali": infos.append("a pessoa procurada não trabalha no local")
+                    elif motivo_simples == "Falecido": infos.append("a pessoa procurada já se encontra falecida")
+                    
+                    if nao_sabe_simples == "Não Conhece": infos.append("não a conhece, não sabendo informar como encontrá-la")
+                    elif nao_sabe_simples == "Não sabe informar": infos.append("não sabe informar o dia e horário para encontrá-la")
+                    elif nao_sabe_simples == "Não sabe endereço": infos.append("não sabe informar seu novo endereço")
+                    
+                    if paradeiro_simples == "Não sabe o paradeiro": infos.append("desconhece o seu paradeiro atual")
+                    elif paradeiro_simples == "Incerto e Não Sabido": infos.append("a pessoa encontra-se em local incerto e não sabido")
+                    
+                    if infos:
+                        if len(infos) > 1:
+                            texto_infos = "; ".join(infos[:-1]) + ", e que " + infos[-1]
+                        else:
+                            texto_infos = infos[0]
+                        paragrafo_unico += f"{texto_infos}. "
                 obs_extra = ""
                 if condicao_simples == "Chuva": obs_extra = "Certifico que a execução restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento. "
                 elif condicao_simples == "Local Perigoso": obs_extra = "Informo também que o local é conhecidamente de grande periculosidade, os moradores ficam receosos de envolvimento. "
