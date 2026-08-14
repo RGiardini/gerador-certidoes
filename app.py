@@ -776,7 +776,15 @@ elif menu == "📝 Gerar Certidão":
         if st.button("Salvar na Nuvem / Gerar DOCX (Simples)", type="primary", use_container_width=True, key="btn_gerar_simples"):
             with st.spinner("Construindo certidão simples e salvando na nuvem..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
-                horas_validas = [h for h in [h1, h2, h3] if h]
+                
+                # --- CORREÇÃO: Lógica Automática de 'hs' na Simples ---
+                horas_cruas = [h for h in [h1, h2, h3] if h]
+                horas_validas = []
+                for h in horas_cruas:
+                    h_limpo = h.strip()
+                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs')):
+                        h_limpo += 'hs'
+                    horas_validas.append(h_limpo)
                 texto_data_hora = ""
                 if len(dias_validos) == 1:
                     texto_data_hora = f", onde às {horas_validas[0]}, do dia {dias_validos[0]},"
@@ -844,9 +852,10 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph(paragrafo_unico.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                # --- CORREÇÃO: Data Personalizada no rodapé da Simples ---
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 cidade_assinatura = "Santa Luzia" # Se precisar, é só mudar o nome da cidade aqui
-                doc.add_paragraph(f"{cidade_assinatura}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
@@ -924,7 +933,15 @@ elif menu == "📝 Gerar Certidão":
                 
                 # Data e Hora (Busca sempre a última diligência preenchida)
                 dias_validos = [d for d in [d1, d2, d3] if d]
-                horas_validas = [h for h in [h1, h2, h3] if h]
+                
+                # --- CORREÇÃO: Lógica Automática de 'hs' na Positiva ---
+                horas_cruas = [h for h in [h1, h2, h3] if h]
+                horas_validas = []
+                for h in horas_cruas:
+                    h_limpo = h.strip()
+                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs')):
+                        h_limpo += 'hs'
+                    horas_validas.append(h_limpo)
                 
                 dia_pos = dias_validos[-1] if dias_validos else "___/___"
                 hora_pos = horas_validas[-1] if horas_validas else "___:___"
@@ -950,9 +967,10 @@ elif menu == "📝 Gerar Certidão":
                 
                 # Fechamento com indentação padrão do sistema
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                # --- CORREÇÃO: Data Personalizada no rodapé da Positiva ---
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 cidade_assinatura = "Santa Luzia"
-                doc.add_paragraph(f"{cidade_assinatura}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
