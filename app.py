@@ -889,20 +889,6 @@ elif menu == "📝 Gerar Certidão":
                 st.rerun() # Atualiza a tela instantaneamente
 
         # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
-                
-                # Lista de campos da Certidão Simples para resetar
-                chaves_limpar_simples = [
-                    "sit_radio_simples", "obteve_inf_radio_simples", "nome_inf_input_simples", 
-                    "motivo_radio_simples", "naosabe_radio_simples", "paradeiro_radio_simples", 
-                    "condicao_radio_simples", "obs_simples"
-                ]
-                for k in chaves_limpar_simples:
-                    if k in st.session_state:
-                        del st.session_state[k]
-                
-                st.rerun() # Atualiza a tela instantaneamente para desmarcar as opções
-
-        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
         if 'doc_simples' in st.session_state:
             if st.session_state.get('piscar_tela'):
                 st.balloons()
@@ -1046,16 +1032,6 @@ elif menu == "📝 Gerar Certidão":
                 st.session_state['limpar_positiva'] = True # Avisa o sistema para limpar na próxima rodada
                 
                 st.rerun() # Atualiza a tela instantaneamente
-
-        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
-                
-                # Lista de campos da Certidão Positiva para resetar
-                chaves_limpar_positiva = ["mod_pos", "contra_pos", "ass_pos", "adv_pos", "obs_pos"]
-                for k in chaves_limpar_positiva:
-                    if k in st.session_state:
-                        del st.session_state[k]
-                
-                st.rerun() # Atualiza a tela instantaneamente para desmarcar as opções
 
         # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
         if 'doc_positiva' in st.session_state:
