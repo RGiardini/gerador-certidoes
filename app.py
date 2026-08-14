@@ -199,7 +199,46 @@ elif menu == "📂 Minhas Certidões":
     if not arquivos:
         st.info("Nenhuma certidão salva ainda.")
     else:
-        arquivos.sort(key=lambda x: x["created_at"], reverse=True)
+        # --- NOVO: Filtros e Seleção em Massa ---
+        c_filtro, c_btn1, c_btn2 = st.columns([2, 1.5, 1.5])
+        with c_filtro:
+            ativar_filtro = st.checkbox("Filtrar por data", key="ativar_filtro_data")
+            hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
+            data_filtro = st.date_input("Escolha a data:", value=hoje_real.date(), disabled=not ativar_filtro, label_visibility="collapsed")
+            
+        # Preparar dados e aplicar filtro
+        arquivos_filtrados = []
+        for item in arquivos:
+            try:
+                data_str = item["created_at"].replace("Z", "+00:00")
+                data_obj = datetime.datetime.fromisoformat(data_str)
+                data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
+                data_br_date = data_br_obj.date()
+                data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
+            except:
+                data_br_date = None
+                data_br = "Data desconhecida"
+                
+            item['data_br_date'] = data_br_date
+            item['data_br'] = data_br
+            
+            if ativar_filtro and data_br_date != data_filtro:
+                continue
+            arquivos_filtrados.append(item)
+            
+        with c_btn1:
+            if st.button("✓ Marcar Todos Abaixo", use_container_width=True):
+                for arq in arquivos_filtrados:
+                    st.session_state[f"chk_file_{arq['name']}"] = True
+                st.rerun()
+        with c_btn2:
+            if st.button("✕ Desmarcar Todos", use_container_width=True):
+                for arq in arquivos_filtrados:
+                    st.session_state[f"chk_file_{arq['name']}"] = False
+                st.rerun()
+                
+        arquivos_filtrados.sort(key=lambda x: x["created_at"], reverse=True)
+        st.divider()
         
         c_sel, c_nome, c_data = st.columns([1, 4, 3])
         c_sel.write("**Selecionar**")
@@ -209,23 +248,15 @@ elif menu == "📂 Minhas Certidões":
         
         arquivos_selecionados = []
         
-        for item in arquivos:
+        for item in arquivos_filtrados:
             c1, c2, c3 = st.columns([1, 4, 3])
-            try:
-                data_str = item["created_at"].replace("Z", "+00:00")
-                data_obj = datetime.datetime.fromisoformat(data_str)
-                data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
-                data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
-            except:
-                data_br = "Data desconhecida"
-
             with c1:
                 if st.checkbox("", key=f"chk_file_{item['name']}"):
                     arquivos_selecionados.append(item['name'])
             with c2:
                 st.write(item['name'])
             with c3:
-                st.write(data_br)
+                st.write(item['data_br'])
                 
         st.divider()
         
@@ -381,26 +412,31 @@ elif menu == "📝 Gerar Certidão":
         pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico", key="pessoa_geral")
 
     st.markdown("---")
-    st.subheader("Dias e Horários das Diligências")
+    st.subheader("Data do Documento e Diligências")
     
-    # 🚀 MELHORIA ESTRUTURAL 4: Re-organização para 3 colunas compactas (Compactação Vertical)
-    # Criamos 3 colunas: uma para cada diligência (Dia+Hora)
+    # --- NOVO: Campo de Data Editável ---
+    hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
+    data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=hoje_real.date(), key="data_certidao_geral")
+    
+    st.write("**Informe os Dias e Horários (o 'hs' será adicionado automaticamente se esquecer):**")
+    
+    # Re-organização para 3 colunas compactas
     cd1, cd2, cd3 = st.columns(3)
 
     with cd1:
         st.write("**Diligência 1**")
         d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
-        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55hs", key="h1_geral")
+        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55", key="h1_geral")
         
     with cd2:
         st.write("**Diligência 2**")
         d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
-        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58hs", key="h2_geral")
+        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58", key="h2_geral")
         
     with cd3:
         st.write("**Diligência 3**")
         d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
-        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15hs", key="h3_geral")
+        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
 
     st.divider()
 
@@ -417,9 +453,9 @@ elif menu == "📝 Gerar Certidão":
 
         motivos_selecionados = []
         with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
-            # ... (Lista de motivos compactada pelo CSS global, mas estrutura original mantida)
+            # --- NOVO: Adicionado "não foi localizada" ---
             motivos_list = [
-                "mudou-se", "não reside no local", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
+                "mudou-se", "não reside no local", "não foi localizada", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
                 "não trabalha no local", "está viajando", "local inabitado", "antigo inquilino", 
                 "antigo morador", "antigo proprietário", "rotatividade de inquilinos",
                 "Repassado para terceiros", "internado", "transferido", "encontra-se preso",
@@ -477,7 +513,6 @@ elif menu == "📝 Gerar Certidão":
         
         with st.expander("📝 Certificações Adicionais", expanded=False):
             cert_extras = []
-            # Dividindo as 8 opções em 2 colunas para manter o layout compacto
             c_extra1, c_extra2 = st.columns(2)
             
             with c_extra1:
@@ -508,7 +543,16 @@ elif menu == "📝 Gerar Certidão":
         if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True, key="btn_gerar_docx_det"):
             with st.spinner("Gerando detalhada..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
-                horas_validas = [h for h in [h1, h2, h3] if h]
+                
+                # --- NOVO: Lógica Automática de 'hs' ---
+                horas_cruas = [h for h in [h1, h2, h3] if h]
+                horas_validas = []
+                for h in horas_cruas:
+                    h_limpo = h.strip()
+                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs')):
+                        h_limpo += 'hs'
+                    horas_validas.append(h_limpo)
+
                 texto_data_hora = ""
                 if len(dias_validos) == 1:
                     texto_data_hora = f", por volta das {horas_validas[0]}, do dia {dias_validos[0]},"
@@ -529,6 +573,7 @@ elif menu == "📝 Gerar Certidão":
                         # Motivos de Moradia / Ocupação
                         if m == "mudou-se": frases_motivos.append("a pessoa procurada não reside mais no local, tendo se mudado")
                         elif m == "não reside no local": frases_motivos.append("a pessoa procurada não reside no local indicado")
+                        elif m == "não foi localizada": frases_motivos.append("a pessoa procurada não foi localizada no endereço diligenciado")
                         elif m == "é desconhecido": frases_motivos.append("a pessoa procurada é desconhecida no local")
                         elif m == "dificilmente fica ali": frases_motivos.append("a pessoa procurada reside no local, mas dificilmente é encontrada ali")
                         elif m == "trabalha em tempo integral": frases_motivos.append("a pessoa procurada trabalha em tempo integral, impossibilitando o encontro nos horários diligenciados")
@@ -565,14 +610,12 @@ elif menu == "📝 Gerar Certidão":
                         else: frases_motivos.append(f"a pessoa procurada {m}")
                     
                     if len(frases_motivos) > 1:
-                        # Se tiver mais de uma opção, une as últimas com "e que" para a frase ficar natural
                         texto_motivos = ", e que ".join([", ".join(frases_motivos[:-1]), frases_motivos[-1]])
                     else:
                         texto_motivos = frases_motivos[0]
                         
                     paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
                 if nome_inf_det or relacoes_selecionadas:
-                    # 1. Correção do pronome de tratamento e nome
                     if nome_inf_det:
                         txt_informante = f"pelo(a) Sr(a). {nome_inf_det}"
                     else:
@@ -581,10 +624,8 @@ elif menu == "📝 Gerar Certidão":
                     rel_str = f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ""
                     paragrafo += f"Conforme informações prestadas no local {txt_informante}{rel_str} "
                     
-                    # 2. Correção da lista de coisas que não sabe (removendo os dois pontos e fluindo o texto)
                     if nao_sabe_selecionados:
                         if len(nao_sabe_selecionados) > 1:
-                            # Junta tudo com vírgula, exceto o último, que recebe "e nem"
                             texto_ns = ", ".join(nao_sabe_selecionados[:-1]) + f" e nem {nao_sabe_selecionados[-1]}"
                         else:
                             texto_ns = nao_sabe_selecionados[0]
@@ -593,7 +634,6 @@ elif menu == "📝 Gerar Certidão":
                     else:
                         paragrafo += "este(a) prestou as devidas informações no local. "
                         
-                    # 3. Informações que o informante soube indicar (mantido)
                     if sabe_tel or sabe_end:
                         sabes_list = []
                         if sabe_tel: sabes_list.append(f"o telefone de contato {sabe_tel}")
@@ -601,6 +641,7 @@ elif menu == "📝 Gerar Certidão":
                         paragrafo += f"Por outro lado, o informante soube indicar {' e '.join(sabes_list)}. "
                 if cert_extras: paragrafo += f"Certifico também que {'; '.join(cert_extras)}. "
                 if observacoes_det: paragrafo += f"{observacoes_det.strip()} "
+                
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
@@ -619,10 +660,13 @@ elif menu == "📝 Gerar Certidão":
                 p_corpo = doc.add_paragraph(paragrafo.strip()); p_corpo.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; p_corpo.paragraph_format.first_line_indent = Pt(35.4); p_corpo.paragraph_format.line_spacing = 1.5 
                 doc.add_paragraph("")
                 p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé."); p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                cidade_assinatura = "Santa Luzia" # Se precisar, é só mudar o nome da cidade aqui
-                doc.add_paragraph(f"{cidade_assinatura}, {hoje.day} de {meses[hoje.month - 1]} de {hoje.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                # --- NOVO: Fechamento com a Data Personalizável ---
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                cidade_assinatura = "Santa Luzia" 
+                doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph("")
+                
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -632,13 +676,43 @@ elif menu == "📝 Gerar Certidão":
                 run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
                 run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
                 run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
+                
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
-                data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
+                
+                # Timestamp correto para o nome do arquivo na nuvem
+                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Negativa_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Negativa_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Negativa_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
-            st.success(f"✅ Certidão detalhada salva na sua conta na Nuvem!")
-            st.download_button(label="📥 Baixar DOCX Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_det")
+                
+                # --- NOVO: Estrutura de Estado para Limpar a Tela e Soltar os Balões ---
+                st.session_state['doc_detalhado'] = buffer.getvalue()
+                st.session_state['nome_detalhado'] = nome_arquivo
+                st.session_state['piscar_tela'] = True
+                
+                chaves_limpar = [k for k in st.session_state.keys() if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["sabe_tel_det", "sabe_end_det", "obs_livres_det", "nao_loc_dest", "nao_loc_bens", "nome_inf_det"]]
+                for k in chaves_limpar:
+                    del st.session_state[k]
+                
+                st.rerun() # Atualiza a tela instantaneamente para desmarcar as caixas
 
+        # --- NOVO: Resposta de Sucesso Externa ao Botão ---
+        if 'doc_detalhado' in st.session_state:
+            if st.session_state.get('piscar_tela'):
+                st.balloons()
+                st.toast("✅ Certidão gerada e painel resetado para a próxima!", icon="🎉")
+                st.session_state['piscar_tela'] = False # Para não piscar 2 vezes
+                
+            st.success("✅ Certidão detalhada salva na sua conta na Nuvem!")
+            st.download_button(
+                label="📥 Baixar DOCX Agora", 
+                data=st.session_state['doc_detalhado'], 
+                file_name=st.session_state['nome_detalhado'], 
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                type="primary", 
+                use_container_width=True, 
+                key="btn_dl_det_ready"
+            )
+            
     # ==========================================
     # OPÇÃO B: CERTIDÃO SIMPLES (RESTAURADA E ADAPTADA)
     # ==========================================
