@@ -384,7 +384,12 @@ elif menu == "📝 Gerar Certidão":
 
     tipo_certidao = st.selectbox(
         "Selecione o Modelo de Certidão:", 
-        ["Certidão Negativa Detalhada", "Certidão Negativa Simples (Opções Rápidas)", "Certidão Positiva"]
+        [
+            "Certidão Negativa Detalhada", 
+            "Certidão Negativa Simples (Opções Rápidas)", 
+            "Certidão Positiva",
+            "Certidão Positiva por Hora Certa"
+        ]
     )
     
     st.divider()
@@ -1049,4 +1054,165 @@ elif menu == "📝 Gerar Certidão":
                 type="primary", 
                 use_container_width=True, 
                 key="btn_dl_positiva_ready"
+            )
+            # ==========================================
+    # OPÇÃO D: CERTIDÃO POSITIVA POR HORA CERTA
+    # ==========================================
+    elif tipo_certidao == "Certidão Positiva por Hora Certa":
+        
+        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
+        if st.session_state.get('limpar_horacerta'):
+            chaves_hc = ["hc_nome_terceiro", "hc_relacao", "hc_data_retorno", "hc_hora_retorno", "hc_encontrou_alvo", "hc_aceitou", "hc_assinou"]
+            for k in chaves_hc:
+                if k in st.session_state: del st.session_state[k]
+            st.session_state['limpar_horacerta'] = False
+            
+        st.subheader("1. Suspeita de Ocultação e Agendamento")
+        
+        c_hc1, c_hc2 = st.columns(2)
+        with c_hc1:
+            hc_nome_terceiro = st.text_input("Com quem marcou a hora certa?", placeholder="Ex: Sra. Teresinha dos Santos", key="hc_nome_terceiro")
+            hc_data_retorno = st.text_input("Data marcada para o retorno:", placeholder="Ex: 19/05", key="hc_data_retorno")
+        with c_hc2:
+            hc_relacao = st.text_input("Qualidade/Relação:", placeholder="Ex: mãe, vizinha, porteiro", key="hc_relacao")
+            hc_hora_retorno = st.text_input("Hora marcada para o retorno:", placeholder="Ex: 18:15", key="hc_hora_retorno")
+
+        st.markdown("---")
+        st.subheader("2. Desfecho do Retorno")
+        
+        c_hc3, c_hc4, c_hc5 = st.columns(3)
+        with c_hc3:
+            st.caption("O alvo estava presente?")
+            hc_encontrou_alvo = st.radio("Encontrou a pessoa?", ["Não", "Sim"], key="hc_encontrou_alvo")
+        with c_hc4:
+            st.caption("Contrafé com o terceiro")
+            hc_aceitou = st.radio("Terceiro aceitou receber?", ["Sim", "Não"], key="hc_aceitou")
+        with c_hc5:
+            st.caption("Assinatura do terceiro")
+            hc_assinou = st.radio("Terceiro assinou?", ["Não", "Sim", "Covid-19"], key="hc_assinou")
+
+        st.divider()
+
+        # Lógica do Botão Gerar
+        if st.button("Salvar na Nuvem / Gerar DOCX (Hora Certa)", type="primary", use_container_width=True, key="btn_gerar_horacerta"):
+            with st.spinner("Construindo certidão de Hora Certa..."):
+                
+                txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
+                txt_pessoa = f" o(a) Sr(a). {pessoa}" if pessoa else " a pessoa referida no mandado"
+                
+                # Formatação dos Dias e Horários Anteriores (com injeção automática de 'hs')
+                dias_validos = [d for d in [d1, d2, d3] if d]
+                horas_cruas = [h for h in [h1, h2, h3] if h]
+                horas_validas = []
+                for h in horas_cruas:
+                    h_limpo = h.strip()
+                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs', 'min')):
+                        h_limpo += 'hs'
+                    horas_validas.append(h_limpo)
+                
+                texto_data_hora = ""
+                if len(dias_validos) == 1:
+                    texto_data_hora = f"às {horas_validas[0]}, do dia {dias_validos[0]},"
+                elif len(dias_validos) > 1:
+                    str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
+                    str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
+                    texto_data_hora = f"às {str_horas}, dos dias {str_dias}, respectivamente,"
+                
+                # Injeção automática de 'hs' na hora do retorno
+                hr_limpo = hc_hora_retorno.strip()
+                if hr_limpo and not hr_limpo.lower().endswith(('h', 'hs', 'min')):
+                    hr_limpo += 'hs'
+
+                # Variáveis do Agendamento
+                txt_terceiro = f"na pessoa do(a) Sr(a). {hc_nome_terceiro}" if hc_nome_terceiro else "na pessoa de um terceiro ali presente"
+                txt_relacao = f", na qualidade de {hc_relacao}," if hc_relacao else ","
+                
+                # Variáveis do Desfecho
+                txt_retorno_alvo = "ali não encontrando" if hc_encontrou_alvo == "Não" else "ali encontrando"
+                
+                if hc_aceitou == "Sim":
+                    if hc_assinou == "Sim":
+                        txt_final = "a qual aceitou e exarou sua assinatura no mandado."
+                    elif hc_assinou == "Não":
+                        txt_final = "a qual aceitou, mas não quis assinar o mandado."
+                    else:
+                        txt_final = "a qual aceitou, deixando eu de colher a assinatura como forma de prevenção ao Covid-19."
+                else:
+                    txt_final = "a qual se recusou a receber a contrafé e a assinar o mandado."
+
+                # Construção do Parágrafo Inteligente
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} e não encontrei{txt_pessoa}. Havendo suspeita de ocultação, marquei hora certa {txt_terceiro}{txt_relacao} intimando-o(a) de que voltaria no dia {hc_data_retorno}, às {hr_limpo}, para efetuá-la. Retornando no dia e hora designados, {txt_retorno_alvo}{txt_pessoa}, efetuei a citação/intimação/notificação, deixando a respectiva contrafé com a pessoa referida, {txt_final}"
+                
+                # Geração do Arquivo DOCX
+                doc = Document()
+                style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
+                
+                try:
+                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
+                except: pass
+                
+                if processo:
+                    texto_processo = f"Processo: {processo}"
+                    if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
+                    doc.add_paragraph(texto_processo)
+                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
+                doc.add_paragraph("")
+                
+                p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+                
+                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4)
+                doc.add_paragraph("")
+                
+                # Fechamento
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                cidade_assinatura = "Santa Luzia"
+                doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+                
+                try:
+                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
+                except: pass 
+                
+                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
+                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
+                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
+                
+                buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
+                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
+                nome_arquivo = f"Certidao_HoraCerta_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_HoraCerta_{processo}_{data_arquivo}.docx" if processo else f"Certidao_HoraCerta_{data_arquivo}.docx"
+                
+                # Upload Supabase
+                supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
+                
+                # Estado para Limpar e Baixar
+                st.session_state['doc_horacerta'] = buffer.getvalue()
+                st.session_state['nome_horacerta'] = nome_arquivo
+                st.session_state['piscar_tela'] = True
+                st.session_state['limpar_horacerta'] = True 
+                
+                st.rerun() 
+
+        # Botão Externo
+        if 'doc_horacerta' in st.session_state:
+            if st.session_state.get('piscar_tela'):
+                st.balloons()
+                st.toast("✅ Certidão de Hora Certa gerada e painel resetado!", icon="🎉")
+                st.session_state['piscar_tela'] = False 
+                
+            st.success("✅ Certidão Positiva por Hora Certa salva na sua conta na Nuvem!")
+            st.download_button(
+                label="📥 Baixar Documento Word Agora", 
+                data=st.session_state['doc_horacerta'], 
+                file_name=st.session_state['nome_horacerta'], 
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                type="primary", 
+                use_container_width=True, 
+                key="btn_dl_horacerta_ready"
             )
