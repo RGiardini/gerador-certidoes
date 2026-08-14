@@ -526,16 +526,42 @@ elif menu == "📝 Gerar Certidão":
                 if motivos_selecionados:
                     frases_motivos = []
                     for m in motivos_selecionados:
-                        if m == "local fechado": frases_motivos.append("o imóvel encontrava-se fechado")
-                        elif m == "local inabitado": frases_motivos.append("o local encontra-se inabitado")
-                        elif m == "número não localizado": frases_motivos.append("o número indicado não foi localizado")
-                        elif m == "rua/av não localizada": frases_motivos.append("a via indicada não foi localizada")
-                        elif m == "ap/bloco não localizado": frases_motivos.append("o apartamento/bloco não foi localizado")
-                        elif m == "rotatividade de inquilinos": frases_motivos.append("há alta rotatividade de inquilinos no endereço")
-                        elif m == "guarnecem a residência amparados pela Lei 8.009/90": frases_motivos.append("os bens que guarnecem a residência estão amparados pela Lei 8.009/90")
-                        elif m == "são insuficientes para saldar o débito": frases_motivos.append("os bens encontrados são insuficientes para saldar o débito")
+                        # Motivos de Moradia / Ocupação
+                        if m == "mudou-se": frases_motivos.append("a pessoa procurada não reside mais no local, tendo se mudado")
+                        elif m == "não reside no local": frases_motivos.append("a pessoa procurada não reside no local indicado")
+                        elif m == "é desconhecido": frases_motivos.append("a pessoa procurada é desconhecida no local")
+                        elif m == "dificilmente fica ali": frases_motivos.append("a pessoa procurada reside no local, mas dificilmente é encontrada ali")
+                        elif m == "trabalha em tempo integral": frases_motivos.append("a pessoa procurada trabalha em tempo integral, impossibilitando o encontro nos horários diligenciados")
+                        elif m == "não trabalha no local": frases_motivos.append("a pessoa procurada não trabalha no endereço indicado")
+                        elif m == "está viajando": frases_motivos.append("a pessoa procurada encontra-se viajando")
+                        elif m == "aparece esporadicamente": frases_motivos.append("a pessoa procurada aparece apenas esporadicamente no endereço")
+                        elif m == "utiliza endereço para correspondências": frases_motivos.append("o endereço é utilizado pela pessoa procurada apenas para recebimento de correspondências")
+                        
+                        # Condições do Local
+                        elif m == "local fechado": frases_motivos.append("o imóvel encontrava-se fechado nas ocasiões das diligências")
+                        elif m == "local inabitado": frases_motivos.append("o local encontra-se inabitado/abandonado")
+                        elif m == "número não localizado": frases_motivos.append("o número indicado no mandado não foi localizado na via")
+                        elif m == "rua/av não localizada": frases_motivos.append("a via (rua/avenida) indicada não foi localizada")
+                        elif m == "ap/bloco não localizado": frases_motivos.append("o apartamento ou bloco indicado não foi localizado no condomínio")
+                        
+                        # Terceiros e Situações Específicas
+                        elif m == "rotatividade de inquilinos": frases_motivos.append("há alta rotatividade de inquilinos no endereço, dificultando a localização")
+                        elif m == "Repassado para terceiros": frases_motivos.append("o imóvel/estabelecimento foi repassado para terceiros")
                         elif m in ["antigo inquilino", "antigo morador", "antigo proprietário"]: frases_motivos.append(f"a pessoa procurada trata-se de um {m}")
-                        elif m == "Repassado para terceiros": frases_motivos.append("o imóvel foi repassado para terceiros")
+                        
+                        # Situações Pessoais Graves
+                        elif m == "internado": frases_motivos.append("a pessoa procurada encontra-se internada")
+                        elif m == "transferido": frases_motivos.append("a pessoa procurada foi transferida de unidade/estabelecimento")
+                        elif m == "encontra-se preso": frases_motivos.append("a pessoa procurada encontra-se reclusa no sistema prisional")
+                        elif m == "faleceu": frases_motivos.append("a pessoa procurada já se encontra falecida")
+                        elif m == "sem condições psíquicas de entender conteúdo mandado": frases_motivos.append("a pessoa procurada encontra-se sem condições psíquicas de entender o conteúdo e o fim do mandado")
+                        
+                        # Situações de Execução / Bens
+                        elif m == "faliu": frases_motivos.append("a empresa procurada faliu ou encerrou suas atividades")
+                        elif m == "não exerce atividades": frases_motivos.append("a empresa procurada não exerce mais atividades no local")
+                        elif m == "guarnecem a residência amparados pela Lei 8.009/90": frases_motivos.append("os bens que guarnecem a residência estão amparados pela impenhorabilidade prevista na Lei 8.009/90")
+                        elif m == "são insuficientes para saldar o débito": frases_motivos.append("os bens encontrados são insuficientes ou de baixo valor comercial para saldar o débito")
+                        
                         else: frases_motivos.append(f"a pessoa procurada {m}")
                     
                     if len(frases_motivos) > 1:
