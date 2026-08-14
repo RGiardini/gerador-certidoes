@@ -204,7 +204,7 @@ elif menu == "📂 Minhas Certidões":
         with c_filtro:
             ativar_filtro = st.checkbox("Filtrar por data", key="ativar_filtro_data")
             hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-            data_filtro = st.date_input("Escolha a data:", value=hoje_real.date(), disabled=not ativar_filtro, label_visibility="collapsed")
+            data_filtro = st.date_input("Escolha a data:", value=hoje_real.date(), format="DD/MM/YYYY", disabled=not ativar_filtro, label_visibility="collapsed")
             
         # Preparar dados e aplicar filtro
         arquivos_filtrados = []
@@ -421,7 +421,7 @@ elif menu == "📝 Gerar Certidão":
     
     # --- NOVO: Campo de Data Editável ---
     hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-    data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=hoje_real.date(), key="data_certidao_geral")
+    data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=hoje_real.date(), format="DD/MM/YYYY", key="data_certidao_geral")
     
     st.write("**Informe os Dias e Horários (o 'hs' será adicionado automaticamente se esquecer):**")
     
