@@ -453,8 +453,10 @@ elif menu == "📝 Gerar Certidão":
         # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_detalhada'):
             for k in list(st.session_state.keys()):
-                if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens", "nome_inf_det", "sabe_tel_det", "sabe_end_det", "obs_livres_det"]:
-                    del st.session_state[k]
+                if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens"]:
+                    st.session_state[k] = False # Força as checkboxes a desmarcarem
+                elif k in ["nome_inf_det", "sabe_tel_det", "sabe_end_det", "obs_livres_det"]:
+                    st.session_state[k] = "" # Força os textos a ficarem vazios
             st.session_state['limpar_detalhada'] = False
 
         st.write("**Deixei de cumprir o ato uma vez que:**")
@@ -730,8 +732,10 @@ elif menu == "📝 Gerar Certidão":
         
         # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_simples'):
-            for k in ["sit_radio_simples", "obteve_inf_radio_simples", "nome_inf_input_simples", "motivo_radio_simples", "naosabe_radio_simples", "paradeiro_radio_simples", "condicao_radio_simples", "obs_simples"]:
-                if k in st.session_state: del st.session_state[k]
+            for k in ["sit_radio_simples", "obteve_inf_radio_simples", "motivo_radio_simples", "naosabe_radio_simples", "paradeiro_radio_simples", "condicao_radio_simples"]:
+                st.session_state[k] = None # Zera os radio buttons
+            for k in ["nome_inf_input_simples", "obs_simples"]:
+                st.session_state[k] = "" # Zera os textos
             st.session_state['limpar_simples'] = False
             
         # --- INPUTS (Preservado estrutura original estável) ---
@@ -917,8 +921,11 @@ elif menu == "📝 Gerar Certidão":
         
         # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_positiva'):
-            for k in ["mod_pos", "contra_pos", "ass_pos", "adv_pos", "obs_pos"]:
-                if k in st.session_state: del st.session_state[k]
+            st.session_state["mod_pos"] = "Presencial"
+            st.session_state["contra_pos"] = "Sim"
+            st.session_state["ass_pos"] = "Sim"
+            st.session_state["adv_pos"] = "Não Perguntado"
+            st.session_state["obs_pos"] = ""
             st.session_state['limpar_positiva'] = False
             
         st.subheader("Detalhes da Diligência Positiva")
@@ -1062,9 +1069,11 @@ elif menu == "📝 Gerar Certidão":
         
         # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_horacerta'):
-            chaves_hc = ["hc_nome_terceiro", "hc_relacao", "hc_data_retorno", "hc_hora_retorno", "hc_encontrou_alvo", "hc_aceitou", "hc_assinou"]
-            for k in chaves_hc:
-                if k in st.session_state: del st.session_state[k]
+            for k in ["hc_nome_terceiro", "hc_relacao", "hc_data_retorno", "hc_hora_retorno"]:
+                st.session_state[k] = ""
+            st.session_state["hc_encontrou_alvo"] = "Não"
+            st.session_state["hc_aceitou"] = "Sim"
+            st.session_state["hc_assinou"] = "Não"
             st.session_state['limpar_horacerta'] = False
             
         st.subheader("1. Suspeita de Ocultação e Agendamento")
