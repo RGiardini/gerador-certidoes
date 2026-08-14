@@ -444,6 +444,13 @@ elif menu == "📝 Gerar Certidão":
     # OPÇÃO A: CERTIDÃO DETALHADA
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
+        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA (Antes de desenhar os campos) ---
+        if st.session_state.get('limpar_detalhada'):
+            for k in list(st.session_state.keys()):
+                if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens", "nome_inf_det", "sabe_tel_det", "sabe_end_det", "obs_livres_det"]:
+                    del st.session_state[k]
+            st.session_state['limpar_detalhada'] = False
+
         st.write("**Deixei de cumprir o ato uma vez que:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
@@ -688,16 +695,9 @@ elif menu == "📝 Gerar Certidão":
                 st.session_state['doc_detalhado'] = buffer.getvalue()
                 st.session_state['nome_detalhado'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
+                st.session_state['limpar_detalhada'] = True # Avisa o sistema para limpar na próxima rodada
                 
-                # Forçando a limpeza visual atribuindo valores falsos e vazios
-                for k in list(st.session_state.keys()):
-                    if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens"]:
-                        st.session_state[k] = False
-                        
-                for k in ["sabe_tel_det", "sabe_end_det", "obs_livres_det", "nome_inf_det"]:
-                    st.session_state[k] = ""
-                
-                st.rerun() # Atualiza a tela instantaneamente para desmarcar as caixas
+                st.rerun() # Atualiza a tela instantaneamente
 
         # --- NOVO: Resposta de Sucesso Externa ao Botão ---
         if 'doc_detalhado' in st.session_state:
@@ -722,6 +722,12 @@ elif menu == "📝 Gerar Certidão":
     # ==========================================
     elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
         
+        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
+        if st.session_state.get('limpar_simples'):
+            for k in ["sit_radio_simples", "obteve_inf_radio_simples", "nome_inf_input_simples", "motivo_radio_simples", "naosabe_radio_simples", "paradeiro_radio_simples", "condicao_radio_simples", "obs_simples"]:
+                if k in st.session_state: del st.session_state[k]
+            st.session_state['limpar_simples'] = False
+            
         # --- INPUTS (Preservado estrutura original estável) ---
         st.subheader("Situação Principal")
         situacao_simples = st.radio(
@@ -873,10 +879,12 @@ elif menu == "📝 Gerar Certidão":
                 nome_arquivo = f"Certidao_Simples_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
-                # --- NOVO: Salvando na sessão e limpando a tela da Simples ---
                 st.session_state['doc_simples'] = buffer.getvalue()
                 st.session_state['nome_simples'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
+                st.session_state['limpar_simples'] = True # Avisa o sistema para limpar na próxima rodada
+                
+                st.rerun()
                 
                 # Lista de campos da Certidão Simples para resetar
                 chaves_limpar_simples = [
@@ -912,6 +920,12 @@ elif menu == "📝 Gerar Certidão":
     # ==========================================
     elif tipo_certidao == "Certidão Positiva":
         
+        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
+        if st.session_state.get('limpar_positiva'):
+            for k in ["mod_pos", "contra_pos", "ass_pos", "adv_pos", "obs_pos"]:
+                if k in st.session_state: del st.session_state[k]
+            st.session_state['limpar_positiva'] = False
+            
         st.subheader("Detalhes da Diligência Positiva")
         
         # Opções compactas divididas em 3 colunas
@@ -1021,10 +1035,12 @@ elif menu == "📝 Gerar Certidão":
                 nome_arquivo = f"Certidao_Positiva_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Positiva_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
-                # --- NOVO: Salvando na sessão e limpando a tela da Positiva ---
                 st.session_state['doc_positiva'] = buffer.getvalue()
                 st.session_state['nome_positiva'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
+                st.session_state['limpar_positiva'] = True # Avisa o sistema para limpar na próxima rodada
+                
+                st.rerun()
                 
                 # Lista de campos da Certidão Positiva para resetar
                 chaves_limpar_positiva = ["mod_pos", "contra_pos", "ass_pos", "adv_pos", "obs_pos"]
