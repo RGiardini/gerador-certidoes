@@ -689,9 +689,13 @@ elif menu == "📝 Gerar Certidão":
                 st.session_state['nome_detalhado'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
                 
-                chaves_limpar = [k for k in st.session_state.keys() if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["sabe_tel_det", "sabe_end_det", "obs_livres_det", "nao_loc_dest", "nao_loc_bens", "nome_inf_det"]]
-                for k in chaves_limpar:
-                    del st.session_state[k]
+                # Forçando a limpeza visual atribuindo valores falsos e vazios
+                for k in list(st.session_state.keys()):
+                    if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens"]:
+                        st.session_state[k] = False
+                        
+                for k in ["sabe_tel_det", "sabe_end_det", "obs_livres_det", "nome_inf_det"]:
+                    st.session_state[k] = ""
                 
                 st.rerun() # Atualiza a tela instantaneamente para desmarcar as caixas
 
@@ -868,9 +872,41 @@ elif menu == "📝 Gerar Certidão":
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Simples_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
-            st.success(f"✅ Certidão simples salva na sua conta na Nuvem!")
-            st.download_button(label="📥 Baixar Documento Word Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_simples")
-    
+                
+                # --- NOVO: Salvando na sessão e limpando a tela da Simples ---
+                st.session_state['doc_simples'] = buffer.getvalue()
+                st.session_state['nome_simples'] = nome_arquivo
+                st.session_state['piscar_tela'] = True
+                
+                # Lista de campos da Certidão Simples para resetar
+                chaves_limpar_simples = [
+                    "sit_radio_simples", "obteve_inf_radio_simples", "nome_inf_input_simples", 
+                    "motivo_radio_simples", "naosabe_radio_simples", "paradeiro_radio_simples", 
+                    "condicao_radio_simples", "obs_simples"
+                ]
+                for k in chaves_limpar_simples:
+                    if k in st.session_state:
+                        del st.session_state[k]
+                
+                st.rerun() # Atualiza a tela instantaneamente para desmarcar as opções
+
+        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
+        if 'doc_simples' in st.session_state:
+            if st.session_state.get('piscar_tela'):
+                st.balloons()
+                st.toast("✅ Certidão gerada e painel resetado para a próxima!", icon="🎉")
+                st.session_state['piscar_tela'] = False # Evita piscar duas vezes
+                
+            st.success("✅ Certidão simples salva na sua conta na Nuvem!")
+            st.download_button(
+                label="📥 Baixar Documento Word Agora", 
+                data=st.session_state['doc_simples'], 
+                file_name=st.session_state['nome_simples'], 
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                type="primary", 
+                use_container_width=True, 
+                key="btn_dl_simples_ready"
+            )
     # ==========================================
     # OPÇÃO C: CERTIDÃO POSITIVA
     # ==========================================
@@ -984,5 +1020,34 @@ elif menu == "📝 Gerar Certidão":
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Positiva_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Positiva_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
-            st.success(f"✅ Certidão positiva salva na sua conta na Nuvem!")
-            st.download_button(label="📥 Baixar Documento Word Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_positiva")
+                
+                # --- NOVO: Salvando na sessão e limpando a tela da Positiva ---
+                st.session_state['doc_positiva'] = buffer.getvalue()
+                st.session_state['nome_positiva'] = nome_arquivo
+                st.session_state['piscar_tela'] = True
+                
+                # Lista de campos da Certidão Positiva para resetar
+                chaves_limpar_positiva = ["mod_pos", "contra_pos", "ass_pos", "adv_pos", "obs_pos"]
+                for k in chaves_limpar_positiva:
+                    if k in st.session_state:
+                        del st.session_state[k]
+                
+                st.rerun() # Atualiza a tela instantaneamente para desmarcar as opções
+
+        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
+        if 'doc_positiva' in st.session_state:
+            if st.session_state.get('piscar_tela'):
+                st.balloons()
+                st.toast("✅ Certidão gerada e painel resetado para a próxima!", icon="🎉")
+                st.session_state['piscar_tela'] = False # Evita piscar duas vezes
+                
+            st.success("✅ Certidão positiva salva na sua conta na Nuvem!")
+            st.download_button(
+                label="📥 Baixar Documento Word Agora", 
+                data=st.session_state['doc_positiva'], 
+                file_name=st.session_state['nome_positiva'], 
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+                type="primary", 
+                use_container_width=True, 
+                key="btn_dl_positiva_ready"
+            )
