@@ -585,7 +585,7 @@ elif menu == "📝 Gerar Certidão":
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
+                    p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(5))
                 except: pass 
                 p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
