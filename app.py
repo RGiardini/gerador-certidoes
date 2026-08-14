@@ -461,7 +461,7 @@ elif menu == "📝 Gerar Certidão":
 
             st.write("**Não sabendo o informante indicar:**")
             nao_sabe_list = [
-                "endereço completo", "paradeiro", "o dia/horário exato para encontrá-lo(a)", 
+                "endereço completo", "paradeiro da pessoa procurada", "o dia/horário exato para encontrá-lo(a)", 
                 "telefone", "dia/horário de retorno", "o presídio", 
                 "dados do óbito", "previsão de alta"
             ]
@@ -550,7 +550,7 @@ elif menu == "📝 Gerar Certidão":
                     rel_str = f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ""
                     paragrafo += f"Conforme informações prestadas no local pelo(a) Sr(a). {nome_str}{rel_str} "
                     if nao_sabe_selecionados:
-                        paragrafo += f"este(a) declarou não saber indicar: {', '.join(nao_sabe_selecionados)}. "
+                        paragrafo += f"este(a) declarou não saber informar sobre: {', '.join(nao_sabe_selecionados)}. "
                     else:
                         paragrafo += "este(a) prestou as devidas informações no local. "
                     if sabe_tel or sabe_end:
