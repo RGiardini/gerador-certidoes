@@ -586,7 +586,7 @@ elif menu == "📝 Gerar Certidão":
                         # Motivos de Moradia / Ocupação
                         if m == "mudou-se": frases_motivos.append("a pessoa procurada não reside mais no local, tendo se mudado")
                         elif m == "não reside no local": frases_motivos.append("a pessoa procurada não reside no local indicado")
-                        elif m == "não foi localizada": frases_motivos.append("a pessoa procurada não foi localizada no endereço diligenciado")
+                        elif m == "não foi localizada": frases_motivos.append("a pessoa procurada não foi localizada")
                         elif m == "é desconhecido": frases_motivos.append("a pessoa procurada é desconhecida no local")
                         elif m == "dificilmente fica ali": frases_motivos.append("a pessoa procurada reside no local, mas dificilmente é encontrada ali")
                         elif m == "trabalha em tempo integral": frases_motivos.append("a pessoa procurada trabalha em tempo integral, impossibilitando o encontro nos horários diligenciados")
