@@ -829,7 +829,7 @@ elif menu == "📝 Gerar Certidão":
                 
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
-                nome_arquivo = f"Certidao_Positiva_{processo}_{mandado}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
+                nome_arquivo = f"Certidao_Positiva_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Positiva_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
             st.success(f"✅ Certidão positiva salva na sua conta na Nuvem!")
             st.download_button(label="📥 Baixar Documento Word Agora", data=buffer, file_name=nome_arquivo, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", type="primary", use_container_width=True, key="btn_dl_positiva")
