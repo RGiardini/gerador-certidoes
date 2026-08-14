@@ -546,13 +546,28 @@ elif menu == "📝 Gerar Certidão":
                         
                     paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
                 if nome_inf_det or relacoes_selecionadas:
-                    nome_str = nome_inf_det if nome_inf_det else "pessoa não identificada"
+                    # 1. Correção do pronome de tratamento e nome
+                    if nome_inf_det:
+                        txt_informante = f"pelo(a) Sr(a). {nome_inf_det}"
+                    else:
+                        txt_informante = "por pessoa não identificada"
+                        
                     rel_str = f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ""
-                    paragrafo += f"Conforme informações prestadas no local pelo(a) Sr(a). {nome_str}{rel_str} "
+                    paragrafo += f"Conforme informações prestadas no local {txt_informante}{rel_str} "
+                    
+                    # 2. Correção da lista de coisas que não sabe (removendo os dois pontos e fluindo o texto)
                     if nao_sabe_selecionados:
-                        paragrafo += f"este(a) declarou não saber informar sobre: {', '.join(nao_sabe_selecionados)}. "
+                        if len(nao_sabe_selecionados) > 1:
+                            # Junta tudo com vírgula, exceto o último, que recebe "e nem"
+                            texto_ns = ", ".join(nao_sabe_selecionados[:-1]) + f" e nem {nao_sabe_selecionados[-1]}"
+                        else:
+                            texto_ns = nao_sabe_selecionados[0]
+                            
+                        paragrafo += f"este(a) declarou não saber informar {texto_ns}. "
                     else:
                         paragrafo += "este(a) prestou as devidas informações no local. "
+                        
+                    # 3. Informações que o informante soube indicar (mantido)
                     if sabe_tel or sabe_end:
                         sabes_list = []
                         if sabe_tel: sabes_list.append(f"o telefone de contato {sabe_tel}")
