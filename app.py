@@ -517,7 +517,7 @@ elif menu == "📝 Gerar Certidão":
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
                     texto_data_hora = f", por volta das {str_horas}, dos dias {str_dias}, respectivamente,"
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
-                txt_pessoa = f" de {pessoa}" if pessoa else ""
+                txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
                 sits = []
                 if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
@@ -830,7 +830,8 @@ elif menu == "📝 Gerar Certidão":
                 hora_pos = horas_validas[-1] if horas_validas else "___:___"
                 
                 # Construção do Parágrafo Inteligente
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, {txt_inicio} onde no dia {dia_pos}, às {hora_pos}, CITEI/INTIMEI/NOTIFIQUEI{txt_pessoa}, lendo-lhe o mandado e {txt_contrafe}, {txt_ass}{txt_adv}"
+                # Trocado o 'onde' problemático por 'ocasião em que'
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, {txt_inicio} ocasião em que, no dia {dia_pos}, às {hora_pos}, CITEI/INTIMEI/NOTIFIQUEI{txt_pessoa}, lendo-lhe o mandado e {txt_contrafe}, {txt_ass}{txt_adv}"
                 if obs_pos: paragrafo += f" {obs_pos.strip()}"
                 
                 # Geração do Arquivo DOCX
