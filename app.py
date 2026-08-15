@@ -12,29 +12,21 @@ from supabase import create_client, Client
 # ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
 # ==========================================
-# 🚀 CORREÇÃO 2: Mantido layout centralizado para estabilidade
 st.set_page_config(page_title="Sistema de Certidões", layout="wide")
 
-# --- 🚀 CSS SUPER LIMPO E SEGURO (NÃO QUEBRA O LAYOUT E REPARA A SIDEBAR) ---
 st.markdown("""
     <style>
-    /* Oculta marcações padrão do Streamlit (Exceto o Header para o toggle funcionar) */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    /* header {visibility: hidden;} */ /* 🚀 CORREÇÃO 1: Mantido header visível para o toggle da sidebar */
     
-    /* 🚀 MELHORIA: Compactação Sutil dos espaçamentos gerais */
     .block-container { padding-top: 1rem; padding-bottom: 1rem; }
     div[data-testid="stVerticalBlock"] { gap: 0.8rem !important; }
 
-    /* Estilização para o título principal compactado */
     .main h1 { font-size: 22px; text-align: center; margin-top: 0.5rem !important; margin-bottom: 0.2rem !important; padding-bottom: 0;}
     
-    /* Ajustes finos de margem para elementos específicos (Preservado do seu código) */
     .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
     div[role="radiogroup"] { margin-top: -10px; }
 
-    /* 🚀 MELHORIA TOUCH: Aumento sutil no tamanho dos inputs de rádio para toque no tablet */
     div[role="radiogroup"] div[class^="st-"] > label > div[class^="st-"] > input[type="radio"] { 
         transform: scale(1.15); 
         cursor: pointer;
@@ -44,35 +36,28 @@ st.markdown("""
         line-height: 1.2 !important;
     }
     
-    /* 🚀 MELHORIA: Sidebar mais fina e limpa */
     section[data-testid="stSidebar"] { width: 16rem !important; }
     section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
-
     </style>
 """, unsafe_allow_html=True)
 
-# Conexão com o Supabase (usa st.cache_resource para manter a conexão ativa)
 @st.cache_resource
 def iniciar_conexao():
-    # Certifique-se de que estas chaves estão configuradas no Render (Environment)
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     return create_client(url, key)
 
 supabase: Client = iniciar_conexao()
 
-# Função para criptografar senhas
 def gerar_hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
 # ==========================================
 # 2. CONTROLE DE SESSÃO E LOGIN
 # ==========================================
-# Inicializa o estado de login se não existir
 if "usuario_logado" not in st.session_state:
     st.session_state["usuario_logado"] = None
 
-# Se o usuário não estiver logado, exibe a tela de Login/Cadastro
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões - TJMG")
     
@@ -127,7 +112,6 @@ if st.session_state["usuario_logado"] is None:
 # ==========================================
 # 3. DADOS DO USUÁRIO E MENU LATERAL
 # ==========================================
-# Se chegou aqui, o usuário está logado. Busca os dados atualizados dele.
 usuario_atual = st.session_state["usuario_logado"]
 resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
 dados_usuario = resposta_usuario.data[0]
@@ -199,14 +183,12 @@ elif menu == "📂 Minhas Certidões":
     if not arquivos:
         st.info("Nenhuma certidão salva ainda.")
     else:
-        # --- NOVO: Filtros e Seleção em Massa ---
         c_filtro, c_btn1, c_btn2 = st.columns([2, 1.5, 1.5])
         with c_filtro:
             ativar_filtro = st.checkbox("Filtrar por data", key="ativar_filtro_data")
             hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
             data_filtro = st.date_input("Escolha a data:", value=hoje_real.date(), format="DD/MM/YYYY", disabled=not ativar_filtro, label_visibility="collapsed")
             
-        # Preparar dados e aplicar filtro
         arquivos_filtrados = []
         for item in arquivos:
             try:
@@ -407,7 +389,6 @@ elif menu == "📝 Gerar Certidão":
     with c_comarca:
         comarca = st.text_input("Cód. Comarca:", value="0245", placeholder="Ex: 0245", key="comarca_geral")
 
-    # Endereço e Pessoa procurada agora em uma única linha (Compactação Vertical)
     c_end, c_pes = st.columns(2)
     with c_end:
         endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'", key="endereco_geral")
@@ -417,11 +398,10 @@ elif menu == "📝 Gerar Certidão":
     st.markdown("---")
     st.subheader("Data do Documento e Diligências")
     
-    # --- NOVO: Campo de Data Editável ---
     hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
     data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=hoje_real.date(), format="DD/MM/YYYY", key="data_certidao_geral")
     
-    st.write("**Informe os Dias e Horários (o 'hs' será adicionado automaticamente se esquecer):**")
+    st.write("**Informe os Dias e Horários (o 'h' será adicionado automaticamente se esquecer):**")
     
     cd1, cd2, cd3 = st.columns(3)
 
@@ -447,7 +427,6 @@ elif menu == "📝 Gerar Certidão":
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
         
-        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_detalhada'):
             for k in list(st.session_state.keys()):
                 if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens"]:
@@ -549,7 +528,6 @@ elif menu == "📝 Gerar Certidão":
 
         st.divider()
 
-        # Botão de Geração Detalhada
         if st.button("Salvar na Nuvem / Gerar DOCX (Detalhada)", type="primary", use_container_width=True, key="btn_gerar_docx_det"):
             with st.spinner("Gerando detalhada..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
@@ -571,7 +549,7 @@ elif menu == "📝 Gerar Certidão":
                     texto_data_hora = f", por volta das {str_horas}, dos dias {str_dias}, respectivamente,"
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir a ordem descrita no mandado{txt_pessoa}, uma vez que "
                 sits = []
                 if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
                 if nao_loc_bens: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
@@ -717,7 +695,6 @@ elif menu == "📝 Gerar Certidão":
         
         st.info("💡 Esta versão usa a nova lógica de construção de texto (frases de ponte) para maior coesão gramatical.")
 
-        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_detalhada_nova'):
             for k in list(st.session_state.keys()):
                 if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "cert_n_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
@@ -822,14 +799,14 @@ elif menu == "📝 Gerar Certidão":
         if st.button("Salvar na Nuvem / Gerar DOCX (Nova Detalhada)", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
             with st.spinner("Construindo a certidão com a nova lógica..."):
                 
-                # 1. TRATAMENTO DE DATAS E HORAS (Mais limpo)
+                # 1. TRATAMENTO DE DATAS E HORAS
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
                     h_limpo = h.strip()
                     if h_limpo and not h_limpo.lower().endswith(('h', 'hs')):
-                        h_limpo += 'h' # Usando apenas 'h' para ficar mais formal
+                        h_limpo += 'h' 
                     horas_validas.append(h_limpo)
 
                 texto_data_hora = ""
@@ -851,11 +828,10 @@ elif menu == "📝 Gerar Certidão":
                 if nao_loc_bens_n: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
                 paragrafo += " e ".join(sits) + ". " if sits else "não foi possível a sua realização. "
 
-                # 3. CONSTRUÇÃO DOS MOTIVOS ("Constatou-se que...")
+                # 3. CONSTRUÇÃO DOS MOTIVOS
                 if motivos_selecionados:
                     frases_motivos = []
                     for m in motivos_selecionados:
-                        # (Mapeamento dos motivos - mantido o mesmo conteúdo, mas preparado para a ponte)
                         if m == "mudou-se": frases_motivos.append("a pessoa procurada não reside mais no local, tendo se mudado")
                         elif m == "não reside no local": frases_motivos.append("a pessoa procurada não reside no local indicado")
                         elif m == "não foi localizada": frases_motivos.append("a pessoa procurada não foi localizada")
@@ -892,7 +868,7 @@ elif menu == "📝 Gerar Certidão":
                         
                     paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
 
-                # 4. CONSTRUÇÃO DO INFORMANTE ("Conforme informações...")
+                # 4. CONSTRUÇÃO DO INFORMANTE
                 if nome_inf_det_n or relacoes_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
                     if nome_inf_det_n:
                         txt_informante = f"pelo(a) Sr(a). {nome_inf_det_n}"
@@ -924,13 +900,12 @@ elif menu == "📝 Gerar Certidão":
                         if sabe_end: sabes_list.append(f"o endereço atual como sendo: {sabe_end}")
                         paragrafo += f"Por outro lado, a referida pessoa soube indicar {' e '.join(sabes_list)}. "
 
-                # 5. CONSTRUÇÃO DOS EXTRAS ("Certifico ainda que...")
+                # 5. CONSTRUÇÃO DOS EXTRAS
                 if cert_extras: 
                     paragrafo += f"Certifico ainda que {'; '.join(cert_extras)}. "
                 if observacoes_det: 
                     paragrafo += f"{observacoes_det.strip()} "
 
-                # Fechamento Padrão
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
