@@ -1175,11 +1175,12 @@ elif menu == "📝 Gerar Certidão":
             )
 
     # ==========================================
-    # OPÇÃO C: CERTIDÃO POSITIVA
+    # OPÇÃO C: CERTIDÃO POSITIVA (NOVA VERSÃO COESA)
     # ==========================================
     elif tipo_certidao == "Certidão Positiva":
         
         if st.session_state.get('limpar_positiva'):
+            st.session_state["fin_pos"] = "Citação"
             st.session_state["mod_pos"] = "Presencial"
             st.session_state["contra_pos"] = "Sim"
             st.session_state["ass_pos"] = "Sim"
@@ -1188,6 +1189,15 @@ elif menu == "📝 Gerar Certidão":
             st.session_state['limpar_positiva'] = False
             
         st.subheader("Detalhes da Diligência Positiva")
+        
+        # --- NOVO: Seletor de Finalidade ---
+        finalidade_pos = st.selectbox(
+            "Finalidade principal do Mandado:", 
+            ["Citação", "Intimação", "Notificação", "Penhora", "Avaliação"], 
+            key="fin_pos"
+        )
+        
+        st.markdown("---")
         
         c_mod, c_contra, c_ass = st.columns(3)
         with c_mod:
@@ -1217,41 +1227,65 @@ elif menu == "📝 Gerar Certidão":
         st.divider()
         
         if st.button("Salvar na Nuvem / Gerar DOCX (Positiva)", type="primary", use_container_width=True, key="btn_gerar_positiva"):
-            with st.spinner("Gerando certidão positiva..."):
-                txt_pessoa = f" a pessoa referida no mandado, Sr(a). {pessoa}" if pessoa else " a pessoa referida no mandado"
+            with st.spinner("Gerando certidão positiva com texto coeso..."):
                 
-                if mod_pos == "Telefone/WhatsApp":
-                    txt_inicio = "por via remota, através de ligação telefônica/aplicativo de mensagens,"
-                    txt_contrafe = f"encaminhando-lhe a contrafé mediante aplicativo de mensagens, a qual {'aceitou' if contrafe_pos == 'Sim' else 'não aceitou'}"
-                else:
-                    txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
-                    txt_inicio = f"dirigi-me {txt_endereco},"
-                    txt_contrafe = f"entregando-lhe a contrafé, a qual {'aceitou' if contrafe_pos == 'Sim' else 'não aceitou'}"
-                
-                if ass_pos == "Sim": txt_ass = "colhendo sua assinatura no mandado."
-                elif ass_pos == "Não": txt_ass = "não exarando sua assinatura no mandado."
-                else: txt_ass = "deixando de colher sua assinatura no mandado, como forma de prevenção ao Covid-19."
-                
-                txt_adv = ""
-                if adv_pos == "Tem condições": txt_adv = " Informou também que tem condição de contratar um advogado."
-                elif adv_pos == "Não tem condições": txt_adv = " Informou também que não tem condição de contratar um advogado e precisa que seja nomeado um para lhe defender."
-                
+                # 1. TRATAMENTO DE DATAS E HORAS
                 dias_validos = [d for d in [d1, d2, d3] if d]
-                
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
                     h_limpo = h.strip()
                     if h_limpo and not h_limpo.lower().endswith(('h', 'hs')):
-                        h_limpo += 'hs'
+                        h_limpo += 'h'
                     horas_validas.append(h_limpo)
                 
                 dia_pos = dias_validos[-1] if dias_validos else "___/___"
                 hora_pos = horas_validas[-1] if horas_validas else "___:___"
+
+                # 2. DEFINIÇÃO DA AÇÃO PRINCIPAL
+                verbo_acao = ""
+                if finalidade_pos == "Citação": verbo_acao = "à CITAÇÃO"
+                elif finalidade_pos == "Intimação": verbo_acao = "à INTIMAÇÃO"
+                elif finalidade_pos == "Notificação": verbo_acao = "à NOTIFICAÇÃO"
+                elif finalidade_pos == "Penhora": verbo_acao = "à PENHORA"
+                elif finalidade_pos == "Avaliação": verbo_acao = "à AVALIAÇÃO"
+
+                txt_pessoa = f" de {pessoa}" if pessoa else " da pessoa referida no mandado"
+                txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
+
+                # 3. CONSTRUÇÃO DO TEXTO E MODALIDADE
+                if mod_pos == "Telefone/WhatsApp":
+                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, no dia {dia_pos}, por volta das {hora_pos}, procedi, por via remota (ligação telefônica/aplicativo de mensagens), {verbo_acao}{txt_pessoa}. "
+                    
+                    if contrafe_pos == "Sim":
+                        paragrafo += "Na oportunidade, encaminhei a respectiva contrafé eletronicamente, a qual teve seu recebimento confirmado. "
+                    else:
+                        paragrafo += "Tentei encaminhar a respectiva contrafé eletronicamente, porém a mesma foi recusada ou não teve seu recebimento confirmado. "
+                else:
+                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, ocasião em que, no dia {dia_pos}, por volta das {hora_pos}, procedi {verbo_acao}{txt_pessoa}. "
+                    
+                    if contrafe_pos == "Sim":
+                        paragrafo += "Na oportunidade, li-lhe o mandado e entreguei-lhe a respectiva contrafé, a qual foi aceita pela parte"
+                    else:
+                        paragrafo += "Na oportunidade, li-lhe o mandado e ofereci-lhe a respectiva contrafé, a qual foi recusada pela parte"
+                        
+                    if ass_pos == "Sim":
+                        paragrafo += ", que exarou sua assinatura no documento. "
+                    elif ass_pos == "Não":
+                        paragrafo += ", que se recusou a exarar sua assinatura no documento. "
+                    else:
+                        paragrafo += ", deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19. "
+
+                # 4. ADIÇÃO SOBRE ADVOGADO E OBSERVAÇÕES
+                if adv_pos == "Tem condições": 
+                    paragrafo += "Questionado(a), a parte informou possuir condições de constituir um advogado particular para sua defesa. "
+                elif adv_pos == "Não tem condições": 
+                    paragrafo += "Questionado(a), a parte declarou ser hipossuficiente, não possuindo condições financeiras de constituir um advogado, necessitando assim da nomeação de um defensor para atuar em sua defesa. "
                 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, {txt_inicio} ocasião em que, no dia {dia_pos}, às {hora_pos}, CITEI/INTIMEI/NOTIFIQUEI{txt_pessoa}, lendo-lhe o mandado e {txt_contrafe}, {txt_ass}{txt_adv}"
-                if obs_pos: paragrafo += f" {obs_pos.strip()}"
-                
+                if obs_pos: 
+                    paragrafo += f"{obs_pos.strip()} "
+
+                # Fechamento padrão
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
@@ -1263,10 +1297,11 @@ elif menu == "📝 Gerar Certidão":
                     doc.add_paragraph(texto_processo)
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
                 
+                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 cidade_assinatura = "Santa Luzia"
                 doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 try:
@@ -1279,7 +1314,7 @@ elif menu == "📝 Gerar Certidão":
                 run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
                 
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
-                data_arquivo = hoje.strftime("%d-%m-%Y_%Hh%M")
+                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Positiva_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Positiva_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
@@ -1293,7 +1328,7 @@ elif menu == "📝 Gerar Certidão":
         if 'doc_positiva' in st.session_state:
             if st.session_state.get('piscar_tela'):
                 st.balloons()
-                st.toast("✅ Certidão gerada e painel resetado para a próxima!", icon="🎉")
+                st.toast("✅ Certidão Positiva gerada com sucesso!", icon="🎉")
                 st.session_state['piscar_tela'] = False
                 
             st.success("✅ Certidão positiva salva na sua conta na Nuvem!")
@@ -1308,11 +1343,12 @@ elif menu == "📝 Gerar Certidão":
             )
             
     # ==========================================
-    # OPÇÃO D: CERTIDÃO POSITIVA POR HORA CERTA
+    # OPÇÃO D: CERTIDÃO POSITIVA POR HORA CERTA (NOVA VERSÃO COESA)
     # ==========================================
     elif tipo_certidao == "Certidão Positiva por Hora Certa":
         
         if st.session_state.get('limpar_horacerta'):
+            st.session_state["fin_hc"] = "Citação"
             for k in ["hc_nome_terceiro", "hc_relacao", "hc_data_retorno", "hc_hora_retorno"]:
                 st.session_state[k] = ""
             st.session_state["hc_encontrou_alvo"] = "Não"
@@ -1321,6 +1357,13 @@ elif menu == "📝 Gerar Certidão":
             st.session_state['limpar_horacerta'] = False
             
         st.subheader("1. Suspeita de Ocultação e Agendamento")
+        
+        # --- NOVO: Seletor de Finalidade ---
+        finalidade_hc = st.selectbox(
+            "Ato sendo praticado:", 
+            ["Citação", "Intimação", "Notificação"], 
+            key="fin_hc"
+        )
         
         c_hc1, c_hc2 = st.columns(2)
         with c_hc1:
@@ -1335,22 +1378,23 @@ elif menu == "📝 Gerar Certidão":
         
         c_hc3, c_hc4, c_hc5 = st.columns(3)
         with c_hc3:
-            st.caption("O alvo estava presente?")
+            st.caption("O alvo estava presente no retorno?")
             hc_encontrou_alvo = st.radio("Encontrou a pessoa?", ["Não", "Sim"], key="hc_encontrou_alvo")
         with c_hc4:
-            st.caption("Contrafé com o terceiro")
-            hc_aceitou = st.radio("Terceiro aceitou receber?", ["Sim", "Não"], key="hc_aceitou")
+            st.caption("Contrafé")
+            hc_aceitou = st.radio("O terceiro/alvo aceitou receber?", ["Sim", "Não"], key="hc_aceitou")
         with c_hc5:
-            st.caption("Assinatura do terceiro")
-            hc_assinou = st.radio("Terceiro assinou?", ["Não", "Sim", "Covid-19"], key="hc_assinou")
+            st.caption("Assinatura")
+            hc_assinou = st.radio("O terceiro/alvo assinou?", ["Não", "Sim", "Covid-19"], key="hc_assinou")
 
         st.divider()
 
         if st.button("Salvar na Nuvem / Gerar DOCX (Hora Certa)", type="primary", use_container_width=True, key="btn_gerar_horacerta"):
-            with st.spinner("Construindo certidão de Hora Certa..."):
+            with st.spinner("Construindo certidão de Hora Certa com encadeamento textual..."):
                 
-                txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
-                txt_pessoa = f" o(a) Sr(a). {pessoa}" if pessoa else " a pessoa referida no mandado"
+                # 1. TRATAMENTO DE DATAS E HORAS
+                txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
+                txt_pessoa = f" de {pessoa}" if pessoa else " da pessoa referida no mandado"
                 
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_cruas = [h for h in [h1, h2, h3] if h]
@@ -1358,38 +1402,44 @@ elif menu == "📝 Gerar Certidão":
                 for h in horas_cruas:
                     h_limpo = h.strip()
                     if h_limpo and not h_limpo.lower().endswith(('h', 'hs', 'min')):
-                        h_limpo += 'hs'
+                        h_limpo += 'h'
                     horas_validas.append(h_limpo)
                 
                 texto_data_hora = ""
                 if len(dias_validos) == 1:
-                    texto_data_hora = f"às {horas_validas[0]}, do dia {dias_validos[0]},"
+                    texto_data_hora = f"no dia {dias_validos[0]}, por volta das {horas_validas[0]}, ocasião em que"
                 elif len(dias_validos) > 1:
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
-                    texto_data_hora = f"às {str_horas}, dos dias {str_dias}, respectivamente,"
+                    texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente, ocasiões em que"
                 
                 hr_limpo = hc_hora_retorno.strip()
                 if hr_limpo and not hr_limpo.lower().endswith(('h', 'hs', 'min')):
-                    hr_limpo += 'hs'
+                    hr_limpo += 'h'
 
+                # 2. DEFINIÇÃO DA AÇÃO PRINCIPAL
+                nome_ato = finalidade_hc.upper()
+
+                # 3. CONSTRUÇÃO DO AGENDAMENTO E RETORNO
                 txt_terceiro = f"na pessoa do(a) Sr(a). {hc_nome_terceiro}" if hc_nome_terceiro else "na pessoa de um terceiro ali presente"
                 txt_relacao = f", na qualidade de {hc_relacao}," if hc_relacao else ","
                 
-                txt_retorno_alvo = "ali não encontrando" if hc_encontrou_alvo == "Não" else "ali encontrando"
+                txt_retorno_alvo = "ali não a encontrando" if hc_encontrou_alvo == "Não" else "ali a encontrando"
                 
                 if hc_aceitou == "Sim":
                     if hc_assinou == "Sim":
-                        txt_final = "a qual aceitou e exarou sua assinatura no mandado."
+                        txt_final = "a qual aceitou o documento e exarou sua assinatura no respectivo mandado."
                     elif hc_assinou == "Não":
-                        txt_final = "a qual aceitou, mas não quis assinar o mandado."
+                        txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no respectivo mandado."
                     else:
-                        txt_final = "a qual aceitou, deixando eu de colher a assinatura como forma de prevenção ao Covid-19."
+                        txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19."
                 else:
-                    txt_final = "a qual se recusou a receber a contrafé e a assinar o mandado."
+                    txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} e não encontrei{txt_pessoa}. Havendo suspeita de ocultação, marquei hora certa {txt_terceiro}{txt_relacao} intimando-o(a) de que voltaria no dia {hc_data_retorno}, às {hr_limpo}, para efetuá-la. Retornando no dia e hora designados, {txt_retorno_alvo}{txt_pessoa}, efetuei a citação/intimação/notificação, deixando a respectiva contrafé com a pessoa referida, {txt_final}"
+                # O Parágrafo Completo Unificado
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
+                # Fechamento Padrão
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 
@@ -1406,7 +1456,7 @@ elif menu == "📝 Gerar Certidão":
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
                 doc.add_paragraph("")
                 
-                p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA POR HORA CERTA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph("")
                 
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4)
@@ -1445,7 +1495,7 @@ elif menu == "📝 Gerar Certidão":
         if 'doc_horacerta' in st.session_state:
             if st.session_state.get('piscar_tela'):
                 st.balloons()
-                st.toast("✅ Certidão de Hora Certa gerada e painel resetado!", icon="🎉")
+                st.toast("✅ Certidão de Hora Certa gerada com sucesso!", icon="🎉")
                 st.session_state['piscar_tela'] = False 
                 
             st.success("✅ Certidão Positiva por Hora Certa salva na sua conta na Nuvem!")
