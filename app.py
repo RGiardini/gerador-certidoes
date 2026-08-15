@@ -394,10 +394,7 @@ elif menu == "📝 Gerar Certidão":
     
     st.divider()
 
-  # --- CAMPOS COMPARTILHADOS (CABEÇALHO) ---
-    # 🚀 Nova estruturação: Mandado, Processo, Ano e Comarca na mesma linha
-    # A lista [1, 2.5, 1, 1] define o tamanho relativo de cada coluna. 
-    # O Processo fica um pouco maior para caber o número, os demais ficam pequenos.
+    # --- CAMPOS COMPARTILHADOS (CABEÇALHO) ---
     c_mandado, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
     
     with c_mandado:
@@ -409,7 +406,7 @@ elif menu == "📝 Gerar Certidão":
     with c_comarca:
         comarca = st.text_input("Cód. Comarca:", value="0245", placeholder="Ex: 0245", key="comarca_geral")
 
-    # 🚀 MELHORIA ESTRUTURAL 3: Endereço e Pessoa procurada agora em uma única linha (Compactação Vertical)
+    # Endereço e Pessoa procurada agora em uma única linha (Compactação Vertical)
     c_end, c_pes = st.columns(2)
     with c_end:
         endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'", key="endereco_geral")
@@ -425,7 +422,6 @@ elif menu == "📝 Gerar Certidão":
     
     st.write("**Informe os Dias e Horários (o 'hs' será adicionado automaticamente se esquecer):**")
     
-    # Re-organização para 3 colunas compactas
     cd1, cd2, cd3 = st.columns(3)
 
     with cd1:
@@ -445,7 +441,7 @@ elif menu == "📝 Gerar Certidão":
 
     st.divider()
 
-   # ==========================================
+    # ==========================================
     # OPÇÃO A: CERTIDÃO DETALHADA
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
@@ -454,9 +450,9 @@ elif menu == "📝 Gerar Certidão":
         if st.session_state.get('limpar_detalhada'):
             for k in list(st.session_state.keys()):
                 if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens"]:
-                    st.session_state[k] = False # Força as checkboxes a desmarcarem
+                    st.session_state[k] = False 
                 elif k in ["nome_inf_det", "sabe_tel_det", "sabe_end_det", "obs_livres_det"]:
-                    st.session_state[k] = "" # Força os textos a ficarem vazios
+                    st.session_state[k] = ""
             st.session_state['limpar_detalhada'] = False
 
         st.write("**Deixei de cumprir o ato uma vez que:**")
@@ -468,7 +464,6 @@ elif menu == "📝 Gerar Certidão":
 
         motivos_selecionados = []
         with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
-            # --- NOVO: Adicionado "não foi localizada" ---
             motivos_list = [
                 "mudou-se", "não reside no local", "não foi localizada", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
                 "não trabalha no local", "está viajando", "local inabitado", "antigo inquilino", 
@@ -488,7 +483,6 @@ elif menu == "📝 Gerar Certidão":
                         motivos_selecionados.append(m)
 
         st.markdown("---")
-        # Informações sobre o informante
         relacoes_selecionadas = []
         nao_sabe_selecionados = []
         sabe_tel = ""
@@ -559,7 +553,6 @@ elif menu == "📝 Gerar Certidão":
             with st.spinner("Gerando detalhada..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 
-                # --- NOVO: Lógica Automática de 'hs' ---
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
@@ -585,7 +578,6 @@ elif menu == "📝 Gerar Certidão":
                 if motivos_selecionados:
                     frases_motivos = []
                     for m in motivos_selecionados:
-                        # Motivos de Moradia / Ocupação
                         if m == "mudou-se": frases_motivos.append("a pessoa procurada não reside mais no local, tendo se mudado")
                         elif m == "não reside no local": frases_motivos.append("a pessoa procurada não reside no local indicado")
                         elif m == "não foi localizada": frases_motivos.append("a pessoa procurada não foi localizada")
@@ -597,26 +589,22 @@ elif menu == "📝 Gerar Certidão":
                         elif m == "aparece esporadicamente": frases_motivos.append("a pessoa procurada aparece apenas esporadicamente no endereço")
                         elif m == "utiliza endereço para correspondências": frases_motivos.append("o endereço é utilizado pela pessoa procurada apenas para recebimento de correspondências")
                         
-                        # Condições do Local
                         elif m == "local fechado": frases_motivos.append("o imóvel encontrava-se fechado nas ocasiões das diligências")
                         elif m == "local inabitado": frases_motivos.append("o local encontra-se inabitado/abandonado")
                         elif m == "número não localizado": frases_motivos.append("o número indicado no mandado não foi localizado no logradouro pertencente ao bairro referido")
                         elif m == "rua/av não localizada": frases_motivos.append("a via (rua/avenida) indicada no mandado não foi localizada no bairro referido")
                         elif m == "ap/bloco não localizado": frases_motivos.append("o apartamento ou bloco indicado não foi localizado no condomínio")
                         
-                        # Terceiros e Situações Específicas
                         elif m == "rotatividade de inquilinos": frases_motivos.append("há alta rotatividade de inquilinos no endereço, dificultando a localização")
                         elif m == "Repassado para terceiros": frases_motivos.append("o imóvel/estabelecimento foi repassado para terceiros")
                         elif m in ["antigo inquilino", "antigo morador", "antigo proprietário"]: frases_motivos.append(f"a pessoa procurada trata-se de um {m}")
                         
-                        # Situações Pessoais Graves
                         elif m == "internado": frases_motivos.append("a pessoa procurada encontra-se internada")
                         elif m == "transferido": frases_motivos.append("a pessoa procurada foi transferida de unidade/estabelecimento")
                         elif m == "encontra-se preso": frases_motivos.append("a pessoa procurada encontra-se reclusa no sistema prisional")
                         elif m == "faleceu": frases_motivos.append("a pessoa procurada já se encontra falecida")
                         elif m == "sem condições psíquicas de entender conteúdo mandado": frases_motivos.append("a pessoa procurada encontra-se sem condições psíquicas de entender o conteúdo e o fim do mandado")
                         
-                        # Situações de Execução / Bens
                         elif m == "faliu": frases_motivos.append("a empresa procurada faliu ou encerrou suas atividades")
                         elif m == "não exerce atividades": frases_motivos.append("a empresa procurada não exerce mais atividades no local")
                         elif m == "guarnecem a residência amparados pela Lei 8.009/90": frases_motivos.append("os bens que guarnecem a residência estão amparados pela impenhorabilidade prevista na Lei 8.009/90")
@@ -676,7 +664,6 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph("")
                 p_fechamento = doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé."); p_fechamento.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
-                # --- NOVO: Fechamento com a Data Personalizável ---
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 cidade_assinatura = "Santa Luzia" 
                 doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -694,25 +681,22 @@ elif menu == "📝 Gerar Certidão":
                 
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 
-                # Timestamp correto para o nome do arquivo na nuvem
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_Negativa_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Negativa_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Negativa_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
-                # --- NOVO: Estrutura de Estado para Limpar a Tela e Soltar os Balões ---
                 st.session_state['doc_detalhado'] = buffer.getvalue()
                 st.session_state['nome_detalhado'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
-                st.session_state['limpar_detalhada'] = True # Avisa o sistema para limpar na próxima rodada
+                st.session_state['limpar_detalhada'] = True
                 
-                st.rerun() # Atualiza a tela instantaneamente
+                st.rerun()
 
-        # --- NOVO: Resposta de Sucesso Externa ao Botão ---
         if 'doc_detalhado' in st.session_state:
             if st.session_state.get('piscar_tela'):
                 st.balloons()
                 st.toast("✅ Certidão gerada e painel resetado para a próxima!", icon="🎉")
-                st.session_state['piscar_tela'] = False # Para não piscar 2 vezes
+                st.session_state['piscar_tela'] = False
                 
             st.success("✅ Certidão detalhada salva na sua conta na Nuvem!")
             st.download_button(
@@ -725,20 +709,18 @@ elif menu == "📝 Gerar Certidão":
                 key="btn_dl_det_ready"
             )
             
-# ==========================================
-    # OPÇÃO B: CERTIDÃO SIMPLES (RESTAURADA E ADAPTADA)
+    # ==========================================
+    # OPÇÃO B: CERTIDÃO SIMPLES
     # ==========================================
     elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
         
-        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_simples'):
             for k in ["sit_radio_simples", "obteve_inf_radio_simples", "motivo_radio_simples", "naosabe_radio_simples", "paradeiro_radio_simples", "condicao_radio_simples"]:
-                st.session_state[k] = None # Zera os radio buttons
+                st.session_state[k] = None
             for k in ["nome_inf_input_simples", "obs_simples"]:
-                st.session_state[k] = "" # Zera os textos
+                st.session_state[k] = ""
             st.session_state['limpar_simples'] = False
             
-        # --- INPUTS (Preservado estrutura original estável) ---
         st.subheader("Situação Principal")
         situacao_simples = st.radio(
             "Selecione uma opção:", 
@@ -747,14 +729,12 @@ elif menu == "📝 Gerar Certidão":
         )
 
         st.markdown("---")
-        # Informante
         obteve_inf_simples = st.radio("Obteve Informações?", ["Sim", "Não", "NQI"], index=None, horizontal=True, key="obteve_inf_radio_simples")
         nome_inf_simples = st.text_input("Nome do informante:", disabled=(obteve_inf_simples != "Sim"), key="nome_inf_input_simples")
 
         st.markdown("---")
         st.write("**Detalhes das Informações Obtidas:**")
         
-        # Motivo
         st.caption("Motivo")
         motivo_simples = st.radio(
             "Selecione uma opção:", 
@@ -762,7 +742,6 @@ elif menu == "📝 Gerar Certidão":
             index=None, key="motivo_radio_simples"
         )
         
-        # Não sabe
         st.caption("O que não sabe indicar?")
         nao_sabe_simples = st.radio(
             "Selecione uma opção:", 
@@ -770,7 +749,6 @@ elif menu == "📝 Gerar Certidão":
             index=None, key="naosabe_radio_simples"
         )
         
-        # Paradeiro
         st.caption("Paradeiro")
         paradeiro_simples = st.radio(
             "Selecione uma opção:", 
@@ -780,7 +758,6 @@ elif menu == "📝 Gerar Certidão":
 
         st.markdown("---")
         st.write("**Condições Extras**")
-        # Condições do local
         condicao_simples = st.radio(
             "Selecione uma opção:", 
             ["Local Perigoso", "Medo Processo", "Zona Rural", "Blocos", "Chuva"], 
@@ -788,16 +765,13 @@ elif menu == "📝 Gerar Certidão":
         )
 
         st.markdown("---")
-        # Observações Extra Compacta (Área de texto compactada pelo CSS global)
         observacoes_simples = st.text_area("Observações Extras:", height=60, key="obs_simples")
         st.divider()
 
-        # --- LÓGICA DO BOTÃO GERAR SIMPLES (Restaurada do seu exemplo funcional) ---
         if st.button("Salvar na Nuvem / Gerar DOCX (Simples)", type="primary", use_container_width=True, key="btn_gerar_simples"):
             with st.spinner("Construindo certidão simples e salvando na nuvem..."):
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 
-                # --- CORREÇÃO: Lógica Automática de 'hs' na Simples ---
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
@@ -819,7 +793,6 @@ elif menu == "📝 Gerar Certidão":
                 elif situacao_simples == "Pessoa Não Encontrada": txt_situacao = "porque não a encontrei no local."
                 elif situacao_simples == "Não Localizei a Pessoa": txt_situacao = "porque não a localizei."
                 
-                # Remove a vírgula sobrando no final da data/hora e arruma a conexão com o 'deixei'
                 texto_data_hora_limpo = texto_data_hora.rstrip(",") 
                 paragrafo_unico = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}{texto_data_hora_limpo} e deixei de citar/intimar/notificar{txt_pessoa}, {txt_situacao} "
                 
@@ -830,7 +803,6 @@ elif menu == "📝 Gerar Certidão":
                 elif obteve_inf_simples == "NQI": 
                     paragrafo_unico += "Conforme informações prestadas por um vizinho(a) que não quis se identificar, este(a) afirmou que "
                 
-                # Agrupa os motivos de forma inteligente, usando conectivos corretos ao invés de jogar pontos no meio da frase
                 if obteve_inf_simples in ["Sim", "NQI"]:
                     infos = []
                     if motivo_simples == "Mudou-se": infos.append("a pessoa procurada não reside mais no local, tendo se mudado sem deixar meios para contato")
@@ -872,9 +844,8 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph(paragrafo_unico.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                # --- CORREÇÃO: Data Personalizada no rodapé da Simples ---
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                cidade_assinatura = "Santa Luzia" # Se precisar, é só mudar o nome da cidade aqui
+                cidade_assinatura = "Santa Luzia"
                 doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
@@ -889,20 +860,18 @@ elif menu == "📝 Gerar Certidão":
                 nome_arquivo = f"Certidao_Simples_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Simples_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Simples_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
-                # --- NOVO: Salvando na sessão e limpando a tela da Simples ---
                 st.session_state['doc_simples'] = buffer.getvalue()
                 st.session_state['nome_simples'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
-                st.session_state['limpar_simples'] = True # Avisa o sistema para limpar na próxima rodada
+                st.session_state['limpar_simples'] = True
                 
-                st.rerun() # Atualiza a tela instantaneamente
+                st.rerun()
 
-        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
         if 'doc_simples' in st.session_state:
             if st.session_state.get('piscar_tela'):
                 st.balloons()
                 st.toast("✅ Certidão gerada e painel resetado para a próxima!", icon="🎉")
-                st.session_state['piscar_tela'] = False # Evita piscar duas vezes
+                st.session_state['piscar_tela'] = False
                 
             st.success("✅ Certidão simples salva na sua conta na Nuvem!")
             st.download_button(
@@ -914,12 +883,12 @@ elif menu == "📝 Gerar Certidão":
                 use_container_width=True, 
                 key="btn_dl_simples_ready"
             )
+
     # ==========================================
     # OPÇÃO C: CERTIDÃO POSITIVA
     # ==========================================
     elif tipo_certidao == "Certidão Positiva":
         
-        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_positiva'):
             st.session_state["mod_pos"] = "Presencial"
             st.session_state["contra_pos"] = "Sim"
@@ -930,7 +899,6 @@ elif menu == "📝 Gerar Certidão":
             
         st.subheader("Detalhes da Diligência Positiva")
         
-        # Opções compactas divididas em 3 colunas
         c_mod, c_contra, c_ass = st.columns(3)
         with c_mod:
             st.caption("Modalidade")
@@ -944,7 +912,6 @@ elif menu == "📝 Gerar Certidão":
             
         st.markdown("---")
         
-        # Opções secundárias divididas em 2 colunas
         c_adv, c_obs = st.columns([1, 2])
         with c_adv:
             st.caption("Situação de Advogado")
@@ -959,12 +926,10 @@ elif menu == "📝 Gerar Certidão":
             
         st.divider()
         
-        # Lógica do Botão Gerar
         if st.button("Salvar na Nuvem / Gerar DOCX (Positiva)", type="primary", use_container_width=True, key="btn_gerar_positiva"):
             with st.spinner("Gerando certidão positiva..."):
                 txt_pessoa = f" a pessoa referida no mandado, Sr(a). {pessoa}" if pessoa else " a pessoa referida no mandado"
                 
-                # Modalidade e Contrafé adaptadas do PowerApps
                 if mod_pos == "Telefone/WhatsApp":
                     txt_inicio = "por via remota, através de ligação telefônica/aplicativo de mensagens,"
                     txt_contrafe = f"encaminhando-lhe a contrafé mediante aplicativo de mensagens, a qual {'aceitou' if contrafe_pos == 'Sim' else 'não aceitou'}"
@@ -973,20 +938,16 @@ elif menu == "📝 Gerar Certidão":
                     txt_inicio = f"dirigi-me {txt_endereco},"
                     txt_contrafe = f"entregando-lhe a contrafé, a qual {'aceitou' if contrafe_pos == 'Sim' else 'não aceitou'}"
                 
-                # Assinatura
                 if ass_pos == "Sim": txt_ass = "colhendo sua assinatura no mandado."
                 elif ass_pos == "Não": txt_ass = "não exarando sua assinatura no mandado."
                 else: txt_ass = "deixando de colher sua assinatura no mandado, como forma de prevenção ao Covid-19."
                 
-                # Advogado
                 txt_adv = ""
                 if adv_pos == "Tem condições": txt_adv = " Informou também que tem condição de contratar um advogado."
                 elif adv_pos == "Não tem condições": txt_adv = " Informou também que não tem condição de contratar um advogado e precisa que seja nomeado um para lhe defender."
                 
-                # Data e Hora (Busca sempre a última diligência preenchida)
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 
-                # --- CORREÇÃO: Lógica Automática de 'hs' na Positiva ---
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
@@ -998,12 +959,9 @@ elif menu == "📝 Gerar Certidão":
                 dia_pos = dias_validos[-1] if dias_validos else "___/___"
                 hora_pos = horas_validas[-1] if horas_validas else "___:___"
                 
-                # Construção do Parágrafo Inteligente
-                # Trocado o 'onde' problemático por 'ocasião em que'
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, {txt_inicio} ocasião em que, no dia {dia_pos}, às {hora_pos}, CITEI/INTIMEI/NOTIFIQUEI{txt_pessoa}, lendo-lhe o mandado e {txt_contrafe}, {txt_ass}{txt_adv}"
                 if obs_pos: paragrafo += f" {obs_pos.strip()}"
                 
-                # Geração do Arquivo DOCX
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
@@ -1017,9 +975,7 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
                 
-                # Fechamento com indentação padrão do sistema
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                # --- CORREÇÃO: Data Personalizada no rodapé da Positiva ---
                 hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3); meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 cidade_assinatura = "Santa Luzia"
                 doc.add_paragraph(f"{cidade_assinatura}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
@@ -1037,20 +993,18 @@ elif menu == "📝 Gerar Certidão":
                 nome_arquivo = f"Certidao_Positiva_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_Positiva_{processo}_{data_arquivo}.docx" if processo else f"Certidao_Positiva_{data_arquivo}.docx"
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
-                # --- NOVO: Salvando na sessão e limpando a tela da Positiva ---
                 st.session_state['doc_positiva'] = buffer.getvalue()
                 st.session_state['nome_positiva'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
-                st.session_state['limpar_positiva'] = True # Avisa o sistema para limpar na próxima rodada
+                st.session_state['limpar_positiva'] = True
                 
-                st.rerun() # Atualiza a tela instantaneamente
+                st.rerun()
 
-        # --- NOVO: Botão de download e aviso visual por fora do botão de gerar ---
         if 'doc_positiva' in st.session_state:
             if st.session_state.get('piscar_tela'):
                 st.balloons()
                 st.toast("✅ Certidão gerada e painel resetado para a próxima!", icon="🎉")
-                st.session_state['piscar_tela'] = False # Evita piscar duas vezes
+                st.session_state['piscar_tela'] = False
                 
             st.success("✅ Certidão positiva salva na sua conta na Nuvem!")
             st.download_button(
@@ -1062,12 +1016,12 @@ elif menu == "📝 Gerar Certidão":
                 use_container_width=True, 
                 key="btn_dl_positiva_ready"
             )
-            # ==========================================
+            
+    # ==========================================
     # OPÇÃO D: CERTIDÃO POSITIVA POR HORA CERTA
     # ==========================================
     elif tipo_certidao == "Certidão Positiva por Hora Certa":
         
-        # --- SOLUÇÃO DEFINITIVA DE LIMPEZA ---
         if st.session_state.get('limpar_horacerta'):
             for k in ["hc_nome_terceiro", "hc_relacao", "hc_data_retorno", "hc_hora_retorno"]:
                 st.session_state[k] = ""
@@ -1102,14 +1056,12 @@ elif menu == "📝 Gerar Certidão":
 
         st.divider()
 
-        # Lógica do Botão Gerar
         if st.button("Salvar na Nuvem / Gerar DOCX (Hora Certa)", type="primary", use_container_width=True, key="btn_gerar_horacerta"):
             with st.spinner("Construindo certidão de Hora Certa..."):
                 
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
                 txt_pessoa = f" o(a) Sr(a). {pessoa}" if pessoa else " a pessoa referida no mandado"
                 
-                # Formatação dos Dias e Horários Anteriores (com injeção automática de 'hs')
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
@@ -1127,16 +1079,13 @@ elif menu == "📝 Gerar Certidão":
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
                     texto_data_hora = f"às {str_horas}, dos dias {str_dias}, respectivamente,"
                 
-                # Injeção automática de 'hs' na hora do retorno
                 hr_limpo = hc_hora_retorno.strip()
                 if hr_limpo and not hr_limpo.lower().endswith(('h', 'hs', 'min')):
                     hr_limpo += 'hs'
 
-                # Variáveis do Agendamento
                 txt_terceiro = f"na pessoa do(a) Sr(a). {hc_nome_terceiro}" if hc_nome_terceiro else "na pessoa de um terceiro ali presente"
                 txt_relacao = f", na qualidade de {hc_relacao}," if hc_relacao else ","
                 
-                # Variáveis do Desfecho
                 txt_retorno_alvo = "ali não encontrando" if hc_encontrou_alvo == "Não" else "ali encontrando"
                 
                 if hc_aceitou == "Sim":
@@ -1149,10 +1098,8 @@ elif menu == "📝 Gerar Certidão":
                 else:
                     txt_final = "a qual se recusou a receber a contrafé e a assinar o mandado."
 
-                # Construção do Parágrafo Inteligente
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} e não encontrei{txt_pessoa}. Havendo suspeita de ocultação, marquei hora certa {txt_terceiro}{txt_relacao} intimando-o(a) de que voltaria no dia {hc_data_retorno}, às {hr_limpo}, para efetuá-la. Retornando no dia e hora designados, {txt_retorno_alvo}{txt_pessoa}, efetuei a citação/intimação/notificação, deixando a respectiva contrafé com a pessoa referida, {txt_final}"
                 
-                # Geração do Arquivo DOCX
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 
@@ -1175,7 +1122,6 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4)
                 doc.add_paragraph("")
                 
-                # Fechamento
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 cidade_assinatura = "Santa Luzia"
@@ -1197,10 +1143,8 @@ elif menu == "📝 Gerar Certidão":
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_arquivo = f"Certidao_HoraCerta_{processo}_Mandado-{mandado}_{data_arquivo}.docx" if processo and mandado else f"Certidao_HoraCerta_{processo}_{data_arquivo}.docx" if processo else f"Certidao_HoraCerta_{data_arquivo}.docx"
                 
-                # Upload Supabase
                 supabase.storage.from_("certidoes_usuarios").upload(file=buffer.getvalue(), path=f"{usuario_atual}/{nome_arquivo}", file_options={"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"})
                 
-                # Estado para Limpar e Baixar
                 st.session_state['doc_horacerta'] = buffer.getvalue()
                 st.session_state['nome_horacerta'] = nome_arquivo
                 st.session_state['piscar_tela'] = True
@@ -1208,7 +1152,6 @@ elif menu == "📝 Gerar Certidão":
                 
                 st.rerun() 
 
-        # Botão Externo
         if 'doc_horacerta' in st.session_state:
             if st.session_state.get('piscar_tela'):
                 st.balloons()
