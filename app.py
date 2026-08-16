@@ -4,7 +4,6 @@ import hashlib
 import zipfile
 import subprocess
 import tempfile
-import extra_streamlit_components as stx
 from io import BytesIO
 import datetime
 from docx import Document
@@ -12,13 +11,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from supabase import create_client, Client
 
-# Inicializa o Cookie Manager de forma segura
-if 'cookie_manager' not in st.session_state:
-    st.session_state['cookie_manager'] = stx.CookieManager()
 
-cookie_manager = st.session_state['cookie_manager']
-# Detector de Cookie (para teste)
-st.sidebar.write(f"DEBUG: Usuário no cookie: {cookie_manager.get(cookie='usuario_logado')}")
 
 # ==========================================
 # 1. FUNÇÃO DE CONVERSÃO PARA PDF
@@ -135,22 +128,17 @@ def gerar_hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
 # ==========================================
-# 3. CONTROLE DE SESSÃO E LOGIN
+# 3. CONTROLE DE SESSÃO E LOGIN (VIA URL)
 # ==========================================
 
-# Tenta recuperar o usuário salvo no cookie do navegador
-cookie_usuario = cookie_manager.get(cookie="usuario_logado")
+# Se o session_state estiver vazio, tenta resgatar o usuário direto da URL (F5)
+if "usuario_logado" not in st.session_state or st.session_state["usuario_logado"] is None:
+    usuario_url = st.query_params.get("user")
+    if usuario_url:
+        st.session_state["usuario_logado"] = usuario_url
+    else:
+        st.session_state["usuario_logado"] = None
 
-# Inicializa o session_state se não existir
-if "usuario_logado" not in st.session_state:
-    st.session_state["usuario_logado"] = None
-
-# 🔑 CORREÇÃO CRUCIAL: Se o session_state estiver vazio, mas o cookie acabou de carregar um valor, assume ele!
-if st.session_state["usuario_logado"] is None and cookie_usuario is not None:
-    st.session_state["usuario_logado"] = cookie_usuario
-    st.rerun()
-
-# Se continuarmos sem usuário logado, exibe a tela de acesso
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões - TJMG")
     
@@ -169,7 +157,8 @@ if st.session_state["usuario_logado"] is None:
                     senha_criptografada = gerar_hash_senha(senha_login)
                     if dados_bd["senha"] == senha_criptografada:
                         st.session_state["usuario_logado"] = usuario_login
-                        cookie_manager.set("usuario_logado", usuario_login)
+                        # 🚀 Salva o usuário na URL do navegador de forma permanente até o logout
+                        st.query_params["user"] = usuario_login
                         st.rerun()
                     else:
                         st.error("Senha incorreta!")
@@ -181,7 +170,7 @@ if st.session_state["usuario_logado"] is None:
     with aba_cadastro:
         pass
         
-    st.stop() # Interrompe a execução do resto do app se não estiver logado
+    st.stop()
 
 # ==========================================
 # 4. DADOS DO USUÁRIO E MENU LATERAL
@@ -202,9 +191,8 @@ with st.sidebar:
     st.divider()
     
     if st.button("Sair (Logout)", key="btn_logout"):
-        # Estas 3 linhas abaixo precisam estar um pouco mais para a direita!
         st.session_state["usuario_logado"] = None
-        cookie_manager.delete("usuario_logado") # Apaga o cookie
+        st.query_params.clear()  # Limpa o usuário da URL
         st.rerun()
 
 # ==========================================
