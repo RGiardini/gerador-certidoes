@@ -161,7 +161,7 @@ if st.session_state["usuario_logado"] is None:
                     # CORREÇÃO AQUI: Verifique se a senha bate
                     if dados_bd["senha"] == senha_criptografada:
                         st.session_state["usuario_logado"] = usuario_login
-                        cookie_manager.set("usuario_logado", usuario_login, expires_days=30)
+                        cookie_manager.set("usuario_logado", usuario_login)
                         st.rerun()
                     else:
                         st.error("Senha incorreta!")
