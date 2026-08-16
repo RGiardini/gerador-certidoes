@@ -17,6 +17,8 @@ if 'cookie_manager' not in st.session_state:
     st.session_state['cookie_manager'] = stx.CookieManager()
 
 cookie_manager = st.session_state['cookie_manager']
+# Detector de Cookie (para teste)
+st.sidebar.write(f"DEBUG: Usuário no cookie: {cookie_manager.get(cookie='usuario_logado')}")
 
 # ==========================================
 # 1. FUNÇÃO DE CONVERSÃO PARA PDF
