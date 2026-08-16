@@ -631,9 +631,9 @@ elif menu == "📝 Gerar Certidão":
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
-                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
-                except: pass
+                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
+                except Exception as e:
+                    st.error(f"Erro do Supabase: {e}")
                 if processo:
                     texto_processo = f"Processo: {processo}"
                     if ano: texto_processo += f".{ano}.8.13.{comarca}"
