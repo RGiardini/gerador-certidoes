@@ -152,12 +152,23 @@ if st.session_state["usuario_logado"] is None:
         senha_login = st.text_input("Senha:", type="password", key="log_pwd_input")
         
         if st.button("Entrar", type="primary", use_container_width=True, key="btn_entrar"):
-            # ... (seu código de validação no Supabase continua aqui) ...
-            if senha_correta:
-                st.session_state["usuario_logado"] = usuario_login
-                # A MÁGICA: Grava o cookie por 30 dias
-                cookie_manager.set("usuario_logado", usuario_login, expires_days=30)
-                st.rerun()
+            if usuario_login and senha_login:
+                resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_login).execute()
+                
+                if len(resposta.data) > 0:
+                    dados_bd = resposta.data[0]
+                    senha_criptografada = gerar_hash_senha(senha_login)
+                    # CORREÇÃO AQUI: Verifique se a senha bate
+                    if dados_bd["senha"] == senha_criptografada:
+                        st.session_state["usuario_logado"] = usuario_login
+                        cookie_manager.set("usuario_logado", usuario_login, expires_days=30)
+                        st.rerun()
+                    else:
+                        st.error("Senha incorreta!")
+                else:
+                    st.error("Usuário não encontrado.")
+            else:
+                st.warning("Preencha usuário e senha.")
                 
     with aba_cadastro:
         # (código da aba de cadastro permanece igual)
@@ -184,9 +195,9 @@ with st.sidebar:
     st.divider()
     
     if st.button("Sair (Logout)", key="btn_logout"):
-    st.session_state["usuario_logado"] = None
-    cookie_manager.delete("usuario_logado") # Apaga o cookie
-    st.rerun()
+        st.session_state["usuario_logado"] = None
+        cookie_manager.delete("usuario_logado") # Apaga o cookie
+        st.rerun()
 
 # ==========================================
 # 5. TELA: MEU PERFIL
