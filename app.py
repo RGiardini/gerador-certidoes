@@ -45,23 +45,70 @@ st.set_page_config(page_title="Sistema de Certidões", layout="wide")
 
 st.markdown("""
     <style>
+    /* Oculta elementos padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    .block-container { padding-top: 1rem; padding-bottom: 1rem; }
-    div[data-testid="stVerticalBlock"] { gap: 0.8rem !important; }
-    .main h1 { font-size: 22px; text-align: center; margin-top: 0.5rem !important; margin-bottom: 0.2rem !important; padding-bottom: 0;}
-    .stCheckbox { margin-top: -5px; margin-bottom: -5px; }
-    div[role="radiogroup"] { margin-top: -10px; }
-    div[role="radiogroup"] div[class^="st-"] > label > div[class^="st-"] > input[type="radio"] { 
-        transform: scale(1.15); 
-        cursor: pointer;
+    
+    /* Configuração geral do container e espaçamentos modernos */
+    .block-container { 
+        padding-top: 2rem; 
+        padding-bottom: 2rem; 
+        max-width: 1200px;
     }
-    div[role="radiogroup"] div[class^="st-"] > label > div[data-testid="stMarkdownContainer"] {
-        font-size: 1.0rem !important;
-        line-height: 1.2 !important;
+    div[data-testid="stVerticalBlock"] { 
+        gap: 1rem !important; 
     }
-    section[data-testid="stSidebar"] { width: 16rem !important; }
-    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
+
+    /* Estilização refinada para o título principal */
+    .main h1 { 
+        font-size: 26px !important; 
+        font-weight: 700;
+        text-align: center; 
+        color: #1E293B;
+        margin-top: 0rem !important; 
+        margin-bottom: 1.5rem !important; 
+    }
+
+    /* Criação do efeito de Cartões Flutuantes nos blocos principais */
+    div[data-testid="stExpander"], div.stTextInput, div.stSelectbox, div.stRadio {
+        background-color: #FFFFFF;
+        border-radius: 10px;
+        padding: 0.2rem;
+    }
+
+    /* Ajustes finos nos inputs de texto */
+    input[type="text"], input[type="password"] {
+        border-radius: 8px !important;
+        border: 1px solid #CBD5E1 !important;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+        border-color: #0F172A !important;
+        box-shadow: 0 0 0 1px #0F172A !important;
+    }
+
+    /* Estilização moderna para os botões primários (Call to Action) */
+    button[kind="primary"] {
+        background-color: #0F172A !important;
+        color: #FFFFFF !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #1E293B !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
+    }
+
+    /* Sidebar mais elegante e organizada */
+    section[data-testid="stSidebar"] { 
+        background-color: #F8FAFC !important;
+        border-right: 1px solid #E2E8F0;
+        width: 18rem !important; 
+    }
+    section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] { 
+        gap: 0.8rem !important; 
+    }
     </style>
 """, unsafe_allow_html=True)
 
