@@ -195,6 +195,7 @@ with st.sidebar:
     st.divider()
     
     if st.button("Sair (Logout)", key="btn_logout"):
+        # Estas 3 linhas abaixo precisam estar um pouco mais para a direita!
         st.session_state["usuario_logado"] = None
         cookie_manager.delete("usuario_logado") # Apaga o cookie
         st.rerun()
