@@ -4,12 +4,19 @@ import hashlib
 import zipfile
 import subprocess
 import tempfile
+import extra_streamlit_components as stx
 from io import BytesIO
 import datetime
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from supabase import create_client, Client
+@st.cache_resource
+def get_manager():
+    return stx.CookieManager()
+
+cookie_manager = get_manager()
+
 
 # ==========================================
 # 1. FUNÇÃO DE CONVERSÃO PARA PDF
@@ -128,37 +135,29 @@ def gerar_hash_senha(senha):
 # ==========================================
 # 3. CONTROLE DE SESSÃO E LOGIN
 # ==========================================
-if "usuario_logado" not in st.session_state:
-    st.session_state["usuario_logado"] = None
 
-# Se NÃO estiver logado, mostra a tela de acesso
+# Tenta recuperar o usuário salvo no cookie do navegador
+cookie_usuario = cookie_manager.get(cookie="usuario_logado")
+
+if "usuario_logado" not in st.session_state:
+    st.session_state["usuario_logado"] = cookie_usuario
+
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões - TJMG")
     
     aba_login, aba_cadastro = st.tabs(["Entrar", "Criar Nova Conta"])
     
     with aba_login:
-        st.write("Acesse sua conta para gerar certidões.")
         usuario_login = st.text_input("Usuário:", key="log_usr_input").lower().strip()
         senha_login = st.text_input("Senha:", type="password", key="log_pwd_input")
         
         if st.button("Entrar", type="primary", use_container_width=True, key="btn_entrar"):
-            if usuario_login and senha_login:
-                resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_login).execute()
-                
-                if len(resposta.data) > 0:
-                    dados_bd = resposta.data[0]
-                    senha_criptografada = gerar_hash_senha(senha_login)
-                    if dados_bd["senha"] == senha_criptografada:
-                        # GRAVA O USUÁRIO NA SESSÃO DE FORMA PERMANENTE ATÉ O LOGOUT
-                        st.session_state["usuario_logado"] = usuario_login
-                        st.rerun()
-                    else:
-                        st.error("Senha incorreta!")
-                else:
-                    st.error("Usuário não encontrado. Vá na aba 'Criar Nova Conta'.")
-            else:
-                st.warning("Preencha usuário e senha.")
+            # ... (seu código de validação no Supabase continua aqui) ...
+            if senha_correta:
+                st.session_state["usuario_logado"] = usuario_login
+                # A MÁGICA: Grava o cookie por 30 dias
+                cookie_manager.set("usuario_logado", usuario_login, expires_days=30)
+                st.rerun()
                 
     with aba_cadastro:
         # (código da aba de cadastro permanece igual)
@@ -185,8 +184,9 @@ with st.sidebar:
     st.divider()
     
     if st.button("Sair (Logout)", key="btn_logout"):
-        st.session_state["usuario_logado"] = None
-        st.rerun()
+    st.session_state["usuario_logado"] = None
+    cookie_manager.delete("usuario_logado") # Apaga o cookie
+    st.rerun()
 
 # ==========================================
 # 5. TELA: MEU PERFIL
