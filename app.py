@@ -59,14 +59,16 @@ st.markdown("""
         gap: 1rem !important; 
     }
 
-    /* Estilização refinada para o título principal */
-    .main h1 { 
+    /* 🚀 Centralização e refinamento de todos os títulos principais (h1) */
+    .main h1, h1[data-testid="stHeader"] { 
         font-size: 26px !important; 
         font-weight: 700;
-        text-align: center; 
+        text-align: center !important; 
         color: #1E293B;
         margin-top: 0rem !important; 
         margin-bottom: 1.5rem !important; 
+        display: block;
+        width: 100%;
     }
 
     /* Criação do efeito de Cartões Flutuantes nos blocos principais */
