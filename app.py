@@ -141,9 +141,16 @@ def gerar_hash_senha(senha):
 # Tenta recuperar o usuário salvo no cookie do navegador
 cookie_usuario = cookie_manager.get(cookie="usuario_logado")
 
+# Inicializa o session_state se não existir
 if "usuario_logado" not in st.session_state:
-    st.session_state["usuario_logado"] = cookie_usuario
+    st.session_state["usuario_logado"] = None
 
+# 🔑 CORREÇÃO CRUCIAL: Se o session_state estiver vazio, mas o cookie acabou de carregar um valor, assume ele!
+if st.session_state["usuario_logado"] is None and cookie_usuario is not None:
+    st.session_state["usuario_logado"] = cookie_usuario
+    st.rerun()
+
+# Se continuarmos sem usuário logado, exibe a tela de acesso
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões - TJMG")
     
@@ -160,7 +167,6 @@ if st.session_state["usuario_logado"] is None:
                 if len(resposta.data) > 0:
                     dados_bd = resposta.data[0]
                     senha_criptografada = gerar_hash_senha(senha_login)
-                    # CORREÇÃO AQUI: Verifique se a senha bate
                     if dados_bd["senha"] == senha_criptografada:
                         st.session_state["usuario_logado"] = usuario_login
                         cookie_manager.set("usuario_logado", usuario_login)
@@ -173,7 +179,6 @@ if st.session_state["usuario_logado"] is None:
                 st.warning("Preencha usuário e senha.")
                 
     with aba_cadastro:
-        # (código da aba de cadastro permanece igual)
         pass
         
     st.stop() # Interrompe a execução do resto do app se não estiver logado
