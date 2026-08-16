@@ -11,12 +11,12 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from supabase import create_client, Client
-@st.cache_resource
-def get_manager():
-    return stx.CookieManager()
 
-cookie_manager = get_manager()
+# Inicializa o Cookie Manager de forma segura
+if 'cookie_manager' not in st.session_state:
+    st.session_state['cookie_manager'] = stx.CookieManager()
 
+cookie_manager = st.session_state['cookie_manager']
 
 # ==========================================
 # 1. FUNÇÃO DE CONVERSÃO PARA PDF
