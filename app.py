@@ -472,7 +472,7 @@ elif menu == "📝 Gerar Certidão":
                     st.session_state[k] = ""
             st.session_state['limpar_detalhada'] = False
 
-        st.write("**Deixei de cumprir o ato uma vez que:**")
+        st.write("**Deixei de cumprir a ordem descrita uma vez que:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
             nao_loc_dest = st.checkbox("O destinatário não foi localizado", key="nao_loc_dest")
@@ -583,7 +583,7 @@ elif menu == "📝 Gerar Certidão":
                 
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir o ato emanado no mandado{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
@@ -704,7 +704,7 @@ elif menu == "📝 Gerar Certidão":
                     st.session_state[k] = ""
             st.session_state['limpar_detalhada_nova'] = False
 
-        st.write("**Deixei de cumprir o ato uma vez que:**")
+        st.write("**Deixei de cumprir a ordem descrita uma vez que:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
             nao_loc_dest_n = st.checkbox("O destinatário não foi localizado", key="nao_loc_dest_n")
@@ -808,7 +808,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado no mandado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir o ato{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
