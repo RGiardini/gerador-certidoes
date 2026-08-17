@@ -214,36 +214,44 @@ with st.sidebar:
 # ==========================================
 if menu == "⚙️ Meu Perfil":
     st.title("⚙️ Configurar Meu Perfil")
-    st.write("Estes dados serão inseridos no final das suas certidões (Fonte tamanho 8).")
+    st.write("Estes dados são **obrigatórios** para que você possa gerar certidões.")
     
-    novo_nome = st.text_input("Nome Completo:", value=dados_usuario.get("nome", ""), key="input_perfil_nome")
-    novo_cargo = st.text_input("Cargo:", value=dados_usuario.get("cargo", ""), key="input_perfil_cargo")
+    novo_nome = st.text_input("Nome Completo:", value=dados_usuario.get("nome", ""), placeholder="Ex: Rafael", key="input_perfil_nome")
+    novo_cargo = st.text_input("Cargo:", value=dados_usuario.get("cargo", ""), placeholder="Ex: Oficial de Justiça - TJMG", key="input_perfil_cargo")
     nova_matricula = st.text_input("Matrícula (ex: PJPI: 12345):", value=dados_usuario.get("matricula", ""), key="input_perfil_matricula")
+    novo_email = st.text_input("E-mail Profissional:", value=dados_usuario.get("email", ""), placeholder="Ex: rafael@tjmg.jus.br", key="input_perfil_email")
+    nova_cidade = st.text_input("Comarca / Cidade de Lotação:", value=dados_usuario.get("cidade", ""), placeholder="Esta cidade sairá no final das certidões", key="input_perfil_cidade")
     
     st.write("**Sua Assinatura (Fundo branco ou transparente):**")
     arquivo_assinatura = st.file_uploader("Envie a foto da sua assinatura", type=["png", "jpg", "jpeg"], key="uploader_perfil")
     
     if st.button("💾 Salvar Perfil", type="primary", use_container_width=True, key="btn_salvar_perfil"):
-        supabase.table("banco_usuarios").update({
-            "nome": novo_nome,
-            "cargo": novo_cargo,
-            "matricula": nova_matricula
-        }).eq("usuario", usuario_atual).execute()
-        
-        if arquivo_assinatura is not None:
-            try:
-                supabase.storage.from_("assinaturas_usuarios").remove([f"{usuario_atual}.png"])
-            except:
-                pass
-            supabase.storage.from_("assinaturas_usuarios").upload(
-                file=arquivo_assinatura.getvalue(),
-                path=f"{usuario_atual}.png",
-                file_options={"content-type": arquivo_assinatura.type}
-            )
-                
-        st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
-        st.rerun()
-
+        # Validação para tornar os campos obrigatórios
+        if not (novo_nome and novo_cargo and nova_matricula and novo_email and nova_cidade):
+            st.error("⚠️ Atenção: Todos os campos de texto são obrigatórios. Preencha todos antes de salvar!")
+        else:
+            supabase.table("banco_usuarios").update({
+                "nome": novo_nome,
+                "cargo": novo_cargo,
+                "matricula": nova_matricula,
+                "email": novo_email,
+                "cidade": nova_cidade
+            }).eq("usuario", usuario_atual).execute()
+            
+            if arquivo_assinatura is not None:
+                try:
+                    supabase.storage.from_("assinaturas_usuarios").remove([f"{usuario_atual}.png"])
+                except:
+                    pass
+                supabase.storage.from_("assinaturas_usuarios").upload(
+                    file=arquivo_assinatura.getvalue(),
+                    path=f"{usuario_atual}.png",
+                    file_options={"content-type": arquivo_assinatura.type}
+                )
+                    
+            st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
+            st.rerun()
+            
 # ==========================================
 # 6. TELA: MINHAS CERTIDÕES
 # ==========================================
