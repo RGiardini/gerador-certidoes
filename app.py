@@ -558,7 +558,7 @@ elif menu == "📝 Gerar Certidão":
 
             st.write("**Não sabendo o informante indicar:**")
             nao_sabe_list = [
-                "endereço completo", "paradeiro da pessoa procurada", "o dia/horário exato para encontrá-lo(a)", 
+                "endereço completo", "o paradeiro da pessoa procurada", "o dia/horário exato para encontrá-lo(a)", 
                 "telefone", "dia/horário de retorno", "o presídio", 
                 "dados do óbito", "previsão de alta"
             ]
