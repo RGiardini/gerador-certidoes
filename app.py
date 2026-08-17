@@ -672,7 +672,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
@@ -732,7 +732,7 @@ elif menu == "📝 Gerar Certidão":
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
@@ -986,7 +986,7 @@ elif menu == "📝 Gerar Certidão":
                 p_Linha.paragraph_format.first_line_indent = Pt(35.4) # Adiciona parágrafo na primeira linha
 
                 doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1143,7 +1143,7 @@ elif menu == "📝 Gerar Certidão":
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA POR HORA CERTA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
