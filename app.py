@@ -518,7 +518,7 @@ elif menu == "📝 Gerar Certidão":
     with c_end:
         endereco = st.text_input("Endereço (opcional):", placeholder="Se vazio: 'informado no mesmo'", key="endereco_geral")
     with c_pes:
-        pessoa = st.text_input("Pessoa procurada:", placeholder="Deixe vazio para termo genérico", key="pessoa_geral")
+        pessoa = st.text_input("Pessoa procurada: (opcional)", placeholder="Deixe vazio para termo genérico", key="pessoa_geral")
 
     st.markdown("---")
     st.subheader("Data do Documento e Diligências")
@@ -671,7 +671,7 @@ elif menu == "📝 Gerar Certidão":
 
         st.divider()
 
-        if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
+        if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
             with st.spinner("Construindo certidão e preparando arquivo..."):
                 
                 ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
@@ -707,7 +707,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
@@ -1096,7 +1096,7 @@ elif menu == "📝 Gerar Certidão":
 
         st.divider()
 
-        if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_horacerta"):
+        if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_horacerta"):
             with st.spinner("Construindo certidão de Hora Certa..."):
                 
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
@@ -1149,7 +1149,7 @@ elif menu == "📝 Gerar Certidão":
                     else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19."
                 else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
+                paragrafo = f"Certifico que, em cumprimento ao mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
