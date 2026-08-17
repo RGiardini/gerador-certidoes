@@ -771,10 +771,13 @@ elif menu == "📝 Gerar Certidão":
                     if len(frases_motivos_limpas) > 1:
                         meio = ", que ".join(frases_motivos_limpas[:-1])
                         texto_motivos = f"{meio}, e que {frases_motivos_limpas[-1]}"
-                    else:
+                    elif len(frases_motivos_limpas) == 1:
                         texto_motivos = frases_motivos_limpas[0]
+                    else:
+                        texto_motivos = ""
                         
-                    paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
+                    if texto_motivos:
+                        paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
 
                 # ==========================================
                 # BLOCO MELHORADO DO INFORMANTE - Frase Contínua e Integrada
@@ -795,11 +798,12 @@ elif menu == "📝 Gerar Certidão":
                         txt_informante += f", na qualidade de {relacoes_str}," if relacoes_str else ","
                     else:
                         if relacoes_str: 
-                            txt_informante = f"por pessoa no local, que se apresentou como {relacoes_str}, mas preferiu não se identificar,"
+                            # Removido o segundo "no local" para evitar cacofonia
+                            txt_informante = f"por uma pessoa que se apresentou como {relacoes_str}, mas preferiu não se identificar, "
                         else: 
-                            txt_informante = "por pessoa no local que preferiu não se identificar,"
+                            txt_informante = "por pessoa que preferiu não se identificar, "
                             
-                    paragrafo += f"Conforme informações prestadas no local {txt_informante} "
+                    paragrafo += f"Conforme informações prestadas no local {txt_informante}"
                     
                     partes_informacao = []
 
