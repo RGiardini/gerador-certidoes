@@ -769,12 +769,13 @@ elif menu == "📝 Gerar Certidão":
         st.subheader("Detalhes da Certidão Positiva")
         st.markdown("---")
         
-        st.write("**1. Condnções do Recebimento:**")
+        st.write("**1. Condições do Recebimento:**")
         mod_recebimento_pos = st.radio(
             "Selecione a opção de recebimento e assinatura:",
             [
                 "Aceitou e exarou sua assinatura no mandado",
                 "Aceitou, mas não exarou sua assinatura",
+                "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária", # Nova Opção
                 "Não aceitou a contrafé",
                 "Não aceitou e não exarou sua assinatura"
             ],
@@ -879,6 +880,9 @@ elif menu == "📝 Gerar Certidão":
                     paragrafo += "aceitou\nexarando no mandado sua nota de ciência"
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
                     paragrafo += "aceitou\nnão exarando no mandado sua nota de ciência"
+                # Nova lógica adicionada:
+                elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
+                    paragrafo += "aceitou\ndeixando de colher a assinatura como medida de precaução contra a propagação de doenças infectocontagiosas, diante das circunstâncias verificadas no local ou das condições apresentadas pela pessoa"
                 elif mod_recebimento_pos == "Não aceitou a contrafé":
                     paragrafo += "não aceitou\nexarando no mandado sua nota de ciência"
                 else:
