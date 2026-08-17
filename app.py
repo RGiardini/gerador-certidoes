@@ -850,7 +850,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
                 # --- MONTAGEM DO TEXTO CONTÍNUO ---
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Na oportunidade, dei-lhe a contrafé, que "
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou, exarando no mandado sua respectiva nota de ciência. "
