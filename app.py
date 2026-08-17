@@ -4,6 +4,9 @@ import hashlib
 import zipfile
 import subprocess
 import tempfile
+import re
+import time
+import uuid
 from io import BytesIO
 import datetime
 from docx import Document
@@ -12,39 +15,32 @@ from docx.shared import Pt, Cm
 from supabase import create_client, Client
 
 # ==========================================
-# FUNÇÃO AUXILIAR DE DATA
+# FUNÇÕES AUXILIARES
 # ==========================================
+def limpar_cpf(cpf_str):
+    """Remove tudo que não for número do CPF."""
+    return re.sub(r'\D', '', cpf_str)
+
 def formatar_data_completa(data_str, ano_padrao):
-    """
-    Recebe uma string de data (dd/mm ou dd/mm/aa ou dd/mm/aaaa) 
-    e retorna no formato dd/mm/aaaa.
-    """
+    """Recebe uma string de data (dd/mm ou dd/mm/aa) e retorna dd/mm/aaaa."""
     if not data_str or "/" not in data_str:
         return data_str
     
     partes = [p.strip() for p in data_str.split('/')]
     
-    # Se só tem dd/mm
     if len(partes) == 2:
         return f"{partes[0].zfill(2)}/{partes[1].zfill(2)}/{ano_padrao}"
     
-    # Se tem dd/mm/aa (ex: 08/08/26)
     if len(partes) == 3:
         dia, mes, ano_part = partes[0].zfill(2), partes[1].zfill(2), partes[2]
         if len(ano_part) == 2:
-            ano_part = "20" + ano_part # Assume século 21
+            ano_part = "20" + ano_part
         return f"{dia}/{mes}/{ano_part}"
         
     return data_str
 
-# ==========================================
-# 1. FUNÇÃO DE CONVERSÃO PARA PDF
-# ==========================================
 def converter_docx_para_pdf(docx_bytes):
-    """
-    Salva o DOCX temporariamente, aciona o LibreOffice oculto para converter 
-    e devolve os bytes do PDF gerado.
-    """
+    """Converte DOCX para PDF usando LibreOffice oculto."""
     with tempfile.TemporaryDirectory() as temp_dir:
         caminho_docx = os.path.join(temp_dir, "temp_certidao.docx")
         
@@ -65,7 +61,7 @@ def converter_docx_para_pdf(docx_bytes):
         return None
 
 # ==========================================
-# 2. CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
+# CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
 # ==========================================
 st.set_page_config(page_title="Sistema de Certidões", layout="wide")
 
@@ -145,7 +141,7 @@ def gerar_hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
 
 # ==========================================
-# 3. CONTROLE DE SESSÃO E LOGIN (VIA URL)
+# CONTROLE DE SESSÃO E LOGIN (VIA URL)
 # ==========================================
 if "usuario_logado" not in st.session_state or st.session_state["usuario_logado"] is None:
     usuario_url = st.query_params.get("user")
@@ -160,11 +156,15 @@ if st.session_state["usuario_logado"] is None:
     aba_login, aba_cadastro = st.tabs(["Entrar", "Criar Nova Conta"])
     
     with aba_login:
-        usuario_login = st.text_input("Usuário:", key="log_usr_input").lower().strip()
+        cpf_input_bruto = st.text_input("CPF (Apenas números):", key="log_usr_input")
         senha_login = st.text_input("Senha:", type="password", key="log_pwd_input")
         
         if st.button("Entrar", type="primary", use_container_width=True, key="btn_entrar"):
-            if usuario_login and senha_login:
+            usuario_login = limpar_cpf(cpf_input_bruto)
+            
+            if not usuario_login or len(usuario_login) != 11:
+                st.warning("⚠️ O login deve ser um CPF válido contendo 11 números.")
+            elif senha_login:
                 resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_login).execute()
                 
                 if len(resposta.data) > 0:
@@ -177,9 +177,9 @@ if st.session_state["usuario_logado"] is None:
                     else:
                         st.error("Senha incorreta!")
                 else:
-                    st.error("Usuário não encontrado.")
+                    st.error("CPF não cadastrado no sistema.")
             else:
-                st.warning("Preencha usuário e senha.")
+                st.warning("Preencha a senha.")
                 
     with aba_cadastro:
         pass
@@ -187,18 +187,19 @@ if st.session_state["usuario_logado"] is None:
     st.stop()
 
 # ==========================================
-# 4. DADOS DO USUÁRIO E MENU LATERAL
+# DADOS DO USUÁRIO E MENU LATERAL
 # ==========================================
 usuario_atual = st.session_state["usuario_logado"]
 resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
 dados_usuario = resposta_usuario.data[0]
 
 with st.sidebar:
-    st.write(f"👤 Olá, **{usuario_atual.title()}**!")
+    st.write(f"👤 Olá, **{usuario_atual}**!")
     st.divider()
     
     opcoes_menu = ["📝 Gerar Certidão", "📂 Minhas Certidões", "⚙️ Meu Perfil"]
-    if usuario_atual == "10228429":
+    # CPF do Administrador Atualizado
+    if usuario_atual == "05042687670":
         opcoes_menu.append("🛡️ Painel do Administrador")
         
     menu = st.radio("Navegação:", opcoes_menu)
@@ -210,7 +211,7 @@ with st.sidebar:
         st.rerun()
 
 # ==========================================
-# 5. TELA: MEU PERFIL
+# TELA: MEU PERFIL
 # ==========================================
 if menu == "⚙️ Meu Perfil":
     st.title("⚙️ Configurar Meu Perfil")
@@ -221,18 +222,28 @@ if menu == "⚙️ Meu Perfil":
     nova_matricula = st.text_input("Matrícula (ex: PJPI: 12345):", value=dados_usuario.get("matricula", ""), key="input_perfil_matricula")
     novo_email = st.text_input("E-mail Profissional:", value=dados_usuario.get("email", ""), placeholder="Ex: rafael@tjmg.jus.br", key="input_perfil_email")
     
-    # Novos campos de Cidade e Estado lado a lado
     c_cid, c_est = st.columns([3, 1])
     with c_cid:
         nova_cidade = st.text_input("Comarca / Cidade de Lotação:", value=dados_usuario.get("cidade", ""), placeholder="Ex: Belo Horizonte", key="input_perfil_cidade")
     with c_est:
         novo_estado = st.text_input("Estado (Sigla):", value=dados_usuario.get("estado", ""), max_chars=2, placeholder="Ex: MG", key="input_perfil_estado").upper()
     
+    st.markdown("---")
     st.write("**Sua Assinatura (Fundo branco ou transparente):**")
+    
+    # Verifica se já existe assinatura salva
+    try:
+        assinatura_salva = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+        if assinatura_salva:
+            st.success("✅ **Você já possui uma assinatura salva no sistema:**")
+            st.image(assinatura_salva, width=250)
+            st.write("*(Envie um novo arquivo abaixo apenas se desejar substituí-la)*")
+    except:
+        st.warning("❌ **Nenhuma assinatura salva.** Por favor, envie sua assinatura abaixo.")
+
     arquivo_assinatura = st.file_uploader("Envie a foto da sua assinatura", type=["png", "jpg", "jpeg"], key="uploader_perfil")
     
     if st.button("💾 Salvar Perfil", type="primary", use_container_width=True, key="btn_salvar_perfil"):
-        # Atualizado para exigir o estado
         if not (novo_nome and novo_cargo and nova_matricula and novo_email and nova_cidade and novo_estado):
             st.error("⚠️ Atenção: Todos os campos de texto são obrigatórios. Preencha todos antes de salvar!")
         else:
@@ -257,10 +268,11 @@ if menu == "⚙️ Meu Perfil":
                 )
                     
             st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
+            time.sleep(2) # Aguarda 2 segundos para o usuário ler a mensagem
             st.rerun()
 
 # ==========================================
-# 6. TELA: MINHAS CERTIDÕES
+# TELA: MINHAS CERTIDÕES
 # ==========================================
 elif menu == "📂 Minhas Certidões":
     st.title("📂 Minhas Certidões Salvas")
@@ -365,10 +377,11 @@ elif menu == "📂 Minhas Certidões":
                     st.rerun()
 
 # ==========================================
-# 7. TELA: PAINEL DO ADMINISTRADOR
+# TELA: PAINEL DO ADMINISTRADOR
 # ==========================================
 elif menu == "🛡️ Painel do Administrador":
-    if usuario_atual != "10228429":
+    # Validação do novo CPF administrador
+    if usuario_atual != "05042687670":
         st.error("Acesso restrito apenas ao Administrador.")
         st.stop()
         
@@ -379,17 +392,15 @@ elif menu == "🛡️ Painel do Administrador":
     
     with aba_adm1:
         st.subheader("Oficiais Cadastrados no Sistema")
-        # Incluímos 'estado' na consulta
         res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula, email, cidade, estado").execute()
         usuarios_cadastrados = res_todos.data
         
         if usuarios_cadastrados:
             for u in usuarios_cadastrados:
-                with st.expander(f"👤 Usuário: {u['usuario']} — Nome: {u.get('nome') or 'Não preenchido'}"):
+                with st.expander(f"👤 Usuário/CPF: {u['usuario']} — Nome: {u.get('nome') or 'Não preenchido'}"):
                     st.write(f"**Cargo:** {u.get('cargo')}")
                     st.write(f"**Matrícula:** {u.get('matricula')}")
                     st.write(f"**E-mail:** {u.get('email') or 'Não informado'}")
-                    # Imprime a Cidade / Sigla (Ex: Belo Horizonte / MG)
                     st.write(f"**Comarca/Cidade:** {u.get('cidade') or 'Não informada'} / {u.get('estado') or '-'}")
                     
                     if u['usuario'] != usuario_atual:
@@ -415,7 +426,7 @@ elif menu == "🛡️ Painel do Administrador":
             for pasta in pastas_usuarios:
                 nome_oficial = pasta["name"]
                 if nome_oficial and nome_oficial != ".emptyFolder":
-                    st.markdown(f"### 📂 Oficial: `{nome_oficial}`")
+                    st.markdown(f"### 📂 Oficial (CPF): `{nome_oficial}`")
                     
                     try:
                         arquivos_oficial = supabase.storage.from_("certidoes_usuarios").list(nome_oficial)
@@ -454,17 +465,15 @@ elif menu == "🛡️ Painel do Administrador":
                     st.divider()
 
 # ==========================================
-# 8. TELA: GERADOR DE CERTIDÃO
+# TELA: GERADOR DE CERTIDÃO
 # ==========================================
 elif menu == "📝 Gerar Certidão":
     st.title("Gerador de Certidões - TJMG")
     
-    # Bloqueio caso algum campo, incluindo o estado, esteja vazio
     if not (dados_usuario.get("nome") and dados_usuario.get("cargo") and dados_usuario.get("matricula") and dados_usuario.get("email") and dados_usuario.get("cidade") and dados_usuario.get("estado")):
         st.warning("⚠️ Acesso restrito! Vá em 'Meu Perfil' e preencha **todos os dados obrigatórios** (Nome, Cargo, Matrícula, E-mail, Comarca e Estado) para liberar a geração de certidões.")
         st.stop()
 
-    # Formata a cidade e o estado para usar no documento (ex: Belo Horizonte/MG)
     cidade_certidao = dados_usuario.get("cidade").strip().title()
     estado_certidao = dados_usuario.get("estado").strip().upper()
 
@@ -522,7 +531,6 @@ elif menu == "📝 Gerar Certidão":
         except:
             pass
 
-    # Controle para o usuário escolher entre usar a última diligência ou escolher manualmente
     usar_ultima_diligencia = st.checkbox("Usar automaticamente a data da última diligência", value=True, key="chk_usar_ultima_dil")
 
     if usar_ultima_diligencia:
@@ -659,10 +667,8 @@ elif menu == "📝 Gerar Certidão":
         if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
             with st.spinner("Construindo certidão e preparando arquivo..."):
                 
-                # --- NOVA LÓGICA DE DATAS AQUI ---
                 ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
                 dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
-                # ---------------------------------
                 
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
@@ -677,7 +683,6 @@ elif menu == "📝 Gerar Certidão":
                     h_str = horas_validas[0] if len(horas_validas) > 0 else "___hs"
                     texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {h_str},"
                 elif len(dias_formatados) > 1:
-                    # Previne erro se o usuário não informar horas
                     if len(horas_validas) > 1:
                         str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     elif len(horas_validas) == 1:
@@ -687,7 +692,6 @@ elif menu == "📝 Gerar Certidão":
                         
                     str_dias = ", ".join(dias_formatados[:-1]) + f" e {dias_formatados[-1]}"
                     
-                    # Só usa "respectivamente" se tiver mais de um horário também
                     if len(horas_validas) > 1:
                         texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
                     else:
@@ -696,7 +700,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
@@ -756,7 +760,7 @@ elif menu == "📝 Gerar Certidão":
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
@@ -773,8 +777,6 @@ elif menu == "📝 Gerar Certidão":
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
-                import uuid
-
                 # Adiciona segundos (%S) e um pedaço de UUID único (ex: 4 caracteres)
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%Mm%Ss")
                 sufixo_unico = str(uuid.uuid4())[:6]
@@ -892,10 +894,8 @@ elif menu == "📝 Gerar Certidão":
                 
                 verbo_ato = "citei/intimei/notifiquei"
                 
-                # --- NOVA LÓGICA DE DATAS AQUI ---
                 ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
                 dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
-                # ---------------------------------
                 
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_formatadas = []
@@ -928,8 +928,7 @@ elif menu == "📝 Gerar Certidão":
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                # --- MONTAGEM DO TEXTO CONTÍNUO ---
-                paragrafo = f"Certifico que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou, exarando no mandado sua nota de ciência. "
@@ -982,7 +981,6 @@ elif menu == "📝 Gerar Certidão":
 
                 if obs_pos:
                     paragrafo += f"{obs_pos.strip()} "
-                # --- FIM DA MONTAGEM DO TEXTO CONTÍNUO ---
 
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
@@ -1004,16 +1002,15 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph("")
 
-                # Adiciona o texto contínuo como um parágrafo justificado (removido o loop que quebrava em linhas)
                 p_Linha = doc.add_paragraph(paragrafo.strip())
                 p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                p_Linha.paragraph_format.first_line_indent = Pt(35.4) # Adiciona parágrafo na primeira linha
+                p_Linha.paragraph_format.first_line_indent = Pt(35.4) 
 
                 doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph("")
                 
                 try:
@@ -1098,13 +1095,10 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" de {pessoa}" if pessoa else " da pessoa referida no mandado"
                 
-                # --- NOVA LÓGICA DE DATAS AQUI ---
                 ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
                 dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
                 
-                # Formatar também a data de retorno marcada com o terceiro
                 hc_data_retorno_formatada = formatar_data_completa(hc_data_retorno.strip(), ano_base) if hc_data_retorno else ""
-                # ---------------------------------
                 
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
@@ -1118,7 +1112,6 @@ elif menu == "📝 Gerar Certidão":
                     h_str = horas_validas[0] if len(horas_validas) > 0 else "___hs"
                     texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {h_str},"
                 elif len(dias_formatados) > 1:
-                    # Previne erro se o usuário não informar horas
                     if len(horas_validas) > 1:
                         str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     elif len(horas_validas) == 1:
@@ -1128,7 +1121,6 @@ elif menu == "📝 Gerar Certidão":
                         
                     str_dias = ", ".join(dias_formatados[:-1]) + f" e {dias_formatados[-1]}"
                     
-                    # Só usa "respectivamente" se tiver mais de um horário também
                     if len(horas_validas) > 1:
                         texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
                     else:
@@ -1145,12 +1137,12 @@ elif menu == "📝 Gerar Certidão":
                 txt_retorno_alvo = "ali não a encontrando" if hc_encontrou_alvo == "Não" else "ali a encontrando"
                 
                 if hc_aceitou == "Sim":
-                    if hc_assinou == "Sim": txt_final = "a qual aceitou o documento e exarou sua assinatura no mandado."
-                    elif hc_assinou == "Não": txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no mandado."
+                    if hc_assinou == "Sim": txt_final = "a qual aceitou o documento e exarou sua assinatura no respectivo mandado."
+                    elif hc_assinou == "Não": txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no respectivo mandado."
                     else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19."
-                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o mandado."
+                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a contrafé com a pessoa mencionada, {txt_final}"
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
@@ -1167,7 +1159,7 @@ elif menu == "📝 Gerar Certidão":
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
                 doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA POR HORA CERTA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
