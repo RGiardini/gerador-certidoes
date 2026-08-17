@@ -649,12 +649,25 @@ elif menu == "📝 Gerar Certidão":
                     horas_validas.append(h_limpo)
 
                 texto_data_hora = ""
-                if len(dias_formatados) == 1: 
-                    texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {horas_validas[0]},"
+                if len(dias_formatados) == 1:
+                    h_str = horas_validas[0] if len(horas_validas) > 0 else "___hs"
+                    texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {h_str},"
                 elif len(dias_formatados) > 1:
-                    str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
+                    # Previne erro se o usuário não informar horas
+                    if len(horas_validas) > 1:
+                        str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
+                    elif len(horas_validas) == 1:
+                        str_horas = horas_validas[0]
+                    else:
+                        str_horas = "___hs"
+                        
                     str_dias = ", ".join(dias_formatados[:-1]) + f" e {dias_formatados[-1]}"
-                    texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
+                    
+                    # Só usa "respectivamente" se tiver mais de um horário também
+                    if len(horas_validas) > 1:
+                        texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
+                    else:
+                        texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas},"
 
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
@@ -1077,13 +1090,25 @@ elif menu == "📝 Gerar Certidão":
                     horas_validas.append(h_limpo)
                 
                 texto_data_hora = ""
-                if len(dias_formatados) == 1: 
-                    texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {horas_validas[0]},"
+                if len(dias_formatados) == 1:
+                    h_str = horas_validas[0] if len(horas_validas) > 0 else "___hs"
+                    texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {h_str},"
                 elif len(dias_formatados) > 1:
-                    str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
+                    # Previne erro se o usuário não informar horas
+                    if len(horas_validas) > 1:
+                        str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
+                    elif len(horas_validas) == 1:
+                        str_horas = horas_validas[0]
+                    else:
+                        str_horas = "___hs"
+                        
                     str_dias = ", ".join(dias_formatados[:-1]) + f" e {dias_formatados[-1]}"
-                    # A palavra respectivamente só aparece se houver mais de uma data
-                    texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
+                    
+                    # Só usa "respectivamente" se tiver mais de um horário também
+                    if len(horas_validas) > 1:
+                        texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
+                    else:
+                        texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas},"
                 
                 
                 hr_limpo = hc_hora_retorno.strip()
