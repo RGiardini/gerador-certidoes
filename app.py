@@ -227,9 +227,6 @@ if st.session_state["usuario_logado"] is None:
         
         texto_termos = """
         **Termos de Uso e Assinatura:**
-        Declaro que li e concordo com as normas de uso do sistema. 
-        Estou ciente de que esta ferramenta será oferecida de forma **100% gratuita pelo prazo de 1 (um) ano** a partir da data deste cadastro. 
-        Após este período de testes, para continuar utilizando o sistema, será cobrada uma mensalidade no valor de **R$ 30,00**. Não haverá cobrança automática sem aviso prévio.
         """
         st.info(texto_termos)
         aceite_termos = st.checkbox("Li e aceito os Termos de Uso e o período de gratuidade de 1 ano.", key="chk_termos")
