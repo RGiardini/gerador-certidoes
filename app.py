@@ -12,6 +12,32 @@ from docx.shared import Pt, Cm
 from supabase import create_client, Client
 
 # ==========================================
+# FUNÇÃO AUXILIAR DE DATA
+# ==========================================
+def formatar_data_completa(data_str, ano_padrao):
+    """
+    Recebe uma string de data (dd/mm ou dd/mm/aa ou dd/mm/aaaa) 
+    e retorna no formato dd/mm/aaaa.
+    """
+    if not data_str or "/" not in data_str:
+        return data_str
+    
+    partes = [p.strip() for p in data_str.split('/')]
+    
+    # Se só tem dd/mm
+    if len(partes) == 2:
+        return f"{partes[0].zfill(2)}/{partes[1].zfill(2)}/{ano_padrao}"
+    
+    # Se tem dd/mm/aa (ex: 08/08/26)
+    if len(partes) == 3:
+        dia, mes, ano_part = partes[0].zfill(2), partes[1].zfill(2), partes[2]
+        if len(ano_part) == 2:
+            ano_part = "20" + ano_part # Assume século 21
+        return f"{dia}/{mes}/{ano_part}"
+        
+    return data_str
+
+# ==========================================
 # 1. FUNÇÃO DE CONVERSÃO PARA PDF
 # ==========================================
 def converter_docx_para_pdf(docx_bytes):
@@ -472,7 +498,14 @@ elif menu == "📝 Gerar Certidão":
         except:
             pass
 
-    data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=data_padrao_calculada, format="DD/MM/YYYY", key="data_certidao_geral")
+    # Controle para o usuário escolher entre usar a última diligência ou escolher manualmente
+    usar_ultima_diligencia = st.checkbox("Usar automaticamente a data da última diligência", value=True, key="chk_usar_ultima_dil")
+
+    if usar_ultima_diligencia:
+        data_certidao = data_padrao_calculada
+        st.info(f"📅 Data da certidão definida automaticamente pela última diligência: **{data_certidao.strftime('%d/%m/%Y')}**")
+    else:
+        data_certidao = st.date_input("Escolha a data da certidão:", value=data_padrao_calculada, format="DD/MM/YYYY", key="data_certidao_manual_escolha")
     
     st.write("**Informe os Dias e Horários**")
     
@@ -602,7 +635,11 @@ elif menu == "📝 Gerar Certidão":
         if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
             with st.spinner("Construindo certidão e preparando arquivo..."):
                 
-                dias_validos = [d for d in [d1, d2, d3] if d]
+                # --- NOVA LÓGICA DE DATAS AQUI ---
+                ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
+                dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
+                # ---------------------------------
+                
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
@@ -612,10 +649,11 @@ elif menu == "📝 Gerar Certidão":
                     horas_validas.append(h_limpo)
 
                 texto_data_hora = ""
-                if len(dias_validos) == 1: texto_data_hora = f"no dia {dias_validos[0]}, por volta das {horas_validas[0]},"
-                elif len(dias_validos) > 1:
+                if len(dias_formatados) == 1: 
+                    texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {horas_validas[0]},"
+                elif len(dias_formatados) > 1:
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
-                    str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
+                    str_dias = ", ".join(dias_formatados[:-1]) + f" e {dias_formatados[-1]}"
                     texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
 
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
@@ -817,7 +855,11 @@ elif menu == "📝 Gerar Certidão":
                 
                 verbo_ato = "citei/intimei/notifiquei"
                 
-                dias_validos = [d for d in [d1, d2, d3] if d]
+                # --- NOVA LÓGICA DE DATAS AQUI ---
+                ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
+                dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
+                # ---------------------------------
+                
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_formatadas = []
                 
@@ -832,19 +874,19 @@ elif menu == "📝 Gerar Certidão":
                         horas_formatadas.append(h_limpo)
                 
                 str_horarios_dias = ""
-                if len(dias_validos) == 1 and len(horas_formatadas) == 1:
-                    str_horarios_dias = f"por volta das {horas_formatadas[0]}, do dia {dias_validos[0]}"
-                elif len(dias_validos) > 1 and len(horas_formatadas) > 1:
+                if len(dias_formatados) == 1 and len(horas_formatadas) == 1:
+                    str_horarios_dias = f"por volta das {horas_formatadas[0]}, do dia {dias_formatados[0]}"
+                elif len(dias_formatados) > 1 and len(horas_formatadas) > 1:
                     pares = []
-                    for i in range(min(len(horas_formatadas), len(dias_validos))):
-                        pares.append(f"por volta das {horas_formatadas[i]}, do(s) dia(s) {dias_validos[i]}")
+                    for i in range(min(len(horas_formatadas), len(dias_formatados))):
+                        pares.append(f"por volta das {horas_formatadas[i]}, do(s) dia(s) {dias_formatados[i]}")
                     if len(pares) == 2:
                         str_horarios_dias = f"{pares[0]} e {pares[1]}"
                     else:
                         str_horarios_dias = ", ".join(pares[:-1]) + f" e {pares[-1]}"
                 else:
                      h_f = horas_formatadas[0] if horas_formatadas else "___hs 00min"
-                     d_f = dias_validos[0] if dias_validos else "___/___/2026"
+                     d_f = dias_formatados[0] if dias_formatados else f"___/___/{ano_base}"
                      str_horarios_dias = f"por volta das {h_f}, do(s) dia(s) {d_f}"
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
@@ -1019,7 +1061,14 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" de {pessoa}" if pessoa else " da pessoa referida no mandado"
                 
-                dias_validos = [d for d in [d1, d2, d3] if d]
+                # --- NOVA LÓGICA DE DATAS AQUI ---
+                ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
+                dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
+                
+                # Formatar também a data de retorno marcada com o terceiro
+                hc_data_retorno_formatada = formatar_data_completa(hc_data_retorno.strip(), ano_base) if hc_data_retorno else ""
+                # ---------------------------------
+                
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
@@ -1028,11 +1077,11 @@ elif menu == "📝 Gerar Certidão":
                     horas_validas.append(h_limpo)
                 
                 texto_data_hora = ""
-                if len(dias_validos) == 1: 
-                    texto_data_hora = f"no dia {dias_validos[0]}, por volta das {horas_validas[0]},"
-                elif len(dias_validos) > 1:
+                if len(dias_formatados) == 1: 
+                    texto_data_hora = f"no dia {dias_formatados[0]}, por volta das {horas_validas[0]},"
+                elif len(dias_formatados) > 1:
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
-                    str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
+                    str_dias = ", ".join(dias_formatados[:-1]) + f" e {dias_formatados[-1]}"
                     # A palavra respectivamente só aparece se houver mais de uma data
                     texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
                 
@@ -1047,12 +1096,12 @@ elif menu == "📝 Gerar Certidão":
                 txt_retorno_alvo = "ali não a encontrando" if hc_encontrou_alvo == "Não" else "ali a encontrando"
                 
                 if hc_aceitou == "Sim":
-                    if hc_assinou == "Sim": txt_final = "a qual aceitou o documento e exarou sua assinatura no respectivo mandado."
-                    elif hc_assinou == "Não": txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no respectivo mandado."
+                    if hc_assinou == "Sim": txt_final = "a qual aceitou o documento e exarou sua assinatura no mandado."
+                    elif hc_assinou == "Não": txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no mandado."
                     else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19."
-                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
+                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o mandado."
 
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a contrafé com a pessoa mencionada, {txt_final}"
                 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
