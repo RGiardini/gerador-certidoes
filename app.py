@@ -251,7 +251,7 @@ if menu == "⚙️ Meu Perfil":
                     
             st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
             st.rerun()
-            
+
 # ==========================================
 # 6. TELA: MINHAS CERTIDÕES
 # ==========================================
@@ -372,7 +372,8 @@ elif menu == "🛡️ Painel do Administrador":
     
     with aba_adm1:
         st.subheader("Oficiais Cadastrados no Sistema")
-        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula").execute()
+        # Incluímos email e cidade no select
+        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula, email, cidade").execute()
         usuarios_cadastrados = res_todos.data
         
         if usuarios_cadastrados:
@@ -380,6 +381,8 @@ elif menu == "🛡️ Painel do Administrador":
                 with st.expander(f"👤 Usuário: {u['usuario']} — Nome: {u.get('nome') or 'Não preenchido'}"):
                     st.write(f"**Cargo:** {u.get('cargo')}")
                     st.write(f"**Matrícula:** {u.get('matricula')}")
+                    st.write(f"**E-mail:** {u.get('email') or 'Não informado'}")
+                    st.write(f"**Comarca/Cidade:** {u.get('cidade') or 'Não informada'}")
                     
                     if u['usuario'] != usuario_atual:
                         if st.button(f"🗑️ Excluir usuário {u['usuario']}", key=f"del_adm_usr_{u['usuario']}"):
@@ -448,9 +451,13 @@ elif menu == "🛡️ Painel do Administrador":
 elif menu == "📝 Gerar Certidão":
     st.title("Gerador de Certidões - TJMG")
     
-    if not dados_usuario.get("nome"):
-        st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' antes de gerar certidões.")
+    # Bloqueio caso algum campo esteja vazio
+    if not (dados_usuario.get("nome") and dados_usuario.get("cargo") and dados_usuario.get("matricula") and dados_usuario.get("email") and dados_usuario.get("cidade")):
+        st.warning("⚠️ Acesso restrito! Vá em 'Meu Perfil' e preencha **todos os dados obrigatórios** (Nome, Cargo, Matrícula, E-mail e Comarca) para liberar a geração de certidões.")
         st.stop()
+
+    # Formata a cidade do usuário para usar no documento (ex: belo horizonte -> Belo Horizonte)
+    cidade_certidao = dados_usuario.get("cidade").strip().title()
 
     c_tipo, c_formato = st.columns([3, 1])
     with c_tipo:
@@ -743,7 +750,7 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(f"{cidade_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
