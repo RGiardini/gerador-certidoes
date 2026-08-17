@@ -745,100 +745,223 @@ elif menu == "📝 Gerar Certidão":
             st.success("✅ Certidão salva na Nuvem!")
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_a2'], file_name=st.session_state['doc_pronto_nome_a2'], mime=st.session_state['doc_pronto_mime_a2'], type="primary", use_container_width=True)
             
-    # ==========================================
+   # ==========================================
     # OPÇÃO B: CERTIDÃO POSITIVA
     # ==========================================
     elif tipo_certidao == "Certidão Positiva":
         
         if st.session_state.get('limpar_positiva'):
             st.session_state["fin_pos"] = "Citação"
-            st.session_state["mod_pos"] = "Presencial"
-            st.session_state["contra_pos"] = "Sim"
-            st.session_state["ass_pos"] = "Sim"
-            st.session_state["adv_pos"] = "Não Perguntado"
+            st.session_state["mod_recebimento_pos"] = "Aceitou e assinou"
+            st.session_state["recurso_pos"] = "Não informado"
+            st.session_state["ciencia_pos"] = "Não informado"
+            st.session_state["reconhece_pos"] = "Não informado"
+            st.session_state["interesse_pos"] = "Não informado"
+            st.session_state["adv_pos_novo"] = "Não informado"
+            st.session_state["tel_pos"] = ""
+            st.session_state["email_pos"] = ""
+            st.session_state["tipo_realizacao_pos"] = "Pessoa procurada"
+            st.session_state["nome_rep_pos"] = ""
+            st.session_state["enunciado_pos"] = False
             st.session_state["obs_pos"] = ""
             st.session_state['limpar_positiva'] = False
             
-        st.subheader("Detalhes da Diligência Positiva")
-        finalidade_pos = st.selectbox("Finalidade principal do Mandado:", ["Citação", "Intimação", "Notificação", "Penhora", "Avaliação"], key="fin_pos")
+        st.subheader("Detalhes da Certidão Positiva")
+        finalidade_pos = st.selectbox("Finalidade do Mandado:", ["Citação", "Intimação", "Notificação", "Penhora", "Avaliação"], key="fin_pos")
         st.markdown("---")
         
-        c_mod, c_contra, c_ass = st.columns(3)
-        with c_mod: mod_pos = st.radio("Como foi o contato?", ["Presencial", "Telefone/WhatsApp"], key="mod_pos")
-        with c_contra: contrafe_pos = st.radio("Aceitou a contrafé?", ["Sim", "Não"], key="contra_pos")
-        with c_ass: ass_pos = st.radio("Colheu assinatura?", ["Sim", "Não", "Covid-19"], key="ass_pos")
-            
+        st.write("**1. Condnções do Recebimento:**")
+        mod_recebimento_pos = st.radio(
+            "Selecione a opção de recebimento e assinatura:",
+            [
+                "Aceitou e exarou sua assinatura no mandado",
+                "Aceitou, mas não exarou sua assinatura",
+                "Não aceitou a contrafé",
+                "Não aceitou e não exarou sua assinatura"
+            ],
+            key="mod_recebimento_pos"
+        )
+        
         st.markdown("---")
-        c_adv, c_obs = st.columns([1, 2])
-        with c_adv: adv_pos = st.radio("Perguntou sobre advogado?", ["Não Perguntado", "Tem condições", "Não tem condições"], key="adv_pos")
-        with c_obs: obs_pos = st.text_area("Observações Adicionais", height=110, key="obs_pos")
+        st.subheader("2. Declarações e Informações do(a) Sra(a).")
+        
+        c_p1, c_p2 = st.columns(2)
+        with c_p1:
+            recurso_pos = st.radio("Sobre recorrer:", ["Não informado", "Deseja recorrer", "Não deseja recorrer"], key="recurso_pos")
+            ciencia_pos = st.radio("Ciência da ação:", ["Não informado", "Tem ciência da ação em curso", "Não tem ciência da ação em curso"], key="ciencia_pos")
+            reconhece_pos = st.radio("Reconhecimento de assinatura:", ["Não informado", "Reconhece como suas as assinaturas", "Não reconhece as assinaturas"], key="reconhece_pos")
+        with c_p2:
+            interesse_pos = st.radio("Interesse no prosseguimento:", ["Não informado", "Tem interesse no prosseguimento", "Não tem interesse no prosseguimento"], key="interesse_pos")
+            adv_pos_novo = st.radio("Condições financeiras (Advogado):", ["Não informado", "Tem condições financeiras (advogado constituído)", "Não tem condições (hipossuficiente / defensor)"], key="adv_pos_novo")
+
+        st.markdown("---")
+        c_t1, c_t2 = st.columns(2)
+        with c_t1:
+            tel_pos = st.text_input("Telefone de contato:", placeholder="Ex: (31) 99999-9999", key="tel_pos")
+        with c_t2:
+            email_pos = st.text_input("E-mail:", placeholder="Ex: nome@email.com", key="email_pos")
+
+        st.markdown("---")
+        st.subheader("3. Especificidades da Realização do Ato")
+        tipo_realizacao_pos = st.radio(
+            "Como o ato foi realizado?",
+            [
+                "Pessoa procurada",
+                "Representante legal",
+                "Enunciados 5 e 38 do Fonaje"
+            ],
+            key="tipo_realizacao_pos"
+        )
+
+        nome_rep_pos = ""
+        enunciado_pos = False
+
+        if tipo_realizacao_pos == "Representante legal":
+            nome_rep_pos = st.text_input("Nome do Representante Legal:", placeholder="Ex: Maria da Silva", key="nome_rep_pos")
+        elif tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
+            enunciado_pos = True
+            nome_rep_pos = st.text_input("Nome da pessoa / dados complementares:", placeholder="Ex: Nome da pessoa que recebeu", key="nome_rep_pos")
+
+        obs_pos = st.text_area("Observações Adicionais (opcional)", height=90, key="obs_pos")
             
         st.divider()
         
         if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_positiva"):
             with st.spinner("Gerando certidão positiva..."):
+                
+                # Tratamento de dias e horas conforme o padrão do modelo da imagem
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_cruas = [h for h in [h1, h2, h3] if h]
-                horas_validas = []
+                horas_formatadas = []
+                
                 for h in horas_cruas:
                     h_limpo = h.strip()
-                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs')): h_limpo += 'h'
-                    horas_validas.append(h_limpo)
+                    if ":" in h_limpo:
+                        partes_h = h_limpo.split(":")
+                        horas_formatadas.append(f"{partes_h[0]}h {partes_h[1]}min")
+                    elif not h_limpo.lower().endswith(('h', 'min')):
+                        horas_formatadas.append(f"{h_limpo}h 00min")
+                    else:
+                        horas_formatadas.append(h_limpo)
                 
-                dia_pos = dias_validos[-1] if dias_validos else "___/___"
-                hora_pos = horas_validas[-1] if horas_validas else "___:___"
-
-                verbo_acao = ""
-                if finalidade_pos == "Citação": verbo_acao = "à CITAÇÃO"
-                elif finalidade_pos == "Intimação": verbo_acao = "à INTIMAÇÃO"
-                elif finalidade_pos == "Notificação": verbo_acao = "à NOTIFICAÇÃO"
-                elif finalidade_pos == "Penhora": verbo_acao = "à PENHORA"
-                elif finalidade_pos == "Avaliação": verbo_acao = "à AVALIAÇÃO"
-
-                txt_pessoa = f" de {pessoa}" if pessoa else " da pessoa referida no mandado"
-                txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
-
-                if mod_pos == "Telefone/WhatsApp":
-                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, no dia {dia_pos}, por volta das {hora_pos}, procedi, por via remota (ligação telefônica/aplicativo de mensagens), {verbo_acao}{txt_pessoa}. "
-                    if contrafe_pos == "Sim": paragrafo += "Na oportunidade, encaminhei a respectiva contrafé eletronicamente, a qual teve seu recebimento confirmado. "
-                    else: paragrafo += "Tentei encaminhar a respectiva contrafé eletronicamente, porém a mesma foi recusada ou não teve seu recebimento confirmado. "
+                # Montagem gramatical dos horários e dias conforme modelo anexo
+                str_horarios_dias = ""
+                if len(dias_validos) == 1 and len(horas_formatadas) == 1:
+                    str_horarios_dias = f"por volta das {horas_formatadas[0]}, do dia {dias_validos[0]}"
+                elif len(dias_validos) > 1 and len(horas_formatadas) > 1:
+                    # Formata combinando sequências exatas do modelo
+                    pares = []
+                    for i in range(min(len(horas_formatadas), len(dias_validos))):
+                        pares.append(f"por volta das {horas_formatadas[i]}, do(s) dia(s) {dias_validos[i]}")
+                    if len(pares) == 2:
+                        str_horarios_dias = f"{pares[0]} e {pares[1]}"
+                    else:
+                        str_horarios_dias = ", ".join(pares[:-1]) + f" e {pares[-1]}"
                 else:
-                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, ocasião em que, no dia {dia_pos}, por volta das {hora_pos}, procedi {verbo_acao}{txt_pessoa}. "
-                    if contrafe_pos == "Sim": paragrafo += "Na oportunidade, li-lhe o mandado e entreguei-lhe a respectiva contrafé, a qual foi aceita pela parte"
-                    else: paragrafo += "Na oportunidade, li-lhe o mandado e ofereci-lhe a respectiva contrafé, a qual foi recusada pela parte"
-                        
-                    if ass_pos == "Sim": paragrafo += ", que exarou sua assinatura no documento. "
-                    elif ass_pos == "Não": paragrafo += ", que se recusou a exarar sua assinatura no documento. "
-                    else: paragrafo += ", deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19. "
+                    # Fallback caso preencha apenas 1 ou 2 avulsos
+                     h_f = horas_formatadas[0] if horas_formatadas else "___h___min"
+                     d_f = dias_validos[0] if dias_validos else "___/___/2026"
+                     str_horarios_dias = f"por volta das {h_f}, do(s) dia(s) {d_f}"
 
-                if adv_pos == "Tem condições": paragrafo += "Questionado(a), a parte informou possuir condições de constituir um advogado particular para sua defesa. "
-                elif adv_pos == "Não tem condições": paragrafo += "Questionado(a), a parte declarou ser hipossuficiente, necessitando da nomeação de um defensor para atuar em sua defesa. "
+                txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                if not paragrafo.endswith(". "):
-                    paragrafo = paragrafo.rstrip() + ". "
+                # Verbo conjugado adequado gramaticalmente
+                if finalidade_pos == "Citação": verbo_ato = "citei"
+                elif finalidade_pos == "Intimação": verbo_ato = "intimei"
+                elif finalidade_pos == "Notificação": verbo_ato = "notifiquei"
+                else: verbo_ato = "citei/intimei/notifiquei"
 
-                if obs_pos: paragrafo += f"{obs_pos.strip()} "
+                # Construção do parágrafo principal alinhado ao modelo anexado
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, neste último, {verbo_ato} o destinatário, para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe contrafé, que:\n"
+                
+                if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
+                    paragrafo += "aceitou\nexarando no mandado sua nota de ciência"
+                elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
+                    paragrafo += "aceitou\nnão exarando no mandado sua nota de ciência"
+                elif mod_recebimento_pos == "Não aceitou a contrafé":
+                    paragrafo += "não aceitou\nexarando no mandado sua nota de ciência"
+                else:
+                    paragrafo += "não aceitou\nnão exarando no mandado sua nota de ciência"
+
+                # Bloco de declarações da parte
+                paragrafo += "\n\nCertifico, ainda, que, o(a) supracitado(a) informou que:\n"
+                
+                if recurso_pos == "Deseja recorrer": paragrafo += "<u>deseja</u> recorrer.\n"
+                elif recurso_pos == "Não deseja recorrer": paragrafo += "<u>não</u> deseja recorrer.\n"
+                
+                if ciencia_pos == "Tem ciência da ação em curso": paragrafo += "<u>tem</u> ciência do ajuizamento da ação em curso.\n"
+                elif ciencia_pos == "Não tem ciência da ação em curso": paragrafo += "<u>não tem</u> ciência do ajuizamento da ação em curso.\n"
+
+                if reconhece_pos == "Reconhece como suas as assinaturas": paragrafo += "<u>reconhece</u> como suas as assinaturas constantes nos documentos juntados no processo.\n"
+                elif reconhece_pos == "Não reconhece as assinaturas": paragrafo += "<u>não reconhece</u> como suas as assinaturas constantes nos documentos juntados no processo.\n"
+
+                if interesse_pos == "Tem interesse no prosseguimento": paragrafo += "<u>tem interesse</u> no prosseguimento do feito/demanda.\n"
+                elif interesse_pos == "Não tem interesse no prosseguimento": paragrafo += "<u>não tem interesse</u> no prosseguimento do feito/demanda.\n"
+
+                if adv_pos_novo == "Tem condições financeiras (advogado constituído)": 
+                    paragrafo += "<u>tem</u> condições financeiras de apresentar sua defesa através de advogado constituído.\n"
+                elif adv_pos_novo == "Não tem condições (hipossuficiente / defensor)": 
+                    paragrafo += "<u>não tem</u> condições financeiras de apresentar sua defesa através de advogado constituído, declarando sua hipossuficiência e requerendo a nomeação de um defensor público ou dativo para fazê-la.\n"
+
+                if tel_pos: paragrafo += f"o seu telefone de contato: ({tel_pos}).\n"
+                else: paragrafo += "o seu telefone de contato: (___) ___________________________________.\n"
+
+                if email_pos: paragrafo += f"o seu e-mail: {email_pos}.\n"
+                else: paragrafo += "o seu e-mail: ____________________________________________________.\n"
+
+                # Certifico também que
+                paragrafo += "\nCertifico também que:\n"
+                
+                nome_alvo_txt = pessoa if pessoa else "__________________________________________________"
+                if tipo_realizacao_pos == "Pessoa procurada":
+                    paragrafo += f"a Citação/Intimação/Notificação foi realizada na pessoa do(a) Sr(a). {nome_alvo_txt}."
+                elif tipo_realizacao_pos == "Representante legal":
+                    rep_txt = nome_rep_pos if nome_rep_pos else "__________________________________"
+                    paragrafo += f"a Citação/Intimação/Notificação foi realizada na pessoa do(a) Sr(a). {nome_alvo_txt}, que se apresentou como representante legal ({rep_txt})."
+                elif tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
+                    enq_txt = nome_rep_pos if nome_rep_pos else "__________________________________________________"
+                    paragrafo += f"a Citação/Intimação/Notificação foi realizada na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fórum Permanente de Juízes Coordenadores dos Juizados Especiais."
+
+                if obs_pos:
+                    paragrafo += f"\n\n{obs_pos.strip()}"
 
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
                     p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
                 except: pass
+                
                 if processo:
                     texto_processo = f"Processo: {processo}"
                     if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
                     doc.add_paragraph(texto_processo)
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
-                doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
+                
+                doc.add_paragraph("")
+                p_titulo = doc.add_paragraph()
+                run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA")
+                run_titulo.bold = True
+                run_titulo.font.size = Pt(16)
+                p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+
+                # Adicionando os parágrafos formatados respeitando sublinhas/estilos do modelo
+                for linha_texto in paragrafo.split("\n"):
+                    p_Linha = doc.add_paragraph(linha_texto)
+                    p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+
+                doc.add_paragraph("")
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+                
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
                 except: pass 
+                
                 p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
                 run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
@@ -875,7 +998,6 @@ elif menu == "📝 Gerar Certidão":
                 st.session_state['piscar_tela'] = False
             st.success("✅ Certidão salva na Nuvem!")
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_c'], file_name=st.session_state['doc_pronto_nome_c'], mime=st.session_state['doc_pronto_mime_c'], type="primary", use_container_width=True)
-            
     # ==========================================
     # OPÇÃO C: CERTIDÃO POSITIVA POR HORA CERTA
     # ==========================================
