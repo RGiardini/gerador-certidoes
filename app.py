@@ -438,9 +438,7 @@ elif menu == "📝 Gerar Certidão":
         tipo_certidao = st.selectbox(
             "Selecione o Modelo de Certidão:", 
             [
-                "Certidão Negativa Detalhada (Antiga)", 
-                "Certidão Negativa Detalhada (Nova Versão)",
-                "Certidão Negativa Simples (Opções Rápidas)", 
+                "Certidão Negativa Detalhada",
                 "Certidão Positiva",
                 "Certidão Positiva por Hora Certa"
             ]
@@ -476,7 +474,22 @@ elif menu == "📝 Gerar Certidão":
     st.subheader("Data do Documento e Diligências")
     
     hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
-    data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=hoje_real.date(), format="DD/MM/YYYY", key="data_certidao_geral")
+    
+    # Captura preliminar das diligências para definir a data padrão com base na última
+    dias_validos_temp = [d for d in [st.session_state.get("d1_geral"), st.session_state.get("d2_geral"), st.session_state.get("d3_geral")] if d]
+    data_padrao_calculada = hoje_real.date()
+    if dias_validos_temp:
+        ultimo_dia_str = dias_validos_temp[-1].strip()
+        try:
+            partes = ultimo_dia_str.split('/')
+            if len(partes) == 2:
+                dia_num, mes_num = int(partes[0]), int(partes[1])
+                ano_num = int(ano) if ano and ano.isdigit() else hoje_real.year
+                data_padrao_calculada = datetime.date(ano_num, mes_num, dia_num)
+        except:
+            pass
+
+    data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=data_padrao_calculada, format="DD/MM/YYYY", key="data_certidao_geral")
     
     st.write("**Informe os Dias e Horários (o 'h' será adicionado automaticamente se esquecer):**")
     
@@ -500,242 +513,10 @@ elif menu == "📝 Gerar Certidão":
     st.divider()
 
     # ==========================================
-    # OPÇÃO A: CERTIDÃO DETALHADA ANTIGA
+    # OPÇÃO A: CERTIDÃO DETALHADA (NOVA VERSÃO)
     # ==========================================
-    if tipo_certidao == "Certidão Negativa Detalhada (Antiga)":
+    if tipo_certidao == "Certidão Negativa Detalhada":
         
-        if st.session_state.get('limpar_detalhada'):
-            for k in list(st.session_state.keys()):
-                if k.startswith(("mot_det_", "rel_det_", "ns_det_", "cert_")) or k in ["nao_loc_dest", "nao_loc_bens"]:
-                    st.session_state[k] = False 
-                elif k in ["nome_inf_det", "sabe_tel_det", "sabe_end_det", "obs_livres_det"]:
-                    st.session_state[k] = ""
-            st.session_state['limpar_detalhada'] = False
-
-        st.write("**Deixei de cumprir a ordem descrita uma vez que:**")
-        sit_c1, sit_c2 = st.columns(2)
-        with sit_c1:
-            nao_loc_dest = st.checkbox("O destinatário não foi localizado", key="nao_loc_dest")
-        with sit_c2:
-            nao_loc_bens = st.checkbox("Bem(ns) não localizado(s)", key="nao_loc_bens")
-
-        motivos_selecionados = []
-        with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
-            motivos_list = [
-                "mudou-se", "não reside no local", "não foi localizada", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
-                "não trabalha no local", "está viajando", "local inabitado", "antigo inquilino", 
-                "antigo morador", "antigo proprietário", "rotatividade de inquilinos",
-                "Repassado para terceiros", "internado", "transferido", "encontra-se preso",
-                "faleceu", "faliu", "não exerce atividades", "local fechado", 
-                "número não localizado", "rua/av não localizada", "ap/bloco não localizado", 
-                "aparece esporadicamente", "utiliza endereço para correspondências",
-                "sem condições psíquicas de entender conteúdo mandado",
-                "guarnecem a residência amparados pela Lei 8.009/90",
-                "são insuficientes para saldar o débito"
-            ]
-            cols_mot = st.columns(3)
-            for idx, m in enumerate(motivos_list):
-                with cols_mot[idx % 3]:
-                    if st.checkbox(m, key=f"mot_det_{idx}"):
-                        motivos_selecionados.append(m)
-
-        st.markdown("---")
-        relacoes_selecionadas = []
-        nao_sabe_selecionados = []
-        sabe_tel = ""
-        sabe_end = ""
-        
-        with st.expander("👤 Informações sobre o Informante", expanded=False):
-            nome_inf_det = st.text_input("Nome do Sr(a):", placeholder="Vazio se não houver informante", key="nome_inf_det")
-            st.caption("Relação / Qualidade:")
-            relacoes_list = [
-                "morador", "proprietário", "inquilino", "funcionário", "vizinho", "pai", "mãe",
-                "padrasto", "madrasta", "filho", "irmão", "tio", "avô(ó)", "neto", "sobrinho",
-                "primo", "transeunte", "viúvo", "ex", "esposo", "companheiro", "sogro", "enteado",
-                "genro", "nora", "cunhado", "concunhado", "amigo"
-            ]
-            cols_rel = st.columns(4)
-            for idx, r in enumerate(relacoes_list):
-                with cols_rel[idx % 4]:
-                    if st.checkbox(r, key=f"rel_det_{idx}"):
-                        relacoes_selecionadas.append(r)
-
-            st.write("**Não sabendo o informante indicar:**")
-            nao_sabe_list = [
-                "endereço completo", "paradeiro da pessoa procurada", "o dia/horário exato para encontrá-lo(a)", 
-                "telefone", "dia/horário de retorno", "o presídio", 
-                "dados do óbito", "previsão de alta"
-            ]
-            cols_ns = st.columns(3)
-            for idx, ns in enumerate(nao_sabe_list):
-                with cols_ns[idx % 3]:
-                    if st.checkbox(ns, key=f"ns_det_{idx}"):
-                        nao_sabe_selecionados.append(ns)
-
-            st.write("**Sabendo o informante indicar:**")
-            sabe_tel = st.text_input("Telefone indicado:", key="sabe_tel_det")
-            sabe_end = st.text_input("Endereço correto indicado:", key="sabe_end_det")
-        
-        with st.expander("📝 Certificações Adicionais", expanded=False):
-            cert_extras = []
-            c_extra1, c_extra2 = st.columns(2)
-            with c_extra1:
-                if st.checkbox("Procurei informações com moradores", key="cert_vizinhos_det"):
-                    cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito")
-                if st.checkbox("Cópia do mandado com informante", key="cert_copia_det"):
-                    cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a)")
-                if st.checkbox("Local Perigoso", key="cert_perigoso_det"):
-                    cert_extras.append("informo que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
-                if st.checkbox("Medo do Processo", key="cert_medo_det"):
-                    cert_extras.append("informo que os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
-            with c_extra2:
-                if st.checkbox("Apenas bens domésticos", key="cert_moveis_det"):
-                    cert_extras.append("informo que o imóvel é residencial e contém apenas móveis e utensílios domésticos")
-                if st.checkbox("Zona Rural", key="cert_rural_det"):
-                    cert_extras.append("informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
-                if st.checkbox("Condomínio de Blocos", key="cert_blocos_det"):
-                    cert_extras.append("informo que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
-                if st.checkbox("Chuva Forte", key="cert_chuva_det"):
-                    cert_extras.append("informo que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
-
-            observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det")
-
-        st.divider()
-
-        if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_docx_det"):
-            with st.spinner("Gerando detalhada..."):
-                dias_validos = [d for d in [d1, d2, d3] if d]
-                horas_cruas = [h for h in [h1, h2, h3] if h]
-                horas_validas = []
-                for h in horas_cruas:
-                    h_limpo = h.strip()
-                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs')):
-                        h_limpo += 'hs'
-                    horas_validas.append(h_limpo)
-
-                texto_data_hora = ""
-                if len(dias_validos) == 1:
-                    texto_data_hora = f", por volta das {horas_validas[0]}, do dia {dias_validos[0]},"
-                elif len(dias_validos) > 1:
-                    str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
-                    str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
-                    texto_data_hora = f", por volta das {str_horas}, dos dias {str_dias}, respectivamente,"
-                
-                txt_endereco = f"à {endereco}" if endereco else "ao endereço/local/região/bairro indicado(a)"
-                txt_pessoa = f" em face de {pessoa}" if pessoa else ""
-                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, desloquei-me {txt_endereco}{texto_data_hora} onde deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
-                
-                sits = []
-                if nao_loc_dest: sits.append("o destinatário do mandado não foi localizado")
-                if nao_loc_bens: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
-                paragrafo += " e ".join(sits) + ". " if sits else "não foi possível a sua realização. "
-                
-                if motivos_selecionados:
-                    frases_motivos = []
-                    for m in motivos_selecionados:
-                        if m == "mudou-se": frases_motivos.append("a pessoa procurada não reside mais no local, tendo se mudado")
-                        elif m == "não reside no local": frases_motivos.append("a pessoa procurada não reside no local indicado")
-                        elif m == "não foi localizada": frases_motivos.append("a pessoa procurada não foi localizada")
-                        elif m == "faliu": frases_motivos.append("a empresa procurada faliu ou encerrou suas atividades")
-                        else: frases_motivos.append(f"a pessoa procurada {m}")
-                    
-                    if len(frases_motivos) > 1:
-                        texto_motivos = ", e que ".join([", ".join(frases_motivos[:-1]), frases_motivos[-1]])
-                    else:
-                        texto_motivos = frases_motivos[0]
-                    paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
-                
-                if nome_inf_det or relacoes_selecionadas:
-                    txt_informante = f"pelo(a) Sr(a). {nome_inf_det}" if nome_inf_det else "por pessoa não identificada"
-                    rel_str = f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ""
-                    paragrafo += f"Conforme informações prestadas no local {txt_informante}{rel_str} "
-                    
-                    if nao_sabe_selecionados:
-                        if len(nao_sabe_selecionados) > 1:
-                            texto_ns = ", ".join(nao_sabe_selecionados[:-1]) + f" e nem {nao_sabe_selecionados[-1]}"
-                        else:
-                            texto_ns = nao_sabe_selecionados[0]
-                        paragrafo += f"este(a) declarou não saber informar {texto_ns}. "
-                    else:
-                        paragrafo += "este(a) prestou as devidas informações no local. "
-                        
-                    if sabe_tel or sabe_end:
-                        sabes_list = []
-                        if sabe_tel: sabes_list.append(f"o telefone de contato {sabe_tel}")
-                        if sabe_end: sabes_list.append(f"o endereço atual/correto sendo {sabe_end}")
-                        paragrafo += f"Por outro lado, o informante soube indicar {' e '.join(sabes_list)}. "
-                        
-                if cert_extras: paragrafo += f"Certifico também que {'; '.join(cert_extras)}. "
-                if observacoes_det: paragrafo += f"{observacoes_det.strip()} "
-                
-                doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
-                try:
-                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
-                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
-                except Exception as e:
-                    st.error(f"Erro do Supabase: {e}")
-                if processo:
-                    texto_processo = f"Processo: {processo}"
-                    if ano: texto_processo += f".{ano}.8.13.{comarca}"
-                    doc.add_paragraph(texto_processo)
-                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
-                doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                doc.add_paragraph("")
-                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                
-                try:
-                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(5))
-                except: pass 
-                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
-                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
-                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
-                
-                buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
-                docx_bytes = buffer.getvalue()
-                
-                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
-                nome_base = f"Certidao_Negativa_Antiga_{processo}_{data_arquivo}"
-                
-                if formato_saida == "PDF (.pdf)":
-                    arquivo_final_bytes = converter_docx_para_pdf(docx_bytes)
-                    nome_final = nome_base + ".pdf"
-                    mime_final = "application/pdf"
-                    if not arquivo_final_bytes:
-                        st.error("Erro na conversão PDF. Baixando DOCX.")
-                        arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                else:
-                    arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-                supabase.storage.from_("certidoes_usuarios").upload(file=arquivo_final_bytes, path=f"{usuario_atual}/{nome_final}", file_options={"content-type": mime_final})
-                
-                st.session_state['doc_pronto_bytes_a1'] = arquivo_final_bytes
-                st.session_state['doc_pronto_nome_a1'] = nome_final
-                st.session_state['doc_pronto_mime_a1'] = mime_final
-                st.session_state['piscar_tela'] = True
-                st.session_state['limpar_detalhada'] = True
-                st.rerun()
-
-        if 'doc_pronto_bytes_a1' in st.session_state:
-            if st.session_state.get('piscar_tela'):
-                st.balloons(); st.toast("✅ Certidão gerada!", icon="🎉")
-                st.session_state['piscar_tela'] = False
-            st.success("✅ Certidão salva na Nuvem!")
-            st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_a1'], file_name=st.session_state['doc_pronto_nome_a1'], mime=st.session_state['doc_pronto_mime_a1'], type="primary", use_container_width=True)
-
-    # ==========================================
-    # OPÇÃO A.2: CERTIDÃO DETALHADA (NOVA VERSÃO)
-    # ==========================================
-    elif tipo_certidao == "Certidão Negativa Detalhada (Nova Versão)":
-        
-        st.info("💡 Versão com nova lógica de construção de texto para maior coesão gramatical.")
-
         if st.session_state.get('limpar_detalhada_nova'):
             for k in list(st.session_state.keys()):
                 if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "cert_n_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
@@ -813,25 +594,24 @@ elif menu == "📝 Gerar Certidão":
             c_extra1, c_extra2 = st.columns(2)
 
             with c_extra1:
-                if st.checkbox("Procurei informações com moradores", key="cert_vizinhos_det"):
-                    cert_extras.append("procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito")
-                if st.checkbox("Cópia do mandado com informante", key="cert_copia_det"):
-                    cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a)")
-                if st.checkbox("Local Perigoso", key="cert_perigoso_det"):
-                    cert_extras.append("informo que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
-                if st.checkbox("Medo do Processo", key="cert_medo_det"):
-                    cert_extras.append("informo que os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
+                if st.checkbox("Procurei informações com moradores", key="cert_vizinhos_det_n"):
+                    cert_extras.append("Procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito")
+                if st.checkbox("Cópia do mandado com informante", key="cert_copia_det_n"):
+                    cert_extras.append("Devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a)")
+                if st.checkbox("Local Perigoso", key="cert_perigoso_det_n"):
+                    cert_extras.append("Informo que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
+                if st.checkbox("Medo do Processo", key="cert_medo_det_n"):
+                    cert_extras.append("Informo que os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
             with c_extra2:
-                if st.checkbox("Apenas bens domésticos", key="cert_moveis_det"):
-                    cert_extras.append("informo que o imóvel é residencial e contém apenas móveis e utensílios domésticos")
-                if st.checkbox("Zona Rural", key="cert_rural_det"):
-                    cert_extras.append("informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
-                if st.checkbox("Condomínio de Blocos", key="cert_blocos_det"):
-                    cert_extras.append("informo que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
-                if st.checkbox("Chuva Forte", key="cert_chuva_det"):
-                    cert_extras.append("informo que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
+                if st.checkbox("Apenas bens domésticos", key="cert_moveis_det_n"):
+                    cert_extras.append("Informo que o imóvel é residencial e contém apenas móveis e utensílios domésticos")
+                if st.checkbox("Zona Rural", key="cert_rural_det_n"):
+                    cert_extras.append("Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
+                if st.checkbox("Condomínio de Blocos", key="cert_blocos_det_n"):
+                    cert_extras.append("Informo que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
+                if st.checkbox("Chuva Forte", key="cert_chuva_det_n"):
+                    cert_extras.append("Informo que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
 
-           
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det_n")
 
         st.divider()
@@ -900,7 +680,11 @@ elif menu == "📝 Gerar Certidão":
                         if sabe_end: sabes_list.append(f"o endereço atual como sendo: {sabe_end}")
                         paragrafo += f"Por outro lado, a referida pessoa soube indicar {' e '.join(sabes_list)}. "
 
-                if cert_extras: paragrafo += f"Certifico ainda que {'; '.join(cert_extras)}. "
+                # Encerra com ponto final antes das certidões adicionais
+                if not paragrafo.endswith(". "):
+                    paragrafo = paragrafo.rstrip() + ". "
+
+                if cert_extras: paragrafo += f"{'; '.join(cert_extras)}. "
                 if observacoes_det: paragrafo += f"{observacoes_det.strip()} "
 
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
@@ -933,7 +717,7 @@ elif menu == "📝 Gerar Certidão":
                 docx_bytes = buffer.getvalue()
                 
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
-                nome_base = f"Certidao_Nova_Detalhada_{processo}_{data_arquivo}"
+                nome_base = f"Certidao_Negativa_Detalhada_{processo}_{data_arquivo}"
                 
                 if formato_saida == "PDF (.pdf)":
                     arquivo_final_bytes = converter_docx_para_pdf(docx_bytes)
@@ -956,150 +740,13 @@ elif menu == "📝 Gerar Certidão":
 
         if 'doc_pronto_bytes_a2' in st.session_state:
             if st.session_state.get('piscar_tela'):
-                st.balloons(); st.toast("✅ Nova versão gerada!", icon="🎉")
+                st.balloons(); st.toast("✅ Certidão gerada!", icon="🎉")
                 st.session_state['piscar_tela'] = False
             st.success("✅ Certidão salva na Nuvem!")
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_a2'], file_name=st.session_state['doc_pronto_nome_a2'], mime=st.session_state['doc_pronto_mime_a2'], type="primary", use_container_width=True)
             
     # ==========================================
-    # OPÇÃO B: CERTIDÃO SIMPLES
-    # ==========================================
-    elif tipo_certidao == "Certidão Negativa Simples (Opções Rápidas)":
-        
-        if st.session_state.get('limpar_simples'):
-            for k in ["sit_radio_simples", "obteve_inf_radio_simples", "motivo_radio_simples", "naosabe_radio_simples", "paradeiro_radio_simples", "condicao_radio_simples"]:
-                st.session_state[k] = None
-            for k in ["nome_inf_input_simples", "obs_simples"]:
-                st.session_state[k] = ""
-            st.session_state['limpar_simples'] = False
-            
-        st.subheader("Situação Principal")
-        situacao_simples = st.radio("Selecione:", ["Local Fechado", "Pessoa Não Encontrada", "Não Localizei a Pessoa"], index=None, horizontal=True, key="sit_radio_simples")
-
-        st.markdown("---")
-        obteve_inf_simples = st.radio("Obteve Informações?", ["Sim", "Não", "NQI"], index=None, horizontal=True, key="obteve_inf_radio_simples")
-        nome_inf_simples = st.text_input("Nome do informante:", disabled=(obteve_inf_simples != "Sim"), key="nome_inf_input_simples")
-
-        st.markdown("---")
-        st.write("**Detalhes das Informações Obtidas:**")
-        c1, c2, c3 = st.columns(3)
-        with c1: motivo_simples = st.radio("Motivo:", ["Mudou-se", "Não Reside no Local", "Não fica ali", "Não trabalha ali", "Falecido"], index=None, key="motivo_radio_simples")
-        with c2: nao_sabe_simples = st.radio("O que não sabe?", ["Não Conhece", "Não sabe informar", "Não sabe endereço"], index=None, key="naosabe_radio_simples")
-        with c3: paradeiro_simples = st.radio("Paradeiro:", ["Não sabe o paradeiro", "Incerto e Não Sabido"], index=None, key="paradeiro_radio_simples")
-
-        st.markdown("---")
-        st.write("**Condições Extras**")
-        condicao_simples = st.radio("Selecione:", ["Local Perigoso", "Medo Processo", "Zona Rural", "Blocos s/ Porteiro", "Chuva"], index=None, horizontal=True, key="condicao_radio_simples")
-
-        st.markdown("---")
-        observacoes_simples = st.text_area("Observações Extras:", height=60, key="obs_simples")
-        st.divider()
-
-        if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_simples"):
-            with st.spinner("Construindo certidão simples e salvando na nuvem..."):
-                dias_validos = [d for d in [d1, d2, d3] if d]
-                horas_cruas = [h for h in [h1, h2, h3] if h]
-                horas_validas = []
-                for h in horas_cruas:
-                    h_limpo = h.strip()
-                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs')): h_limpo += 'hs'
-                    horas_validas.append(h_limpo)
-                
-                texto_data_hora = ""
-                if len(dias_validos) == 1: texto_data_hora = f", onde às {horas_validas[0]}, do dia {dias_validos[0]},"
-                elif len(dias_validos) > 1:
-                    str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
-                    str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
-                    texto_data_hora = f", onde às {str_horas}, dos dias {str_dias},"
-                
-                txt_endereco = f"à {endereco}" if endereco else "ao endereço informado no mesmo"
-                txt_pessoa = f" a pessoa, Sr(a). {pessoa}" if pessoa else "a pessoa referida no mandado"
-                
-                txt_situacao = ""
-                if situacao_simples == "Local Fechado": txt_situacao = "porque o local foi encontrado fechado e, mesmo após chamar várias vezes, ninguém atendeu."
-                elif situacao_simples == "Pessoa Não Encontrada": txt_situacao = "porque não a encontrei no local."
-                elif situacao_simples == "Não Localizei a Pessoa": txt_situacao = "porque não a localizei."
-                
-                paragrafo_unico = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}{texto_data_hora.rstrip(',')} e deixei de citar/intimar/notificar{txt_pessoa}, {txt_situacao} "
-                
-                if obteve_inf_simples == "Sim": paragrafo_unico += f"Conforme informações obtidas no local com o(a) Sr.(a) {nome_inf_simples}, este(a) informou que "
-                elif obteve_inf_simples == "Não": paragrafo_unico += "Procurei obter informações junto aos moradores e vizinhos, não obtendo êxito, uma vez que ninguém forneceu informações. "
-                elif obteve_inf_simples == "NQI": paragrafo_unico += "Conforme informações prestadas por um vizinho(a) que não quis se identificar, este(a) afirmou que "
-                
-                if obteve_inf_simples in ["Sim", "NQI"]:
-                    infos = []
-                    if motivo_simples == "Mudou-se": infos.append("a pessoa procurada não reside mais no local")
-                    elif motivo_simples == "Não Reside": infos.append("a pessoa procurada não reside no local referido")
-                    elif motivo_simples == "Falecido": infos.append("a pessoa procurada já se encontra falecida")
-                    if nao_sabe_simples == "Não Conhece": infos.append("não a conhece")
-                    if paradeiro_simples == "Incerto e Não Sabido": infos.append("encontra-se em local incerto e não sabido")
-                    if infos:
-                        texto_infos = "; ".join(infos[:-1]) + ", e que " + infos[-1] if len(infos) > 1 else infos[0]
-                        paragrafo_unico += f"{texto_infos}. "
-                        
-                if condicao_simples == "Chuva": paragrafo_unico += "Certifico que a execução restou dificultada em virtude de intensa chuva. "
-                if observacoes_simples: paragrafo_unico += f"{observacoes_simples} "
-                
-                doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
-                try:
-                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
-                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
-                except: pass
-                if processo:
-                    texto_processo = f"Processo: {processo}"
-                    if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
-                    doc.add_paragraph(texto_processo)
-                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
-                doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                doc.add_paragraph(paragrafo_unico.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                
-                try:
-                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
-                except: pass 
-                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
-                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
-                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
-                
-                buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
-                docx_bytes = buffer.getvalue()
-                
-                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
-                nome_base = f"Certidao_Simples_{processo}_{data_arquivo}"
-                
-                if formato_saida == "PDF (.pdf)":
-                    arquivo_final_bytes = converter_docx_para_pdf(docx_bytes)
-                    nome_final = nome_base + ".pdf"
-                    mime_final = "application/pdf"
-                    if not arquivo_final_bytes:
-                        st.error("Erro na conversão PDF. Baixando DOCX.")
-                        arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                else:
-                    arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-
-                supabase.storage.from_("certidoes_usuarios").upload(file=arquivo_final_bytes, path=f"{usuario_atual}/{nome_final}", file_options={"content-type": mime_final})
-                
-                st.session_state['doc_pronto_bytes_b'] = arquivo_final_bytes
-                st.session_state['doc_pronto_nome_b'] = nome_final
-                st.session_state['doc_pronto_mime_b'] = mime_final
-                st.session_state['piscar_tela'] = True
-                st.session_state['limpar_simples'] = True
-                st.rerun()
-
-        if 'doc_pronto_bytes_b' in st.session_state:
-            if st.session_state.get('piscar_tela'):
-                st.balloons(); st.toast("✅ Certidão gerada!", icon="🎉")
-                st.session_state['piscar_tela'] = False
-            st.success("✅ Certidão simples salva na Nuvem!")
-            st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_b'], file_name=st.session_state['doc_pronto_nome_b'], mime=st.session_state['doc_pronto_mime_b'], type="primary", use_container_width=True)
-
-    # ==========================================
-    # OPÇÃO C: CERTIDÃO POSITIVA
+    # OPÇÃO B: CERTIDÃO POSITIVA
     # ==========================================
     elif tipo_certidao == "Certidão Positiva":
         
@@ -1166,6 +813,10 @@ elif menu == "📝 Gerar Certidão":
 
                 if adv_pos == "Tem condições": paragrafo += "Questionado(a), a parte informou possuir condições de constituir um advogado particular para sua defesa. "
                 elif adv_pos == "Não tem condições": paragrafo += "Questionado(a), a parte declarou ser hipossuficiente, necessitando da nomeação de um defensor para atuar em sua defesa. "
+                
+                if not paragrafo.endswith(". "):
+                    paragrafo = paragrafo.rstrip() + ". "
+
                 if obs_pos: paragrafo += f"{obs_pos.strip()} "
 
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
@@ -1226,7 +877,7 @@ elif menu == "📝 Gerar Certidão":
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_c'], file_name=st.session_state['doc_pronto_nome_c'], mime=st.session_state['doc_pronto_mime_c'], type="primary", use_container_width=True)
             
     # ==========================================
-    # OPÇÃO D: CERTIDÃO POSITIVA POR HORA CERTA
+    # OPÇÃO C: CERTIDÃO POSITIVA POR HORA CERTA
     # ==========================================
     elif tipo_certidao == "Certidão Positiva por Hora Certa":
         
@@ -1297,6 +948,9 @@ elif menu == "📝 Gerar Certidão":
 
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
+                if not paragrafo.endswith(". "):
+                    paragrafo = paragrafo.rstrip() + ". "
+
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
