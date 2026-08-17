@@ -595,8 +595,7 @@ elif menu == "📝 Gerar Certidão":
                 "ap/bloco não localizado", 
                 "local inabitado", 
                 "rua/av não localizada", 
-                "são insuficientes para saldar o débito", 
-                "não foi localizada", 
+                "são insuficientes para saldar o débito",  
                 "guarnecem a residência amparados pela Lei 8.009/90", 
                 "sem condições psíquicas de entender conteúdo mandado"
             ]
@@ -753,7 +752,6 @@ elif menu == "📝 Gerar Certidão":
                         "local inabitado": "o local encontra-se inabitado",
                         "rua/av não localizada": "a rua ou avenida indicada não foi localizada",
                         "são insuficientes para saldar o débito": "os bens encontrados são insuficientes para saldar o débito",
-                        "não foi localizada": "a pessoa procurada não foi localizada",
                         "guarnecem a residência amparados pela Lei 8.009/90": "os bens que guarnecem a residência estão amparados pela Lei 8.009/90",
                         "sem condições psíquicas de entender conteúdo mandado": "a pessoa procurada encontra-se sem condições psíquicas de compreender o conteúdo do mandado"
                     }
