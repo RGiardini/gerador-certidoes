@@ -90,15 +90,27 @@ st.markdown("""
         width: 100%;
     }
 
+    /* Ajuste do fundo das caixas */
     div[data-testid="stExpander"], div.stTextInput, div.stSelectbox, div.stRadio {
-        background-color: #FFFFFF;
+        background-color: #FFFFFF !important;
         border-radius: 10px;
         padding: 0.2rem;
     }
 
+    /* CORREÇÃO DO MODO ESCURO: Força o texto e rótulos a ficarem escuros dentro do fundo branco */
+    div[data-testid="stExpander"] *, 
+    div.stTextInput *, 
+    div.stSelectbox *, 
+    div.stRadio * {
+        color: #1E293B !important;
+    }
+
+    /* Ajuste das caixas de digitação */
     input[type="text"], input[type="password"] {
         border-radius: 8px !important;
         border: 1px solid #CBD5E1 !important;
+        background-color: #FFFFFF !important;
+        color: #1E293B !important; /* Texto digitado sempre escuro */
     }
     input[type="text"]:focus, input[type="password"]:focus {
         border-color: #0F172A !important;
