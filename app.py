@@ -11,8 +11,6 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from supabase import create_client, Client
 
-
-
 # ==========================================
 # 1. FUNÇÃO DE CONVERSÃO PARA PDF
 # ==========================================
@@ -47,11 +45,9 @@ st.set_page_config(page_title="Sistema de Certidões", layout="wide")
 
 st.markdown("""
     <style>
-    /* Oculta elementos padrão do Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     
-    /* Configuração geral do container e espaçamentos modernos */
     .block-container { 
         padding-top: 2rem; 
         padding-bottom: 2rem; 
@@ -61,7 +57,6 @@ st.markdown("""
         gap: 1rem !important; 
     }
 
-    /* 🚀 Centralização e refinamento de todos os títulos principais (h1) */
     .main h1, h1[data-testid="stHeader"] { 
         font-size: 26px !important; 
         font-weight: 700;
@@ -73,14 +68,12 @@ st.markdown("""
         width: 100%;
     }
 
-    /* Criação do efeito de Cartões Flutuantes nos blocos principais */
     div[data-testid="stExpander"], div.stTextInput, div.stSelectbox, div.stRadio {
         background-color: #FFFFFF;
         border-radius: 10px;
         padding: 0.2rem;
     }
 
-    /* Ajustes finos nos inputs de texto */
     input[type="text"], input[type="password"] {
         border-radius: 8px !important;
         border: 1px solid #CBD5E1 !important;
@@ -90,7 +83,6 @@ st.markdown("""
         box-shadow: 0 0 0 1px #0F172A !important;
     }
 
-    /* Estilização moderna para os botões primários (Call to Action) */
     button[kind="primary"] {
         background-color: #0F172A !important;
         color: #FFFFFF !important;
@@ -104,7 +96,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2) !important;
     }
 
-    /* Sidebar mais elegante e organizada */
     section[data-testid="stSidebar"] { 
         background-color: #F8FAFC !important;
         border-right: 1px solid #E2E8F0;
@@ -130,8 +121,6 @@ def gerar_hash_senha(senha):
 # ==========================================
 # 3. CONTROLE DE SESSÃO E LOGIN (VIA URL)
 # ==========================================
-
-# Se o session_state estiver vazio, tenta resgatar o usuário direto da URL (F5)
 if "usuario_logado" not in st.session_state or st.session_state["usuario_logado"] is None:
     usuario_url = st.query_params.get("user")
     if usuario_url:
@@ -157,7 +146,6 @@ if st.session_state["usuario_logado"] is None:
                     senha_criptografada = gerar_hash_senha(senha_login)
                     if dados_bd["senha"] == senha_criptografada:
                         st.session_state["usuario_logado"] = usuario_login
-                        # 🚀 Salva o usuário na URL do navegador de forma permanente até o logout
                         st.query_params["user"] = usuario_login
                         st.rerun()
                     else:
@@ -192,7 +180,7 @@ with st.sidebar:
     
     if st.button("Sair (Logout)", key="btn_logout"):
         st.session_state["usuario_logado"] = None
-        st.query_params.clear()  # Limpa o usuário da URL
+        st.query_params.clear()
         st.rerun()
 
 # ==========================================
@@ -403,8 +391,6 @@ elif menu == "🛡️ Painel do Administrador":
                             with c_btn_dl:
                                 if st.button("📥 Baixar", key=f"dl_adm_f_{nome_oficial}_{arq['name']}", use_container_width=True):
                                     file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
-                                    
-                                    # Ajuste Dinâmico de MIME Type
                                     mime_tipo = "application/pdf" if arq["name"].endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                     
                                     st.download_button(
@@ -432,7 +418,6 @@ elif menu == "📝 Gerar Certidão":
         st.warning("⚠️ Você ainda não configurou seu perfil! Vá em 'Meu Perfil' antes de gerar certidões.")
         st.stop()
 
-    # --- ESCOLHAS PRINCIPAIS ---
     c_tipo, c_formato = st.columns([3, 1])
     with c_tipo:
         tipo_certidao = st.selectbox(
@@ -452,7 +437,6 @@ elif menu == "📝 Gerar Certidão":
         
     st.divider()
 
-    # --- CAMPOS COMPARTILHADOS (CABEÇALHO) ---
     c_mandado, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
     
     with c_mandado:
@@ -475,7 +459,6 @@ elif menu == "📝 Gerar Certidão":
     
     hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
     
-    # Captura preliminar das diligências para definir a data padrão com base na última
     dias_validos_temp = [d for d in [st.session_state.get("d1_geral"), st.session_state.get("d2_geral"), st.session_state.get("d3_geral")] if d]
     data_padrao_calculada = hoje_real.date()
     if dias_validos_temp:
@@ -513,7 +496,7 @@ elif menu == "📝 Gerar Certidão":
     st.divider()
 
     # ==========================================
-    # OPÇÃO A: CERTIDÃO DETALHADA (NOVA VERSÃO)
+    # OPÇÃO A: CERTIDÃO DETALHADA
     # ==========================================
     if tipo_certidao == "Certidão Negativa Detalhada":
         
@@ -625,7 +608,7 @@ elif menu == "📝 Gerar Certidão":
                 for h in horas_cruas:
                     h_limpo = h.strip()
                     if h_limpo and not h_limpo.lower().endswith(('h', 'hs')):
-                        h_limpo += 'h' 
+                        h_limpo += 'hs' 
                     horas_validas.append(h_limpo)
 
                 texto_data_hora = ""
@@ -680,7 +663,6 @@ elif menu == "📝 Gerar Certidão":
                         if sabe_end: sabes_list.append(f"o endereço atual como sendo: {sabe_end}")
                         paragrafo += f"Por outro lado, a referida pessoa soube indicar {' e '.join(sabes_list)}. "
 
-                # Encerra com ponto final antes das certidões adicionais
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
 
@@ -745,13 +727,12 @@ elif menu == "📝 Gerar Certidão":
             st.success("✅ Certidão salva na Nuvem!")
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_a2'], file_name=st.session_state['doc_pronto_nome_a2'], mime=st.session_state['doc_pronto_mime_a2'], type="primary", use_container_width=True)
             
-   # ==========================================
+    # ==========================================
     # OPÇÃO B: CERTIDÃO POSITIVA
     # ==========================================
     elif tipo_certidao == "Certidão Positiva":
         
         if st.session_state.get('limpar_positiva'):
-            st.session_state["fin_pos"] = "Citação"
             st.session_state["mod_recebimento_pos"] = "Aceitou e assinou"
             st.session_state["recurso_pos"] = "Não informado"
             st.session_state["ciencia_pos"] = "Não informado"
@@ -775,7 +756,7 @@ elif menu == "📝 Gerar Certidão":
             [
                 "Aceitou e exarou sua assinatura no mandado",
                 "Aceitou, mas não exarou sua assinatura",
-                "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária", # Nova Opção
+                "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária",
                 "Não aceitou a contrafé",
                 "Não aceitou e não exarou sua assinatura"
             ],
@@ -831,7 +812,6 @@ elif menu == "📝 Gerar Certidão":
                 
                 verbo_ato = "citei/intimei/notifiquei"
                 
-                # Tratamento de dias e horas conforme o padrão do modelo da imagem
                 dias_validos = [d for d in [d1, d2, d3] if d]
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_formatadas = []
@@ -842,16 +822,14 @@ elif menu == "📝 Gerar Certidão":
                         partes_h = h_limpo.split(":")
                         horas_formatadas.append(f"{partes_h[0]}hs {partes_h[1]}min")
                     elif not h_limpo.lower().endswith(('hs', 'min')):
-                        horas_formatadas.append(f"{h_limpo}h 00min")
+                        horas_formatadas.append(f"{h_limpo}hs 00min")
                     else:
                         horas_formatadas.append(h_limpo)
                 
-                # Montagem gramatical dos horários e dias conforme modelo anexo
                 str_horarios_dias = ""
                 if len(dias_validos) == 1 and len(horas_formatadas) == 1:
                     str_horarios_dias = f"por volta das {horas_formatadas[0]}, do dia {dias_validos[0]}"
                 elif len(dias_validos) > 1 and len(horas_formatadas) > 1:
-                    # Formata combinando sequências exatas do modelo
                     pares = []
                     for i in range(min(len(horas_formatadas), len(dias_validos))):
                         pares.append(f"por volta das {horas_formatadas[i]}, do(s) dia(s) {dias_validos[i]}")
@@ -860,25 +838,18 @@ elif menu == "📝 Gerar Certidão":
                     else:
                         str_horarios_dias = ", ".join(pares[:-1]) + f" e {pares[-1]}"
                 else:
-                    # Fallback caso preencha apenas 1 ou 2 avulsos
-                     h_f = horas_formatadas[0] if horas_formatadas else "___h___min"
+                     h_f = horas_formatadas[0] if horas_formatadas else "___hs 00min"
                      d_f = dias_validos[0] if dias_validos else "___/___/2026"
                      str_horarios_dias = f"por volta das {h_f}, do(s) dia(s) {d_f}"
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                # Verbo conjugado adequado gramaticalmente
-                verbo_ato = "citei/intimei/notifiquei"
-                
-
-                # Construção do parágrafo principal alinhado ao modelo anexado
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, neste último, {verbo_ato} o destinatário, para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe contrafé, que:\n"
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou\nexarando no mandado sua nota de ciência"
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
                     paragrafo += "aceitou\nnão exarando no mandado sua nota de ciência"
-                # Nova lógica adicionada:
                 elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
                     paragrafo += "aceitou\ndeixando de colher a assinatura como medida de precaução contra a propagação de doenças infectocontagiosas, diante das circunstâncias verificadas no local ou das condições apresentadas pela pessoa"
                 elif mod_recebimento_pos == "Não aceitou a contrafé":
@@ -886,7 +857,6 @@ elif menu == "📝 Gerar Certidão":
                 else:
                     paragrafo += "não aceitou\nnão exarando no mandado sua nota de ciência"
 
-                # Bloco de declarações da parte
                 paragrafo += "\n\nCertifico, ainda, que, o(a) supracitado(a) informou que:\n"
                 
                 if recurso_pos == "Deseja recorrer": paragrafo += "<u>deseja</u> recorrer.\n"
@@ -912,7 +882,6 @@ elif menu == "📝 Gerar Certidão":
                 if email_pos: paragrafo += f"o seu e-mail: {email_pos}.\n"
                 else: paragrafo += "o seu e-mail: ____________________________________________________.\n"
 
-                # Certifico também que
                 paragrafo += "\nCertifico também que:\n"
                 
                 nome_alvo_txt = pessoa if pessoa else "__________________________________________________"
@@ -948,7 +917,6 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph("")
 
-                # Adicionando os parágrafos formatados respeitando sublinhas/estilos do modelo
                 for linha_texto in paragrafo.split("\n"):
                     p_Linha = doc.add_paragraph(linha_texto)
                     p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -1001,6 +969,7 @@ elif menu == "📝 Gerar Certidão":
                 st.session_state['piscar_tela'] = False
             st.success("✅ Certidão salva na Nuvem!")
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_c'], file_name=st.session_state['doc_pronto_nome_c'], mime=st.session_state['doc_pronto_mime_c'], type="primary", use_container_width=True)
+
     # ==========================================
     # OPÇÃO C: CERTIDÃO POSITIVA POR HORA CERTA
     # ==========================================
@@ -1046,7 +1015,7 @@ elif menu == "📝 Gerar Certidão":
                 horas_validas = []
                 for h in horas_cruas:
                     h_limpo = h.strip()
-                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs', 'min')): h_limpo += 'h'
+                    if h_limpo and not h_limpo.lower().endswith(('h', 'hs', 'min')): h_limpo += 'hs'
                     horas_validas.append(h_limpo)
                 
                 texto_data_hora = ""
@@ -1057,7 +1026,7 @@ elif menu == "📝 Gerar Certidão":
                     texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente, ocasiões em que"
                 
                 hr_limpo = hc_hora_retorno.strip()
-                if hr_limpo and not hr_limpo.lower().endswith(('h', 'hs', 'min')): hr_limpo += 'h'
+                if hr_limpo and not hr_limpo.lower().endswith(('h', 'hs', 'min')): hr_limpo += 'hs'
 
                 nome_ato = finalidade_hc.upper()
 
