@@ -560,7 +560,7 @@ elif menu == "📝 Gerar Certidão":
             nao_sabe_list = [
                 "endereço completo", "o paradeiro da pessoa procurada", "o dia/horário exato para encontrá-lo(a)", 
                 "telefone", "dia/horário de retorno", "o presídio", 
-                "dados do óbito", "previsão de alta"
+                "dados do óbito", "previsão de alta", "o paradeiro do bem procurado"
             ]
             cols_ns = st.columns(3)
             for idx, ns in enumerate(nao_sabe_list):
@@ -590,7 +590,7 @@ elif menu == "📝 Gerar Certidão":
                     cert_extras.append("Informo que o imóvel é residencial e contém apenas móveis e utensílios domésticos")
                 if st.checkbox("Zona Rural", key="cert_rural_det_n"):
                     cert_extras.append("Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
-                if st.checkbox("Condomínio de Blocos", key="cert_blocos_det_n"):
+                if st.checkbox("Condomínio s/ Porteiro", key="cert_blocos_det_n"):
                     cert_extras.append("Informo que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
                 if st.checkbox("Chuva Forte", key="cert_chuva_det_n"):
                     cert_extras.append("Informo que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
@@ -850,7 +850,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
                 # --- MONTAGEM DO TEXTO CONTÍNUO ---
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Na oportunidade, ofereci-lhe a contrafé, a qual a parte "
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Na oportunidade, dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou, exarando no mandado sua respectiva nota de ciência. "
@@ -1028,11 +1028,15 @@ elif menu == "📝 Gerar Certidão":
                     horas_validas.append(h_limpo)
                 
                 texto_data_hora = ""
-                if len(dias_validos) == 1: texto_data_hora = f"no dia {dias_validos[0]}, por volta das {horas_validas[0]}, ocasião em que"
+                if len(dias_validos) == 1: 
+                texto_data_hora = f"no dia {dias_validos[0]}, por volta das {horas_validas[0]},"
                 elif len(dias_validos) > 1:
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
-                    texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente, ocasiões em que"
+                    # Adiciona a palavra "respectivamente" apenas se houver mais de uma diligência
+                    sufixo_resp = ", respectivamente," if len(dias_validos) > 1 else ""
+                    texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}{sufixo_resp}"
+                
                 
                 hr_limpo = hc_hora_retorno.strip()
                 if hr_limpo and not hr_limpo.lower().endswith(('h', 'hs', 'min')): hr_limpo += 'hs'
