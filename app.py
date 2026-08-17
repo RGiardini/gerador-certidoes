@@ -288,7 +288,9 @@ vencimento_str = dados_usuario.get("vencimento_trial")
 if vencimento_str:
     try:
         vencimento_obj = datetime.datetime.strptime(vencimento_str, "%Y-%m-%d").date()
-        if hoje_verificacao > vencimento_obj and dados_usuario.get("status_assinatura") != "ativo":
+        
+        # A conta do administrador (05042687670) está isenta da tela de bloqueio
+        if hoje_verificacao > vencimento_obj and dados_usuario.get("status_assinatura") != "ativo" and usuario_atual != "05042687670":
             st.warning("⚠️ **Seu período de 1 ano gratuito expirou.**")
             st.write("Obrigado por utilizar o Gerador de Certidões - TJMG durante este último ano!")
             st.write("Para continuar economizando tempo e gerando suas certidões com facilidade, ative sua assinatura mensal por apenas **R$ 30,00**.")
