@@ -853,7 +853,7 @@ elif menu == "📝 Gerar Certidão":
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
-                    paragrafo += "aceitou, exarando no mandado sua respectiva nota de ciência. "
+                    paragrafo += "aceitou, exarando no mandado sua nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
                     paragrafo += "aceitou, não exarando, contudo, no mandado sua nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
