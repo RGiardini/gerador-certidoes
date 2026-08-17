@@ -590,7 +590,7 @@ elif menu == "📝 Gerar Certidão":
         motivos_selecionados = []
         with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
             motivos_list = [
-                "mudou-se", "não reside no local", "não foi localizada", "é desconhecido", "dificilmente fica ali", "trabalha em tempo integral",
+                "mudou-se", "não reside no local", "não foi localizada", "é desconhecida", "dificilmente fica ali", "trabalha em tempo integral",
                 "não trabalha no local", "está viajando", "local inabitado", "antigo inquilino", 
                 "antigo morador", "antigo proprietário", "rotatividade de inquilinos",
                 "Repassado para terceiros", "internado", "transferido", "encontra-se preso",
@@ -707,7 +707,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao mandado, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
@@ -935,7 +935,7 @@ elif menu == "📝 Gerar Certidão":
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou, exarando no mandado sua nota de ciência. "
