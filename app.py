@@ -493,10 +493,17 @@ elif menu == "🛡️ Painel do Administrador":
     
     with aba_adm1:
         st.subheader("Oficiais Cadastrados no Sistema")
-        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula, email, cidade, estado").execute()
+        # Busca todas as colunas relevantes do banco de dados
+        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula, email, cidade, estado, data_cadastro, vencimento_trial").execute()
         usuarios_cadastrados = res_todos.data
         
         if usuarios_cadastrados:
+            st.write("**Visão Geral dos Dados Cadastrados:**")
+            # Renderiza os dados em uma tabela interativa para fácil visualização
+            st.dataframe(usuarios_cadastrados, use_container_width=True)
+            
+            st.divider()
+            st.write("**Ações Individuais (Excluir Conta):**")
             for u in usuarios_cadastrados:
                 with st.expander(f"👤 Usuário/CPF: {u['usuario']} — Nome: {u.get('nome') or 'Não preenchido'}"):
                     st.write(f"**Cargo:** {u.get('cargo')}")
@@ -516,10 +523,14 @@ elif menu == "🛡️ Painel do Administrador":
 
     with aba_adm2:
         st.subheader("Certidões Geradas por Todos os Oficiais")
+        st.write("Selecione os arquivos que deseja apagar e utilize o botão ao final da lista.")
+        
         try:
             pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
         except:
             pastas_usuarios = []
+            
+        arquivos_selecionados_adm = []
             
         if not pastas_usuarios:
             st.info("Nenhuma pasta de certidão encontrada na nuvem.")
@@ -539,31 +550,43 @@ elif menu == "🛡️ Painel do Administrador":
                     if not certioes_validas:
                         st.caption("Nenhuma certidão gerada por este oficial ainda.")
                     else:
+                        c_sel, c_arq_nome, c_btn_dl = st.columns([1, 4, 2])
+                        c_sel.write("**Excluir**")
+                        c_arq_nome.write("**Nome do Arquivo**")
+                        
                         for arq in certioes_validas:
-                            c_arq_nome, c_btn_dl, c_btn_del = st.columns([4, 2, 2])
+                            c1, c2, c3 = st.columns([1, 4, 2])
                             
-                            with c_arq_nome:
+                            with c1:
+                                # Adiciona o arquivo à lista de exclusão se o checkbox for marcado
+                                if st.checkbox("", key=f"chk_adm_{nome_oficial}_{arq['name']}"):
+                                    arquivos_selecionados_adm.append(f"{nome_oficial}/{arq['name']}")
+                                    
+                            with c2:
                                 st.text(arq["name"])
                                 
-                            with c_btn_dl:
-                                if st.button("📥 Baixar", key=f"dl_adm_f_{nome_oficial}_{arq['name']}", use_container_width=True):
-                                    file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
-                                    mime_tipo = "application/pdf" if arq["name"].endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                    
-                                    st.download_button(
-                                        label="Confirmar",
-                                        data=file_bytes,
-                                        file_name=arq["name"],
-                                        mime=mime_tipo,
-                                        key=f"btn_dl_real_{nome_oficial}_{arq['name']}"
-                                    )
-                                    
-                            with c_btn_del:
-                                if st.button("🗑️ Excluir", key=f"del_adm_f_{nome_oficial}_{arq['name']}", use_container_width=True):
-                                    supabase.storage.from_("certidoes_usuarios").remove([f"{nome_oficial}/{arq['name']}"])
-                                    st.success("Excluído!")
-                                    st.rerun()
+                            with c3:
+                                file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
+                                mime_tipo = "application/pdf" if arq["name"].endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                                
+                                st.download_button(
+                                    label="📥 Baixar",
+                                    data=file_bytes,
+                                    file_name=arq["name"],
+                                    mime=mime_tipo,
+                                    key=f"btn_dl_real_{nome_oficial}_{arq['name']}",
+                                    use_container_width=True
+                                )
                     st.divider()
+            
+            # Botão de exclusão em massa que aparece caso algum arquivo seja selecionado
+            if arquivos_selecionados_adm:
+                st.warning(f"⚠️ **{len(arquivos_selecionados_adm)} arquivo(s) selecionado(s) para exclusão.**")
+                if st.button("🗑️ Apagar Certidões Selecionadas", type="primary", use_container_width=True):
+                    with st.spinner("Apagando arquivos selecionados da nuvem..."):
+                        supabase.storage.from_("certidoes_usuarios").remove(arquivos_selecionados_adm)
+                        st.success("✅ Arquivos excluídos com sucesso!")
+                        st.rerun()
 
 # ==========================================
 # TELA: GERADOR DE CERTIDÃO
