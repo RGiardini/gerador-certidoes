@@ -502,8 +502,8 @@ elif menu == "📝 Gerar Certidão":
         )
         
     st.divider()
-mandado
-    c_, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
+
+    c_mandado, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
     
     with c_mandado:
         mandado = st.text_input("Mandado:", placeholder="Ex: 01", key="mandado_geral")
