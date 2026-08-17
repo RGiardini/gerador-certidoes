@@ -191,6 +191,13 @@ if st.session_state["usuario_logado"] is None:
 # ==========================================
 usuario_atual = st.session_state["usuario_logado"]
 resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
+
+# Trava de segurança: se a sessão atual não existir mais no banco de dados, força o logout
+if not resposta_usuario.data:
+    st.session_state["usuario_logado"] = None
+    st.query_params.clear()
+    st.rerun()
+
 dados_usuario = resposta_usuario.data[0]
 
 with st.sidebar:
