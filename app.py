@@ -168,14 +168,19 @@ if st.session_state["usuario_logado"] is None:
     aba_login, aba_cadastro = st.tabs(["Entrar", "Criar Nova Conta"])
     
     with aba_login:
-        cpf_input_bruto = st.text_input("CPF (Apenas números):", key="log_usr_input")
+        # Aviso para reforçar a regra na tela de login
+        st.info("🔒 **Acesso Restrito:** O login no sistema é feito exclusivamente utilizando o seu **CPF** (apenas números).")
+        
+        cpf_input_bruto = st.text_input("CPF (Apenas números):", placeholder="Ex: 12345678900", key="log_usr_input")
         senha_login = st.text_input("Senha:", type="password", key="log_pwd_input")
         
         if st.button("Entrar", type="primary", use_container_width=True, key="btn_entrar"):
+            # A função limpar_cpf remove tudo que não for número
             usuario_login = limpar_cpf(cpf_input_bruto)
             
+            # Validação rigorosa: Apenas aceita se o resultado final tiver exatamente 11 números
             if not usuario_login or len(usuario_login) != 11:
-                st.warning("⚠️ O login deve ser um CPF válido contendo 11 números.")
+                st.warning("⚠️ Formato inválido. O login deve ser um CPF válido contendo exatamente 11 números.")
             elif senha_login:
                 resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_login).execute()
                 
@@ -195,9 +200,12 @@ if st.session_state["usuario_logado"] is None:
                 
     with aba_cadastro:
         st.subheader("Criar Nova Conta")
+        
+        # Novo aviso claro e em destaque para os novos usuários
+        st.warning("📌 **Aviso Importante:** O seu nome de usuário para acessar o sistema será **exclusivamente o seu CPF**. O sistema não aceita e-mails ou nomes personalizados para o login.")
         st.write("Preencha os dados abaixo para iniciar seu período gratuito.")
         
-        cpf_cad_bruto = st.text_input("CPF (Apenas números):", key="cad_cpf_input")
+        cpf_cad_bruto = st.text_input("Seu CPF (Este será o seu Login - apenas números):", placeholder="Ex: 12345678900", max_chars=14, key="cad_cpf_input")
         senha_cad = st.text_input("Crie uma Senha:", type="password", key="cad_pwd_input")
         senha_cad_conf = st.text_input("Confirme a Senha:", type="password", key="cad_pwd_conf_input")
         
@@ -216,8 +224,9 @@ if st.session_state["usuario_logado"] is None:
         if st.button("Criar Conta e Iniciar Teste", type="primary", use_container_width=True, key="btn_cadastrar"):
             usuario_cad = limpar_cpf(cpf_cad_bruto)
             
+            # Bloqueio estrito no cadastro caso o formato não bata com 11 dígitos
             if not usuario_cad or len(usuario_cad) != 11:
-                st.error("⚠️ O CPF deve conter 11 números válidos.")
+                st.error("⚠️ O Login é restrito ao CPF. Por favor, insira um CPF válido com 11 números.")
             elif not senha_cad or len(senha_cad) < 6:
                 st.error("⚠️ A senha deve ter pelo menos 6 caracteres.")
             elif senha_cad != senha_cad_conf:
@@ -249,7 +258,7 @@ if st.session_state["usuario_logado"] is None:
                     
                     supabase.table("banco_usuarios").insert(novo_usuario).execute()
                     
-                    st.success("✅ Conta criada com sucesso! Faça login na aba ao lado para configurar seu perfil.")
+                    st.success("✅ Conta criada com sucesso! O seu CPF será o seu login. Faça o acesso na aba ao lado.")
                     time.sleep(3)
                     st.rerun()
                     
