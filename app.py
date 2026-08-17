@@ -585,18 +585,18 @@ elif menu == "📝 Gerar Certidão":
                 if st.checkbox("Cópia do mandado com informante", key="cert_copia_det"):
                     cert_extras.append("devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a)")
                 if st.checkbox("Local Perigoso", key="cert_perigoso_det"):
-                    cert_extras.append("o local é conhecidamente de grande periculosidade")
+                    cert_extras.append("o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
                 if st.checkbox("Medo do Processo", key="cert_medo_det"):
-                    cert_extras.append("os moradores ficam receosos de envolvimento com o processo")
+                    cert_extras.append("os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
             with c_extra2:
                 if st.checkbox("Apenas bens domésticos", key="cert_moveis_det"):
                     cert_extras.append("o imóvel é residencial e contém apenas móveis e utensílios domésticos")
                 if st.checkbox("Zona Rural", key="cert_rural_det"):
-                    cert_extras.append("o local é uma zona rural com difícil acesso")
+                    cert_extras.append(" local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
                 if st.checkbox("Condomínio de Blocos", key="cert_blocos_det"):
-                    cert_extras.append("o local é um condomínio com blocos")
+                    cert_extras.append("o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
                 if st.checkbox("Chuva Forte", key="cert_chuva_det"):
-                    cert_extras.append("a execução restou dificultada em virtude das adversas condições meteorológicas (chuva)")
+                    cert_extras.append("a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
 
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det")
 
@@ -819,7 +819,7 @@ elif menu == "📝 Gerar Certidão":
             with c_extra2:
                 if st.checkbox("Apenas bens domésticos", key="cert_n_moveis_det"): cert_extras.append("o imóvel guarnece apenas bens domésticos")
                 if st.checkbox("Zona Rural", key="cert_n_rural_det"): cert_extras.append("o local trata-se de zona rural de difícil acesso")
-                if st.checkbox("Cond. Blocos", key="cert_n_blocos_det"): cert_extras.append("trata-se de condomínio de blocos com portaria desguarnecida")
+                if st.checkbox("Cond. Blocos s/ Porteiro", key="cert_n_blocos_det"): cert_extras.append("trata-se de condomínio de blocos com portaria desguarnecida")
                 if st.checkbox("Chuva Forte", key="cert_n_chuva_det"): cert_extras.append("diligência prejudicada pelas adversas condições meteorológicas")
 
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det_n")
@@ -979,7 +979,7 @@ elif menu == "📝 Gerar Certidão":
 
         st.markdown("---")
         st.write("**Condições Extras**")
-        condicao_simples = st.radio("Selecione:", ["Local Perigoso", "Medo Processo", "Zona Rural", "Blocos", "Chuva"], index=None, horizontal=True, key="condicao_radio_simples")
+        condicao_simples = st.radio("Selecione:", ["Local Perigoso", "Medo Processo", "Zona Rural", "Blocos s/ Porteiro", "Chuva"], index=None, horizontal=True, key="condicao_radio_simples")
 
         st.markdown("---")
         observacoes_simples = st.text_area("Observações Extras:", height=60, key="obs_simples")
