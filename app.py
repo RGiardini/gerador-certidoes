@@ -238,7 +238,6 @@ if menu == "⚙️ Meu Perfil":
     st.markdown("---")
     st.write("**Sua Assinatura (Fundo branco ou transparente):**")
     
-    # Verifica se já existe assinatura salva
     try:
         assinatura_salva = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
         if assinatura_salva:
@@ -770,58 +769,85 @@ elif menu == "📝 Gerar Certidão":
                         
                     paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
 
-                # Bloco de Informações do Informante (incluindo os itens migrados com sintaxe ajustada)
+                # ==========================================
+                # BLOCO MELHORADO DO INFORMANTE - Frase Contínua e Integrada
+                # ==========================================
                 if nome_inf_det_n or relacoes_selecionadas or informacoes_informante_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
                     if nome_inf_det_n:
                         txt_informante = f"pelo(a) Sr(a). {nome_inf_det_n}"
                         txt_informante += f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ","
                     else:
-                        if relacoes_selecionadas: txt_informante = f"por um(a) {', '.join(relacoes_selecionadas)} que preferiu não se identificar,"
-                        else: txt_informante = "por pessoa no local que preferiu não se identificar,"
+                        if relacoes_selecionadas: 
+                            txt_informante = f"por um(a) {', '.join(relacoes_selecionadas)} que preferiu não se identificar,"
+                        else: 
+                            txt_informante = "por pessoa no local que preferiu não se identificar,"
                             
                     paragrafo += f"Conforme informações prestadas no local {txt_informante} "
                     
+                    partes_informacao = []
+
+                    # 1. Informações afirmativas do informante
                     if informacoes_informante_selecionadas:
+                        # Dicionário com sujeitos explícitos para garantir gramática ao usar a conjunção "que"
                         mapa_inf_info = {
-                            "é desconhecida": "informou que a pessoa procurada é desconhecida",
-                            "não reside no local": "informou que a pessoa procurada não reside no local",
-                            "dificilmente fica ali": "informou que a pessoa procurada dificilmente se encontra no local",
-                            "antigo inquilino": "informou que a pessoa procurada trata-se de antigo inquilino",
-                            "rotatividade de inquilinos": "informou que há alta rotatividade de inquilinos no local",
-                            "trabalha em tempo integral": "informou que a pessoa procurada trabalha em tempo integral",
-                            "transferido": "informou que a pessoa procurada foi transferida",
-                            "faliu": "informou que a empresa faliu",
-                            "aparece esporadicamente": "informou que a pessoa procurada aparece esporadicamente no local",
-                            "está viajando": "informou que a pessoa procurada encontra-se viajando",
-                            "antigo morador": "informou que a pessoa procurada trata-se de antigo morador",
-                            "repassado a terceiros": "informou que o imóvel ou negócio foi repassado a terceiros",
-                            "encontra-se preso": "informou que a pessoa procurada encontra-se presa",
-                            "não exerce atividades": "informou que a pessoa ou empresa não exerce atividades no local",
-                            "utiliza endereço para correspondências": "informou que utiliza o endereço apenas para correspondências",
-                            "antigo proprietário": "informou que a pessoa procurada trata-se de antigo proprietário",
-                            "internado": "informou que a pessoa procurada encontra-se internada",
-                            "faleceu": "informou que a pessoa procurada faleceu"
+                            "é desconhecida": "a pessoa procurada é desconhecida no local",
+                            "não reside no local": "a pessoa procurada não reside no endereço",
+                            "dificilmente fica ali": "a pessoa procurada dificilmente se encontra ali",
+                            "antigo inquilino": "a pessoa procurada trata-se de um antigo inquilino",
+                            "rotatividade de inquilinos": "há uma alta rotatividade de inquilinos no local",
+                            "trabalha em tempo integral": "a pessoa procurada trabalha em tempo integral",
+                            "transferido": "a pessoa procurada foi transferida de localidade",
+                            "faliu": "a empresa encerrou suas atividades ou faliu",
+                            "aparece esporadicamente": "a pessoa procurada aparece apenas esporadicamente no endereço",
+                            "está viajando": "a pessoa procurada encontra-se viajando",
+                            "antigo morador": "a pessoa procurada trata-se de um antigo morador",
+                            "repassado a terceiros": "o imóvel ou negócio foi repassado a terceiros",
+                            "encontra-se preso": "a pessoa procurada encontra-se presa",
+                            "não exerce atividades": "a pessoa ou empresa não exerce mais atividades no local",
+                            "utiliza endereço para correspondências": "o endereço é utilizado apenas para o recebimento de correspondências",
+                            "antigo proprietário": "a pessoa procurada trata-se do antigo proprietário",
+                            "internado": "a pessoa procurada encontra-se internada",
+                            "faleceu": "a pessoa procurada já é falecida"
                         }
                         
                         frases_inf_info = [mapa_inf_info.get(inf, inf) for inf in informacoes_informante_selecionadas]
                         if len(frases_inf_info) > 1:
-                            texto_inf_info = ", ".join(frases_inf_info[:-1]) + f" e {frases_inf_info[-1]}"
+                            texto_inf_info = ", que ".join(frases_inf_info[:-1]) + f", e que {frases_inf_info[-1]}"
                         else:
                             texto_inf_info = frases_inf_info[0]
-                        paragrafo += f"{texto_inf_info}. "
-
-                    if nao_sabe_selecionados:
-                        if len(nao_sabe_selecionados) > 1: texto_ns = ", ".join(nao_sabe_selecionados[:-1]) + f" e nem {nao_sabe_selecionados[-1]}"
-                        else: texto_ns = nao_sabe_selecionados[0]
-                        paragrafo += f"Este(a) declarou não saber informar {texto_ns}. "
-                    elif not informacoes_informante_selecionadas:
-                        paragrafo += "nada mais sendo declarado. "
                         
+                        partes_informacao.append(f"este(a) declarou que {texto_inf_info}")
+
+                    # 2. Informações negativas (Não sabe)
+                    if nao_sabe_selecionados:
+                        if len(nao_sabe_selecionados) > 1: 
+                            texto_ns = ", ".join(nao_sabe_selecionados[:-1]) + f" e nem {nao_sabe_selecionados[-1]}"
+                        else: 
+                            texto_ns = nao_sabe_selecionados[0]
+                        
+                        if partes_informacao:
+                            partes_informacao.append(f"acrescentando não saber informar {texto_ns}")
+                        else:
+                            partes_informacao.append(f"este(a) declarou não saber informar {texto_ns}")
+
+                    # 3. Informações positivas adicionais (Telefone / Endereço)
                     if sabe_tel or sabe_end:
                         sabes_list = []
                         if sabe_tel: sabes_list.append(f"o telefone de contato {sabe_tel}")
                         if sabe_end: sabes_list.append(f"o endereço atual como sendo: {sabe_end}")
-                        paragrafo += f"Por outro lado, a referida pessoa soube indicar {' e '.join(sabes_list)}. "
+                        texto_sabe = " e ".join(sabes_list)
+                        
+                        if partes_informacao:
+                            partes_informacao.append(f"contudo, soube indicar {texto_sabe}")
+                        else:
+                            partes_informacao.append(f"este(a) soube indicar {texto_sabe}")
+                    
+                    # Unindo todas as partes do informante de forma contínua
+                    if not partes_informacao:
+                        paragrafo += "este(a) nada mais declarou. "
+                    else:
+                        texto_final_informante = ", ".join(partes_informacao)
+                        paragrafo += f"{texto_final_informante}. "
 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
@@ -1038,15 +1064,22 @@ elif menu == "📝 Gerar Certidão":
                 elif adv_pos_novo == "Não tem condições (hipossuficiente / defensor)": 
                     infos_adicionais.append("não tem condições financeiras de apresentar sua defesa através de advogado constituído, declarando sua hipossuficiência e requerendo a nomeação de um defensor público ou dativo para fazê-la")
 
-                if infos_adicionais:
-                    txt_infos = ", ".join(infos_adicionais[:-1]) + " e " + infos_adicionais[-1] if len(infos_adicionais) > 1 else infos_adicionais[0]
-                    paragrafo += f"Certifico, ainda, que o(a) supracitado(a) informou que {txt_infos}. "
-
                 contatos = []
                 if tel_pos: contatos.append(f"telefone de contato ({tel_pos})")
                 if email_pos: contatos.append(f"e-mail ({email_pos})")
-                if contatos:
-                    paragrafo += f"Informou também seu {' e '.join(contatos)}. "
+
+                # Ajuste no Bloco da Positiva para fundir as informações em uma única frase fluida
+                if infos_adicionais:
+                    txt_infos = ", ".join(infos_adicionais[:-1]) + " e " + infos_adicionais[-1] if len(infos_adicionais) > 1 else infos_adicionais[0]
+                    paragrafo += f"Certifico, ainda, que o(a) supracitado(a) informou que {txt_infos}"
+                    
+                    if contatos:
+                        paragrafo += f", bem como indicou seu {' e '.join(contatos)}. "
+                    else:
+                        paragrafo += ". "
+                else:
+                    if contatos:
+                        paragrafo += f"Certifico, ainda, que o(a) supracitado(a) indicou seu {' e '.join(contatos)}. "
                 
                 nome_alvo_txt = pessoa if pessoa else "a pessoa referida no mandado"
                 
