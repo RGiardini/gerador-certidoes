@@ -618,7 +618,7 @@ elif menu == "📝 Gerar Certidão":
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
                     texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
 
-                txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado no mandado"
+                txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
@@ -886,10 +886,10 @@ elif menu == "📝 Gerar Certidão":
                 if contatos:
                     paragrafo += f"Informou também seu {' e '.join(contatos)}. "
                 
+                
                 nome_alvo_txt = pessoa if pessoa else "a pessoa referida no mandado"
-                if tipo_realizacao_pos == "Pessoa procurada":
-                    paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {nome_alvo_txt}. "
-                elif tipo_realizacao_pos == "Representante legal":
+                
+                if tipo_realizacao_pos == "Representante legal":
                     rep_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
                     paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {nome_alvo_txt}, que se apresentou como representante legal ({rep_txt}). "
                 elif tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
@@ -1044,7 +1044,7 @@ elif menu == "📝 Gerar Certidão":
                     else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19."
                 else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
+                paragrafo = f"Certifico que, em cumprimento ao mandado anexo, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
