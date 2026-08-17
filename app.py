@@ -812,7 +812,7 @@ elif menu == "📝 Gerar Certidão":
             
         st.divider()
         
-        if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_positiva"):
+        if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_positiva"):
             with st.spinner("Gerando certidão positiva..."):
                 
                 verbo_ato = "citei/intimei/notifiquei"
@@ -825,9 +825,9 @@ elif menu == "📝 Gerar Certidão":
                     h_limpo = h.strip()
                     if ":" in h_limpo:
                         partes_h = h_limpo.split(":")
-                        horas_formatadas.append(f"{partes_h[0]}hs {partes_h[1]}min")
-                    elif not h_limpo.lower().endswith(('hs', 'min')):
-                        horas_formatadas.append(f"{h_limpo}hs 00min")
+                        horas_formatadas.append(f"{partes_h[0]}h{partes_h[1]}min")
+                    elif not h_limpo.lower().endswith(('h', 'min')):
+                        horas_formatadas.append(f"{h_limpo}h00min")
                     else:
                         horas_formatadas.append(h_limpo)
                 
