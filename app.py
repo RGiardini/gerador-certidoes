@@ -502,8 +502,8 @@ elif menu == "📝 Gerar Certidão":
         )
         
     st.divider()
-
-    c_mandado, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
+mandado
+    c_, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
     
     with c_mandado:
         mandado = st.text_input("Mandado:", placeholder="Ex: 01", key="mandado_geral")
@@ -590,16 +590,35 @@ elif menu == "📝 Gerar Certidão":
         motivos_selecionados = []
         with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
             motivos_list = [
-                "mudou-se", "não reside no local", "não foi localizada", "é desconhecida", "dificilmente fica ali", "trabalha em tempo integral",
-                "não trabalha no local", "está viajando", "local inabitado", "antigo inquilino", 
-                "antigo morador", "antigo proprietário", "rotatividade de inquilinos",
-                "Repassado para terceiros", "internado", "transferido", "encontra-se preso",
-                "faleceu", "faliu", "não exerce atividades", "local fechado", 
-                "número não localizado", "rua/av não localizada", "ap/bloco não localizado", 
-                "aparece esporadicamente", "utiliza endereço para correspondências",
-                "sem condições psíquicas de entender conteúdo mandado",
-                "guarnecem a residência amparados pela Lei 8.009/90",
-                "são insuficientes para saldar o débito"
+                "local fechado", 
+                "mudou-se", 
+                "é desconhecida", 
+                "não reside no local", 
+                "dificilmente fica ali", 
+                "número não localizado", 
+                "não trabalha no local", 
+                "antigo inquilino", 
+                "rotatividade de inquilinos", 
+                "ap/bloco não localizado", 
+                "trabalha em tempo integral", 
+                "local inabitado", 
+                "transferido", 
+                "faliu", 
+                "aparece esporadicamente", 
+                "está viajando", 
+                "antigo morador", 
+                "Repassado para terceiros", 
+                "encontra-se preso", 
+                "não exerce atividades", 
+                "rua/av não localizada", 
+                "utiliza endereço para correspondências", 
+                "são insuficientes para saldar o débito", 
+                "não foi localizada", 
+                "antigo proprietário", 
+                "internado", 
+                "faleceu", 
+                "guarnecem a residência amparados pela Lei 8.009/90", 
+                "sem condições psíquicas de entender conteúdo mandado"
             ]
             cols_mot = st.columns(3)
             for idx, m in enumerate(motivos_list):
@@ -671,6 +690,7 @@ elif menu == "📝 Gerar Certidão":
 
         st.divider()
 
+
         if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
             with st.spinner("Construindo certidão e preparando arquivo..."):
                 
@@ -707,7 +727,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
-                paragrafo = f"Certifico que, em cumprimento ao mandado, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
@@ -716,14 +736,52 @@ elif menu == "📝 Gerar Certidão":
 
                 if motivos_selecionados:
                     frases_motivos = []
-                    for m in motivos_selecionados:
-                        if m == "mudou-se": frases_motivos.append("a pessoa procurada não reside mais no local")
-                        elif m == "local fechado": frases_motivos.append("o imóvel encontrava-se fechado nas ocasiões das diligências")
-                        elif m == "faliu": frases_motivos.append("a empresa faliu ou encerrou suas atividades")
-                        else: frases_motivos.append(f"a pessoa procurada {m}")
                     
-                    if len(frases_motivos) > 1: texto_motivos = ", e que ".join([", ".join(frases_motivos[:-1]), frases_motivos[-1]])
-                    else: texto_motivos = frases_motivos[0]
+                    # Mapeamento para garantir a gramática perfeita de cada opção
+                    mapa_motivos = {
+                        "local fechado": "o imóvel encontrava-se fechado nas ocasiões das diligências",
+                        "mudou-se": "a pessoa procurada não reside mais no local",
+                        "é desconhecida": "a pessoa procurada é desconhecida no endereço",
+                        "não reside no local": "a pessoa procurada não reside no local",
+                        "dificilmente fica ali": "a pessoa procurada dificilmente se encontra no local",
+                        "número não localizado": "o número do imóvel não foi localizado",
+                        "não trabalha no local": "a pessoa procurada não trabalha no local",
+                        "antigo inquilino": "a pessoa procurada trata-se de um antigo inquilino",
+                        "rotatividade de inquilinos": "há uma alta rotatividade de inquilinos no local",
+                        "ap/bloco não localizado": "o apartamento ou bloco indicado não foi localizado",
+                        "trabalha em tempo integral": "a pessoa procurada trabalha em tempo integral",
+                        "local inabitado": "o local encontra-se inabitado",
+                        "transferido": "a pessoa procurada foi transferida para outra lotação/localidade",
+                        "faliu": "a empresa faliu ou encerrou suas atividades",
+                        "aparece esporadicamente": "a pessoa procurada aparece apenas esporadicamente no local",
+                        "está viajando": "a pessoa procurada encontra-se viajando",
+                        "antigo morador": "a pessoa procurada trata-se de um antigo morador",
+                        "Repassado para terceiros": "o imóvel ou negócio foi repassado para terceiros",
+                        "encontra-se preso": "a pessoa procurada encontra-se presa",
+                        "não exerce atividades": "a pessoa ou empresa procurada não exerce atividades no local",
+                        "rua/av não localizada": "a rua ou avenida indicada não foi localizada",
+                        "utiliza endereço para correspondências": "a pessoa procurada utiliza o endereço apenas para o recebimento de correspondências",
+                        "são insuficientes para saldar o débito": "os bens encontrados são insuficientes para saldar o débito",
+                        "não foi localizada": "a pessoa procurada não foi localizada",
+                        "antigo proprietário": "a pessoa procurada trata-se do antigo proprietário do imóvel",
+                        "internado": "a pessoa procurada encontra-se internada",
+                        "faleceu": "a pessoa procurada faleceu",
+                        "guarnecem a residência amparados pela Lei 8.009/90": "os bens que guarnecem a residência estão amparados pela Lei 8.009/90",
+                        "sem condições psíquicas de entender conteúdo mandado": "a pessoa procurada encontra-se sem condições psíquicas de compreender o conteúdo do mandado"
+                    }
+
+                    for m in motivos_selecionados:
+                        # Puxa a frase correta do dicionário. Se houver algum erro, usa um padrão.
+                        frases_motivos.append(mapa_motivos.get(m, f"a pessoa procurada {m}"))
+                    
+                    # Lógica para juntar as frases gramaticalmente
+                    if len(frases_motivos) > 1:
+                        # Exemplo: Constatou-se que [frase 1], que [frase 2], e que [frase 3].
+                        meio = ", que ".join(frases_motivos[:-1])
+                        texto_motivos = f"{meio}, e que {frases_motivos[-1]}"
+                    else:
+                        texto_motivos = frases_motivos[0]
+                        
                     paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
 
                 if nome_inf_det_n or relacoes_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
@@ -1149,7 +1207,7 @@ elif menu == "📝 Gerar Certidão":
                     else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19."
                 else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
-                paragrafo = f"Certifico que, em cumprimento ao mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
