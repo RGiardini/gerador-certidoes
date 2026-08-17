@@ -275,7 +275,7 @@ if menu == "⚙️ Meu Perfil":
                 )
                     
             st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
-            time.sleep(2) # Aguarda 2 segundos para o usuário ler a mensagem
+            time.sleep(2) 
             st.rerun()
 
 # ==========================================
@@ -387,7 +387,6 @@ elif menu == "📂 Minhas Certidões":
 # TELA: PAINEL DO ADMINISTRADOR
 # ==========================================
 elif menu == "🛡️ Painel do Administrador":
-    # Validação do novo CPF administrador
     if usuario_atual != "05042687670":
         st.error("Acesso restrito apenas ao Administrador.")
         st.stop()
@@ -574,7 +573,7 @@ elif menu == "📝 Gerar Certidão":
         
         if st.session_state.get('limpar_detalhada_nova'):
             for k in list(st.session_state.keys()):
-                if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "cert_n_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
+                if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "inf_informante_det_", "cert_n_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
                     st.session_state[k] = False 
                 elif k in ["nome_inf_det_n", "sabe_tel_det_n", "sabe_end_det_n", "obs_livres_det_n"]:
                     st.session_state[k] = ""
@@ -592,31 +591,13 @@ elif menu == "📝 Gerar Certidão":
             motivos_list = [
                 "local fechado", 
                 "mudou-se", 
-                "é desconhecida", 
-                "não reside no local", 
-                "dificilmente fica ali", 
                 "número não localizado", 
                 "não trabalha no local", 
-                "antigo inquilino", 
-                "rotatividade de inquilinos", 
                 "ap/bloco não localizado", 
-                "trabalha em tempo integral", 
                 "local inabitado", 
-                "transferido", 
-                "faliu", 
-                "aparece esporadicamente", 
-                "está viajando", 
-                "antigo morador", 
-                "Repassado para terceiros", 
-                "encontra-se preso", 
-                "não exerce atividades", 
                 "rua/av não localizada", 
-                "utiliza endereço para correspondências", 
                 "são insuficientes para saldar o débito", 
                 "não foi localizada", 
-                "antigo proprietário", 
-                "internado", 
-                "faleceu", 
                 "guarnecem a residência amparados pela Lei 8.009/90", 
                 "sem condições psíquicas de entender conteúdo mandado"
             ]
@@ -629,6 +610,7 @@ elif menu == "📝 Gerar Certidão":
         st.markdown("---")
         relacoes_selecionadas = []
         nao_sabe_selecionados = []
+        informacoes_informante_selecionadas = []
         sabe_tel = ""
         sabe_end = ""
         
@@ -646,6 +628,33 @@ elif menu == "📝 Gerar Certidão":
                 with cols_rel[idx % 4]:
                     if st.checkbox(r, key=f"rel_detn_{idx}"):
                         relacoes_selecionadas.append(r)
+
+            st.write("**Informações recebidas pelos informantes (Migradas):**")
+            info_informantes_list = [
+                "é desconhecida", 
+                "não reside no local", 
+                "dificilmente fica ali", 
+                "antigo inquilino", 
+                "rotatividade de inquilinos", 
+                "trabalha em tempo integral", 
+                "transferido", 
+                "faliu", 
+                "aparece esporadicamente", 
+                "está viajando", 
+                "antigo morador", 
+                "repassado a terceiros", 
+                "encontra-se preso", 
+                "não exerce atividades", 
+                "utiliza endereço para correspondências", 
+                "antigo proprietário", 
+                "internado", 
+                "faleceu"
+            ]
+            cols_inf_info = st.columns(3)
+            for idx, inf_item in enumerate(info_informantes_list):
+                with cols_inf_info[idx % 3]:
+                    if st.checkbox(inf_item, key=f"inf_informante_det_{idx}"):
+                        informacoes_informante_selecionadas.append(inf_item)
 
             st.write("**Não sabendo o informante indicar:**")
             nao_sabe_list = [
@@ -689,7 +698,6 @@ elif menu == "📝 Gerar Certidão":
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det_n")
 
         st.divider()
-
 
         if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
             with st.spinner("Construindo certidão e preparando arquivo..."):
@@ -737,46 +745,24 @@ elif menu == "📝 Gerar Certidão":
                 if motivos_selecionados:
                     frases_motivos = []
                     
-                    # Mapeamento para garantir a gramática perfeita de cada opção
                     mapa_motivos = {
                         "local fechado": "o imóvel encontrava-se fechado nas ocasiões das diligências",
                         "mudou-se": "a pessoa procurada mudou-se",
-                        "é desconhecida": "a pessoa procurada é desconhecida no endereço",
-                        "não reside no local": "a pessoa procurada não reside no local",
-                        "dificilmente fica ali": "a pessoa procurada dificilmente se encontra no local",
                         "número não localizado": "o número do imóvel não foi localizado",
                         "não trabalha no local": "a pessoa procurada não trabalha no local",
-                        "antigo inquilino": "a pessoa procurada trata-se de um antigo inquilino",
-                        "rotatividade de inquilinos": "há uma alta rotatividade de inquilinos no local",
                         "ap/bloco não localizado": "o apartamento ou bloco indicado não foi localizado",
-                        "trabalha em tempo integral": "a pessoa procurada trabalha em tempo integral",
                         "local inabitado": "o local encontra-se inabitado",
-                        "transferido": "a pessoa procurada foi transferida para outra lotação/localidade",
-                        "faliu": "a empresa faliu ou encerrou suas atividades",
-                        "aparece esporadicamente": "a pessoa procurada aparece apenas esporadicamente no local",
-                        "está viajando": "a pessoa procurada encontra-se viajando",
-                        "antigo morador": "a pessoa procurada trata-se de um antigo morador",
-                        "Repassado para terceiros": "o imóvel ou negócio foi repassado para terceiros",
-                        "encontra-se preso": "a pessoa procurada encontra-se presa",
-                        "não exerce atividades": "a pessoa ou empresa procurada não exerce atividades no local",
                         "rua/av não localizada": "a rua ou avenida indicada não foi localizada",
-                        "utiliza endereço para correspondências": "a pessoa procurada utiliza o endereço apenas para o recebimento de correspondências",
                         "são insuficientes para saldar o débito": "os bens encontrados são insuficientes para saldar o débito",
                         "não foi localizada": "a pessoa procurada não foi localizada",
-                        "antigo proprietário": "a pessoa procurada trata-se do antigo proprietário do imóvel",
-                        "internado": "a pessoa procurada encontra-se internada",
-                        "faleceu": "a pessoa procurada faleceu",
                         "guarnecem a residência amparados pela Lei 8.009/90": "os bens que guarnecem a residência estão amparados pela Lei 8.009/90",
                         "sem condições psíquicas de entender conteúdo mandado": "a pessoa procurada encontra-se sem condições psíquicas de compreender o conteúdo do mandado"
                     }
 
                     for m in motivos_selecionados:
-                        # Puxa a frase correta do dicionário. Se houver algum erro, usa um padrão.
                         frases_motivos.append(mapa_motivos.get(m, f"a pessoa procurada {m}"))
                     
-                    # Lógica para juntar as frases gramaticalmente
                     if len(frases_motivos) > 1:
-                        # Exemplo: Constatou-se que [frase 1], que [frase 2], e que [frase 3].
                         meio = ", que ".join(frases_motivos[:-1])
                         texto_motivos = f"{meio}, e que {frases_motivos[-1]}"
                     else:
@@ -784,7 +770,8 @@ elif menu == "📝 Gerar Certidão":
                         
                     paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
 
-                if nome_inf_det_n or relacoes_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
+                # Bloco de Informações do Informante (incluindo os itens migrados com sintaxe ajustada)
+                if nome_inf_det_n or relacoes_selecionadas or informacoes_informante_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
                     if nome_inf_det_n:
                         txt_informante = f"pelo(a) Sr(a). {nome_inf_det_n}"
                         txt_informante += f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ","
@@ -794,11 +781,40 @@ elif menu == "📝 Gerar Certidão":
                             
                     paragrafo += f"Conforme informações prestadas no local {txt_informante} "
                     
+                    if informacoes_informante_selecionadas:
+                        mapa_inf_info = {
+                            "é desconhecida": "informou que a pessoa procurada é desconhecida",
+                            "não reside no local": "informou que a pessoa procurada não reside no local",
+                            "dificilmente fica ali": "informou que a pessoa procurada dificilmente se encontra no local",
+                            "antigo inquilino": "informou que a pessoa procurada trata-se de antigo inquilino",
+                            "rotatividade de inquilinos": "informou que há alta rotatividade de inquilinos no local",
+                            "trabalha em tempo integral": "informou que a pessoa procurada trabalha em tempo integral",
+                            "transferido": "informou que a pessoa procurada foi transferida",
+                            "faliu": "informou que a empresa faliu",
+                            "aparece esporadicamente": "informou que a pessoa procurada aparece esporadicamente no local",
+                            "está viajando": "informou que a pessoa procurada encontra-se viajando",
+                            "antigo morador": "informou que a pessoa procurada trata-se de antigo morador",
+                            "repassado a terceiros": "informou que o imóvel ou negócio foi repassado a terceiros",
+                            "encontra-se preso": "informou que a pessoa procurada encontra-se presa",
+                            "não exerce atividades": "informou que a pessoa ou empresa não exerce atividades no local",
+                            "utiliza endereço para correspondências": "informou que utiliza o endereço apenas para correspondências",
+                            "antigo proprietário": "informou que a pessoa procurada trata-se de antigo proprietário",
+                            "internado": "informou que a pessoa procurada encontra-se internada",
+                            "faleceu": "informou que a pessoa procurada faleceu"
+                        }
+                        
+                        frases_inf_info = [mapa_inf_info.get(inf, inf) for inf in informacoes_informante_selecionadas]
+                        if len(frases_inf_info) > 1:
+                            texto_inf_info = ", ".join(frases_inf_info[:-1]) + f" e {frases_inf_info[-1]}"
+                        else:
+                            texto_inf_info = frases_inf_info[0]
+                        paragrafo += f"{texto_inf_info}. "
+
                     if nao_sabe_selecionados:
                         if len(nao_sabe_selecionados) > 1: texto_ns = ", ".join(nao_sabe_selecionados[:-1]) + f" e nem {nao_sabe_selecionados[-1]}"
                         else: texto_ns = nao_sabe_selecionados[0]
-                        paragrafo += f"este(a) declarou não saber informar {texto_ns}. "
-                    else:
+                        paragrafo += f"Este(a) declarou não saber informar {texto_ns}. "
+                    elif not informacoes_informante_selecionadas:
                         paragrafo += "nada mais sendo declarado. "
                         
                     if sabe_tel or sabe_end:
@@ -842,11 +858,9 @@ elif menu == "📝 Gerar Certidão":
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
-                # Adiciona segundos (%S) e um pedaço de UUID único (ex: 4 caracteres)
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%Mm%Ss")
                 sufixo_unico = str(uuid.uuid4())[:6]
                 nome_base = f"Certidao_Negativa_Detalhada_{processo}_{data_arquivo}_{sufixo_unico}"
-                
                 
                 if formato_saida == "PDF (.pdf)":
                     arquivo_final_bytes = converter_docx_para_pdf(docx_bytes)
@@ -1034,7 +1048,6 @@ elif menu == "📝 Gerar Certidão":
                 if contatos:
                     paragrafo += f"Informou também seu {' e '.join(contatos)}. "
                 
-                
                 nome_alvo_txt = pessoa if pessoa else "a pessoa referida no mandado"
                 
                 if tipo_realizacao_pos == "Representante legal":
@@ -1190,7 +1203,6 @@ elif menu == "📝 Gerar Certidão":
                         texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
                     else:
                         texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas},"
-                
                 
                 hr_limpo = hc_hora_retorno.strip()
                 if hr_limpo and not hr_limpo.lower().endswith(('h', 'hs', 'min')): hr_limpo += 'hs'
