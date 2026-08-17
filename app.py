@@ -589,9 +589,7 @@ elif menu == "📝 Gerar Certidão":
         with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
             motivos_list = [
                 "local fechado", 
-                "mudou-se", 
                 "número não localizado", 
-                "não trabalha no local", 
                 "ap/bloco não localizado", 
                 "local inabitado", 
                 "rua/av não localizada", 
@@ -629,6 +627,8 @@ elif menu == "📝 Gerar Certidão":
 
             st.write("**Informações recebidas pelos informantes (Migradas):**")
             info_informantes_list = [
+                "mudou-se",
+                "não trabalha no local",
                 "é desconhecida", 
                 "não reside no local", 
                 "dificilmente fica ali", 
@@ -745,9 +745,7 @@ elif menu == "📝 Gerar Certidão":
                     
                     mapa_motivos = {
                         "local fechado": "o imóvel encontrava-se fechado nas ocasiões das diligências",
-                        "mudou-se": "a pessoa procurada mudou-se",
                         "número não localizado": "o número do imóvel não foi localizado",
-                        "não trabalha no local": "a pessoa procurada não trabalha no local",
                         "ap/bloco não localizado": "o apartamento ou bloco indicado não foi localizado",
                         "local inabitado": "o local encontra-se inabitado",
                         "rua/av não localizada": "a rua ou avenida indicada não foi localizada",
@@ -759,11 +757,22 @@ elif menu == "📝 Gerar Certidão":
                     for m in motivos_selecionados:
                         frases_motivos.append(mapa_motivos.get(m, f"a pessoa procurada {m}"))
                     
-                    if len(frases_motivos) > 1:
-                        meio = ", que ".join(frases_motivos[:-1])
-                        texto_motivos = f"{meio}, e que {frases_motivos[-1]}"
+                    # Lógica para não repetir o sujeito "a pessoa procurada"
+                    frases_motivos_limpas = []
+                    suj_motivo_usado = False
+                    for f in frases_motivos:
+                        if "a pessoa procurada" in f:
+                            if not suj_motivo_usado:
+                                suj_motivo_usado = True
+                            else:
+                                f = f.replace("a pessoa procurada ", "")
+                        frases_motivos_limpas.append(f)
+                    
+                    if len(frases_motivos_limpas) > 1:
+                        meio = ", que ".join(frases_motivos_limpas[:-1])
+                        texto_motivos = f"{meio}, e que {frases_motivos_limpas[-1]}"
                     else:
-                        texto_motivos = frases_motivos[0]
+                        texto_motivos = frases_motivos_limpas[0]
                         
                     paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
 
@@ -798,6 +807,8 @@ elif menu == "📝 Gerar Certidão":
                     if informacoes_informante_selecionadas:
                         # Dicionário com sujeitos explícitos para garantir gramática ao usar a conjunção "que"
                         mapa_inf_info = {
+                            "mudou-se": "a pessoa procurada mudou-se dali",
+                            "não trabalha no local": "a pessoa procurada não trabalha no local",
                             "é desconhecida": "a pessoa procurada é desconhecida no local",
                             "não reside no local": "a pessoa procurada não reside no endereço",
                             "dificilmente fica ali": "a pessoa procurada dificilmente se encontra ali",
@@ -819,10 +830,22 @@ elif menu == "📝 Gerar Certidão":
                         }
                         
                         frases_inf_info = [mapa_inf_info.get(inf, inf) for inf in informacoes_informante_selecionadas]
-                        if len(frases_inf_info) > 1:
-                            texto_inf_info = ", que ".join(frases_inf_info[:-1]) + f", e que {frases_inf_info[-1]}"
+                        
+                        # Lógica para não repetir o sujeito nas falas do informante
+                        frases_inf_limpas = []
+                        suj_inf_usado = False
+                        for f in frases_inf_info:
+                            if "a pessoa procurada" in f:
+                                if not suj_inf_usado:
+                                    suj_inf_usado = True
+                                else:
+                                    f = f.replace("a pessoa procurada ", "")
+                            frases_inf_limpas.append(f)
+
+                        if len(frases_inf_limpas) > 1:
+                            texto_inf_info = ", que ".join(frases_inf_limpas[:-1]) + f", e que {frases_inf_limpas[-1]}"
                         else:
-                            texto_inf_info = frases_inf_info[0]
+                            texto_inf_info = frases_inf_limpas[0]
                         
                         partes_informacao.append(f"a qual declarou que {texto_inf_info}")
 
@@ -1089,11 +1112,11 @@ elif menu == "📝 Gerar Certidão":
                     if contatos:
                         paragrafo += f"Certifico, ainda, que o(a) supracitado(a) indicou seu {' e '.join(contatos)}. "
                 
-                nome_alvo_txt = pessoa if pessoa else "a pessoa referida no mandado"
-                
                 if tipo_realizacao_pos == "Representante legal":
                     rep_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
-                    paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {nome_alvo_txt}, que se apresentou como representante legal ({rep_txt}). "
+                    # Ajusta a concordância dependendo se o nome foi digitado ou não
+                    txt_alvo = f"do(a) Sr(a). {pessoa}" if pessoa else "da pessoa referida no mandado"
+                    paragrafo += f"Certifico também que o ato foi realizado na pessoa {txt_alvo}, que se apresentou como representante legal ({rep_txt}). "
                 elif tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
                     enq_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
                     paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fórum Permanente de Juízes Coordenadores dos Juizados Especiais. "
