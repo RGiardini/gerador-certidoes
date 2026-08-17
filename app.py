@@ -220,14 +220,20 @@ if menu == "⚙️ Meu Perfil":
     novo_cargo = st.text_input("Cargo:", value=dados_usuario.get("cargo", ""), placeholder="Ex: Oficial de Justiça - TJMG", key="input_perfil_cargo")
     nova_matricula = st.text_input("Matrícula (ex: PJPI: 12345):", value=dados_usuario.get("matricula", ""), key="input_perfil_matricula")
     novo_email = st.text_input("E-mail Profissional:", value=dados_usuario.get("email", ""), placeholder="Ex: rafael@tjmg.jus.br", key="input_perfil_email")
-    nova_cidade = st.text_input("Comarca / Cidade de Lotação:", value=dados_usuario.get("cidade", ""), placeholder="Esta cidade sairá no final das certidões", key="input_perfil_cidade")
+    
+    # Novos campos de Cidade e Estado lado a lado
+    c_cid, c_est = st.columns([3, 1])
+    with c_cid:
+        nova_cidade = st.text_input("Comarca / Cidade de Lotação:", value=dados_usuario.get("cidade", ""), placeholder="Ex: Belo Horizonte", key="input_perfil_cidade")
+    with c_est:
+        novo_estado = st.text_input("Estado (Sigla):", value=dados_usuario.get("estado", ""), max_chars=2, placeholder="Ex: MG", key="input_perfil_estado").upper()
     
     st.write("**Sua Assinatura (Fundo branco ou transparente):**")
     arquivo_assinatura = st.file_uploader("Envie a foto da sua assinatura", type=["png", "jpg", "jpeg"], key="uploader_perfil")
     
     if st.button("💾 Salvar Perfil", type="primary", use_container_width=True, key="btn_salvar_perfil"):
-        # Validação para tornar os campos obrigatórios
-        if not (novo_nome and novo_cargo and nova_matricula and novo_email and nova_cidade):
+        # Atualizado para exigir o estado
+        if not (novo_nome and novo_cargo and nova_matricula and novo_email and nova_cidade and novo_estado):
             st.error("⚠️ Atenção: Todos os campos de texto são obrigatórios. Preencha todos antes de salvar!")
         else:
             supabase.table("banco_usuarios").update({
@@ -235,7 +241,8 @@ if menu == "⚙️ Meu Perfil":
                 "cargo": novo_cargo,
                 "matricula": nova_matricula,
                 "email": novo_email,
-                "cidade": nova_cidade
+                "cidade": nova_cidade,
+                "estado": novo_estado
             }).eq("usuario", usuario_atual).execute()
             
             if arquivo_assinatura is not None:
@@ -372,8 +379,8 @@ elif menu == "🛡️ Painel do Administrador":
     
     with aba_adm1:
         st.subheader("Oficiais Cadastrados no Sistema")
-        # Incluímos email e cidade no select
-        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula, email, cidade").execute()
+        # Incluímos 'estado' na consulta
+        res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula, email, cidade, estado").execute()
         usuarios_cadastrados = res_todos.data
         
         if usuarios_cadastrados:
@@ -382,7 +389,8 @@ elif menu == "🛡️ Painel do Administrador":
                     st.write(f"**Cargo:** {u.get('cargo')}")
                     st.write(f"**Matrícula:** {u.get('matricula')}")
                     st.write(f"**E-mail:** {u.get('email') or 'Não informado'}")
-                    st.write(f"**Comarca/Cidade:** {u.get('cidade') or 'Não informada'}")
+                    # Imprime a Cidade / Sigla (Ex: Belo Horizonte / MG)
+                    st.write(f"**Comarca/Cidade:** {u.get('cidade') or 'Não informada'} / {u.get('estado') or '-'}")
                     
                     if u['usuario'] != usuario_atual:
                         if st.button(f"🗑️ Excluir usuário {u['usuario']}", key=f"del_adm_usr_{u['usuario']}"):
@@ -451,13 +459,14 @@ elif menu == "🛡️ Painel do Administrador":
 elif menu == "📝 Gerar Certidão":
     st.title("Gerador de Certidões - TJMG")
     
-    # Bloqueio caso algum campo esteja vazio
-    if not (dados_usuario.get("nome") and dados_usuario.get("cargo") and dados_usuario.get("matricula") and dados_usuario.get("email") and dados_usuario.get("cidade")):
-        st.warning("⚠️ Acesso restrito! Vá em 'Meu Perfil' e preencha **todos os dados obrigatórios** (Nome, Cargo, Matrícula, E-mail e Comarca) para liberar a geração de certidões.")
+    # Bloqueio caso algum campo, incluindo o estado, esteja vazio
+    if not (dados_usuario.get("nome") and dados_usuario.get("cargo") and dados_usuario.get("matricula") and dados_usuario.get("email") and dados_usuario.get("cidade") and dados_usuario.get("estado")):
+        st.warning("⚠️ Acesso restrito! Vá em 'Meu Perfil' e preencha **todos os dados obrigatórios** (Nome, Cargo, Matrícula, E-mail, Comarca e Estado) para liberar a geração de certidões.")
         st.stop()
 
-    # Formata a cidade do usuário para usar no documento (ex: belo horizonte -> Belo Horizonte)
+    # Formata a cidade e o estado para usar no documento (ex: Belo Horizonte/MG)
     cidade_certidao = dados_usuario.get("cidade").strip().title()
+    estado_certidao = dados_usuario.get("estado").strip().upper()
 
     c_tipo, c_formato = st.columns([3, 1])
     with c_tipo:
@@ -750,7 +759,7 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"{cidade_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
@@ -1004,7 +1013,7 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 doc.add_paragraph("")
                 
                 try:
@@ -1161,7 +1170,7 @@ elif menu == "📝 Gerar Certidão":
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"Santa Luzia, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
+                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
