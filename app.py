@@ -733,8 +733,8 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
-                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, {texto_data_hora} ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
-                
+                texto_data_hora_formatado = f"{texto_data_hora} " if texto_data_hora else ""
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, {texto_data_hora_formatado}ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
                 if nao_loc_bens_n: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
@@ -771,12 +771,22 @@ elif menu == "📝 Gerar Certidão":
                 # BLOCO MELHORADO DO INFORMANTE - Frase Contínua e Integrada
                 # ==========================================
                 if nome_inf_det_n or relacoes_selecionadas or informacoes_informante_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
+                    
+                    # Trata as relações para ficarem com "e" no final (ex: vizinho e pai)
+                    if relacoes_selecionadas:
+                        if len(relacoes_selecionadas) > 1:
+                            relacoes_str = ", ".join(relacoes_selecionadas[:-1]) + " e " + relacoes_selecionadas[-1]
+                        else:
+                            relacoes_str = relacoes_selecionadas[0]
+                    else:
+                        relacoes_str = ""
+
                     if nome_inf_det_n:
                         txt_informante = f"pelo(a) Sr(a). {nome_inf_det_n}"
-                        txt_informante += f", na qualidade de {', '.join(relacoes_selecionadas)}," if relacoes_selecionadas else ","
+                        txt_informante += f", na qualidade de {relacoes_str}," if relacoes_str else ","
                     else:
-                        if relacoes_selecionadas: 
-                            txt_informante = f"por um(a) {', '.join(relacoes_selecionadas)} que preferiu não se identificar,"
+                        if relacoes_str: 
+                            txt_informante = f"por pessoa no local, que se apresentou como {relacoes_str}, mas preferiu não se identificar,"
                         else: 
                             txt_informante = "por pessoa no local que preferiu não se identificar,"
                             
@@ -814,7 +824,7 @@ elif menu == "📝 Gerar Certidão":
                         else:
                             texto_inf_info = frases_inf_info[0]
                         
-                        partes_informacao.append(f"este(a) declarou que {texto_inf_info}")
+                        partes_informacao.append(f"a qual declarou que {texto_inf_info}")
 
                     # 2. Informações negativas (Não sabe)
                     if nao_sabe_selecionados:
@@ -826,7 +836,7 @@ elif menu == "📝 Gerar Certidão":
                         if partes_informacao:
                             partes_informacao.append(f"acrescentando não saber informar {texto_ns}")
                         else:
-                            partes_informacao.append(f"este(a) declarou não saber informar {texto_ns}")
+                            partes_informacao.append(f"a qual declarou não saber informar {texto_ns}")
 
                     # 3. Informações positivas adicionais (Telefone / Endereço)
                     if sabe_tel or sabe_end:
@@ -838,11 +848,11 @@ elif menu == "📝 Gerar Certidão":
                         if partes_informacao:
                             partes_informacao.append(f"contudo, soube indicar {texto_sabe}")
                         else:
-                            partes_informacao.append(f"este(a) soube indicar {texto_sabe}")
+                            partes_informacao.append(f"a qual soube indicar {texto_sabe}")
                     
                     # Unindo todas as partes do informante de forma contínua
                     if not partes_informacao:
-                        paragrafo += "este(a) nada mais declarou. "
+                        paragrafo += "que nada mais declarou. "
                     else:
                         texto_final_informante = ", ".join(partes_informacao)
                         paragrafo += f"{texto_final_informante}. "
