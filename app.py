@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import hashlib
 import zipfile
-import subprocess
 import tempfile
 import re
 import time
@@ -13,6 +12,11 @@ from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Pt, Cm
 from supabase import create_client, Client
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.units import cm
 
 # ==========================================
 # FUNÇÕES AUXILIARES
@@ -39,26 +43,45 @@ def formatar_data_completa(data_str, ano_padrao):
         
     return data_str
 
-def converter_docx_para_pdf(docx_bytes):
-    """Converte DOCX para PDF usando LibreOffice oculto."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        caminho_docx = os.path.join(temp_dir, "temp_certidao.docx")
-        
-        with open(caminho_docx, "wb") as f:
-            f.write(docx_bytes)
-        
-        comando = [
-            "libreoffice", "--headless", "--convert-to", "pdf",
-            "--outdir", temp_dir, caminho_docx
-        ]
-        
-        subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        caminho_pdf = os.path.join(temp_dir, "temp_certidao.pdf")
-        
-        if os.path.exists(caminho_pdf):
-            with open(caminho_pdf, "rb") as f:
-                return f.read()
-        return None
+def gerar_pdf_nativo(texto_conteudo, dados_cabecalho, dados_assinatura, assinatura_bytes, cabecalho_bytes):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    story = []
+    styles = getSampleStyleSheet()
+
+    # Estilos de formatação jurídica
+    estilo_corpo = ParagraphStyle('Corpo', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, leading=16, alignment=TA_JUSTIFY, firstLineIndent=35.4)
+    estilo_centro = ParagraphStyle('Centro', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, alignment=TA_CENTER)
+    estilo_titulo = ParagraphStyle('Titulo', parent=styles['Normal'], fontName='Times-Bold', fontSize=16, alignment=TA_CENTER)
+    estilo_ass = ParagraphStyle('Ass', parent=styles['Normal'], fontName='Times-Bold', fontSize=8, alignment=TA_CENTER)
+
+    if cabecalho_bytes:
+        img = Image(BytesIO(cabecalho_bytes), width=16*cm, height=2.5*cm)
+        img.hAlign = 'CENTER'
+        story.append(img)
+        story.append(Spacer(1, 15))
+
+    if dados_cabecalho.get("processo"):
+        story.append(Paragraph(f"Processo: {dados_cabecalho['processo']}", styles['Normal']))
+    
+    story.append(Paragraph(f"<b>{dados_cabecalho['titulo']}</b>", estilo_titulo))
+    story.append(Spacer(1, 20))
+    story.append(Paragraph(texto_conteudo, estilo_corpo))
+    story.append(Spacer(1, 30))
+    story.append(Paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.", estilo_centro))
+    story.append(Spacer(1, 20))
+    story.append(Paragraph(dados_cabecalho['data_local'], estilo_centro))
+    story.append(Spacer(1, 20))
+
+    if assinatura_bytes:
+        img_ass = Image(BytesIO(assinatura_bytes), width=5*cm, height=2*cm)
+        img_ass.hAlign = 'CENTER'
+        story.append(img_ass)
+    
+    story.append(Paragraph(f"{dados_assinatura['nome']}<br/>{dados_assinatura['cargo']}<br/>{dados_assinatura['matricula']}", estilo_ass))
+    
+    doc.build(story)
+    return buffer.getvalue()
 
 # ==========================================
 # CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
@@ -90,14 +113,12 @@ st.markdown("""
         width: 100%;
     }
 
-    /* Ajuste do fundo das caixas */
     div[data-testid="stExpander"], div.stTextInput, div.stSelectbox, div.stRadio {
         background-color: #FFFFFF !important;
         border-radius: 10px;
         padding: 0.2rem;
     }
 
-    /* CORREÇÃO DO MODO ESCURO: Força o texto e rótulos a ficarem escuros dentro do fundo branco */
     div[data-testid="stExpander"] *, 
     div.stTextInput *, 
     div.stSelectbox *, 
@@ -105,12 +126,11 @@ st.markdown("""
         color: #1E293B !important;
     }
 
-    /* Ajuste das caixas de digitação */
     input[type="text"], input[type="password"] {
         border-radius: 8px !important;
         border: 1px solid #CBD5E1 !important;
         background-color: #FFFFFF !important;
-        color: #1E293B !important; /* Texto digitado sempre escuro */
+        color: #1E293B !important;
     }
     input[type="text"]:focus, input[type="password"]:focus {
         border-color: #0F172A !important;
@@ -168,17 +188,14 @@ if st.session_state["usuario_logado"] is None:
     aba_login, aba_cadastro = st.tabs(["Entrar", "Criar Nova Conta"])
     
     with aba_login:
-        # Aviso para reforçar a regra na tela de login
         st.info("🔒 **Acesso Restrito:** O login no sistema é feito exclusivamente utilizando o seu **CPF** (apenas números).")
         
         cpf_input_bruto = st.text_input("CPF (Apenas números):", placeholder="Ex: 12345678900", key="log_usr_input")
         senha_login = st.text_input("Senha:", type="password", key="log_pwd_input")
         
         if st.button("Entrar", type="primary", use_container_width=True, key="btn_entrar"):
-            # A função limpar_cpf remove tudo que não for número
             usuario_login = limpar_cpf(cpf_input_bruto)
             
-            # Validação rigorosa: Apenas aceita se o resultado final tiver exatamente 11 números
             if not usuario_login or len(usuario_login) != 11:
                 st.warning("⚠️ Formato inválido. O login deve ser um CPF válido contendo exatamente 11 números.")
             elif senha_login:
@@ -200,8 +217,6 @@ if st.session_state["usuario_logado"] is None:
                 
     with aba_cadastro:
         st.subheader("Criar Nova Conta")
-        
-        # Novo aviso claro e em destaque para os novos usuários
         st.warning("📌 **Aviso Importante:** O seu nome de usuário para acessar o sistema será **exclusivamente o seu CPF**. O sistema não aceita e-mails ou nomes personalizados para o login.")
         st.write("Preencha os dados abaixo para iniciar seu período gratuito.")
         
@@ -211,10 +226,9 @@ if st.session_state["usuario_logado"] is None:
         
         st.markdown("---")
         
-        # O texto claro do Termo de Aceite e Regra do 1 Ano
         texto_termos = """
         **Termos de Uso e Assinatura:**
-        Declaro que li e concordo com as normas de uso do sistema. 
+        Declaro que li e concordo com las normas de uso do sistema. 
         Estou ciente de que esta ferramenta será oferecida de forma **100% gratuita pelo prazo de 1 (um) ano** a partir da data deste cadastro. 
         Após este período de testes, para continuar utilizando o sistema, será cobrada uma mensalidade no valor de **R$ 30,00**. Não haverá cobrança automática sem aviso prévio.
         """
@@ -224,7 +238,6 @@ if st.session_state["usuario_logado"] is None:
         if st.button("Criar Conta e Iniciar Teste", type="primary", use_container_width=True, key="btn_cadastrar"):
             usuario_cad = limpar_cpf(cpf_cad_bruto)
             
-            # Bloqueio estrito no cadastro caso o formato não bata com 11 dígitos
             if not usuario_cad or len(usuario_cad) != 11:
                 st.error("⚠️ O Login é restrito ao CPF. Por favor, insira um CPF válido com 11 números.")
             elif not senha_cad or len(senha_cad) < 6:
@@ -234,18 +247,14 @@ if st.session_state["usuario_logado"] is None:
             elif not aceite_termos:
                 st.error("⚠️ Você deve marcar a caixa aceitando os Termos de Uso para criar a conta.")
             else:
-                # 1. Verifica se o CPF já existe
                 busca = supabase.table("banco_usuarios").select("usuario").eq("usuario", usuario_cad).execute()
                 if len(busca.data) > 0:
                     st.error("❌ Este CPF já está cadastrado no sistema.")
                 else:
-                    # 2. Calcula as datas
                     hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
                     data_cadastro = hoje.date()
-                    # Adiciona 365 dias (1 ano)
                     vencimento_trial = data_cadastro + datetime.timedelta(days=365)
                     
-                    # 3. Insere no banco
                     senha_cripto = gerar_hash_senha(senha_cad)
                     novo_usuario = {
                         "usuario": usuario_cad,
@@ -270,7 +279,6 @@ if st.session_state["usuario_logado"] is None:
 usuario_atual = st.session_state["usuario_logado"]
 resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
 
-# Trava de segurança: se a sessão atual não existir mais no banco de dados, força o logout
 if not resposta_usuario.data:
     st.session_state["usuario_logado"] = None
     st.query_params.clear()
@@ -284,18 +292,15 @@ dados_usuario = resposta_usuario.data[0]
 hoje_verificacao = (datetime.datetime.utcnow() - datetime.timedelta(hours=3)).date()
 vencimento_str = dados_usuario.get("vencimento_trial")
 
-# Se o usuário tiver data de vencimento preenchida, verificamos
 if vencimento_str:
     try:
         vencimento_obj = datetime.datetime.strptime(vencimento_str, "%Y-%m-%d").date()
         
-        # A conta do administrador (05042687670) está isenta da tela de bloqueio
         if hoje_verificacao > vencimento_obj and dados_usuario.get("status_assinatura") != "ativo" and usuario_atual != "05042687670":
             st.warning("⚠️ **Seu período de 1 ano gratuito expirou.**")
             st.write("Obrigado por utilizar o Gerador de Certidões - TJMG durante este último ano!")
             st.write("Para continuar economizando tempo e gerando suas certidões com facilidade, ative sua assinatura mensal por apenas **R$ 30,00**.")
             
-            # Futuramente, aqui você colocará o link/botão do Mercado Pago ou Stripe
             st.button("Assinar agora via PIX / Cartão", type="primary")
             
             if st.button("Sair da conta"):
@@ -303,16 +308,15 @@ if vencimento_str:
                 st.query_params.clear()
                 st.rerun()
                 
-            st.stop() # Isso impede que o resto do sistema e o menu lateral carreguem
+            st.stop()
     except:
-        pass # Caso haja erro de conversão de data, permite o acesso temporário
+        pass
 
 with st.sidebar:
     st.write(f"👤 Olá, **{usuario_atual}**!")
     st.divider()
     
     opcoes_menu = ["📝 Gerar Certidão", "📂 Minhas Certidões", "⚙️ Meu Perfil"]
-    # CPF do Administrador Atualizado
     if usuario_atual == "05042687670":
         opcoes_menu.append("🛡️ Painel do Administrador")
         
@@ -504,13 +508,11 @@ elif menu == "🛡️ Painel do Administrador":
     
     with aba_adm1:
         st.subheader("Oficiais Cadastrados no Sistema")
-        # Busca todas as colunas relevantes do banco de dados
         res_todos = supabase.table("banco_usuarios").select("usuario, nome, cargo, matricula, email, cidade, estado, data_cadastro, vencimento_trial").execute()
         usuarios_cadastrados = res_todos.data
         
         if usuarios_cadastrados:
             st.write("**Visão Geral dos Dados Cadastrados:**")
-            # Renderiza os dados em uma tabela interativa para fácil visualização
             st.dataframe(usuarios_cadastrados, use_container_width=True)
             
             st.divider()
@@ -569,7 +571,6 @@ elif menu == "🛡️ Painel do Administrador":
                             c1, c2, c3 = st.columns([1, 4, 2])
                             
                             with c1:
-                                # Adiciona o arquivo à lista de exclusão se o checkbox for marcado
                                 if st.checkbox("", key=f"chk_adm_{nome_oficial}_{arq['name']}"):
                                     arquivos_selecionados_adm.append(f"{nome_oficial}/{arq['name']}")
                                     
@@ -590,7 +591,6 @@ elif menu == "🛡️ Painel do Administrador":
                                 )
                     st.divider()
             
-            # Botão de exclusão em massa que aparece caso algum arquivo seja selecionado
             if arquivos_selecionados_adm:
                 st.warning(f"⚠️ **{len(arquivos_selecionados_adm)} arquivo(s) selecionado(s) para exclusão.**")
                 if st.button("🗑️ Apagar Certidões Selecionadas", type="primary", use_container_width=True):
@@ -718,14 +718,9 @@ elif menu == "📝 Gerar Certidão":
         motivos_selecionados = []
         with st.expander("📌 Selecionar Motivos Detalhados", expanded=False):
             motivos_list = [
-                "local fechado", 
-                "número não localizado", 
-                "ap/bloco não localizado", 
-                "local inabitado", 
-                "rua/av não localizada", 
-                "são insuficientes para saldar o débito",  
-                "guarnecem a residência amparados pela Lei 8.009/90", 
-                "sem condições psíquicas de entender conteúdo mandado"
+                "local fechado", "número não localizado", "ap/bloco não localizado", 
+                "local inabitado", "rua/av não localizada", "são insuficientes para saldar o débito",  
+                "guarnecem a residência amparados pela Lei 8.009/90", "sem condições psíquicas de entender conteúdo mandado"
             ]
             cols_mot = st.columns(3)
             for idx, m in enumerate(motivos_list):
@@ -757,26 +752,11 @@ elif menu == "📝 Gerar Certidão":
 
             st.write("**Informações recebidas pelos informantes (Migradas):**")
             info_informantes_list = [
-                "mudou-se",
-                "não trabalha no local",
-                "é desconhecida", 
-                "não reside no local", 
-                "dificilmente fica ali", 
-                "antigo inquilino", 
-                "rotatividade de inquilinos", 
-                "trabalha em tempo integral", 
-                "transferido", 
-                "faliu", 
-                "aparece esporadicamente", 
-                "está viajando", 
-                "antigo morador", 
-                "repassado a terceiros", 
-                "encontra-se preso", 
-                "não exerce atividades", 
-                "utiliza endereço para correspondências", 
-                "antigo proprietário", 
-                "internado", 
-                "faleceu"
+                "mudou-se", "não trabalha no local", "é desconhecida", "não reside no local", 
+                "dificilmente fica ali", "antigo inquilino", "rotatividade de inquilinos", 
+                "trabalha em tempo integral", "transferido", "faliu", "aparece esporadicamente", 
+                "está viajando", "antigo morador", "repassado a terceiros", "encontra-se preso", 
+                "não exerce atividades", "utiliza endereço para correspondências", "antigo proprietário", "internado", "faleceu"
             ]
             cols_inf_info = st.columns(3)
             for idx, inf_item in enumerate(info_informantes_list):
@@ -787,8 +767,7 @@ elif menu == "📝 Gerar Certidão":
             st.write("**Não sabendo o informante indicar:**")
             nao_sabe_list = [
                 "endereço completo", "o paradeiro da mesma", "o dia/horário exato para encontrá-lo(a)", 
-                "telefone", "dia/horário de retorno", "o presídio", 
-                "dados do óbito", "previsão de alta", "o paradeiro do bem procurado"
+                "telefone", "dia/horário de retorno", "o presídio", "dados do óbito", "previsão de alta", "o paradeiro do bem procurado"
             ]
             cols_ns = st.columns(3)
             for idx, ns in enumerate(nao_sabe_list):
@@ -810,18 +789,18 @@ elif menu == "📝 Gerar Certidão":
                 if st.checkbox("Cópia do mandado com informante", key="cert_copia_det_n"):
                     cert_extras.append("Devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a)")
                 if st.checkbox("Local Perigoso", key="cert_perigoso_det_n"):
-                    cert_extras.append("Informo que o local é conhecidamente de grande periculosidade, o que quase sempre inviabiliza a obtenção de informações, pois os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
+                    cert_extras.append("Informo que o local é conhecidamente de grande periculosidade...")
                 if st.checkbox("Medo do Processo", key="cert_medo_det_n"):
-                    cert_extras.append("Informo que os moradores ficam receosos de envolvimento com o processo e suas consequências, onde conversei com alguns vizinhos, que não quiseram se identificar, e ninguém soube informar detalhes sobre o possível horário/local para encontrar a pessoa procurada")
+                    cert_extras.append("Informo que os moradores ficam receosos de envolvimento com o processo...")
             with c_extra2:
                 if st.checkbox("Apenas bens domésticos", key="cert_moveis_det_n"):
                     cert_extras.append("Informo que o imóvel é residencial e contém apenas móveis e utensílios domésticos")
                 if st.checkbox("Zona Rural", key="cert_rural_det_n"):
-                    cert_extras.append("Informo que o local é uma zona rural com difícil acesso, localização difícil, numeração irregular com muitas casas sem números na porta, o que causa desconforto nos moradores em fornecer informações precisas sobre o local/horário para encontrar a pessoa procurada")
+                    cert_extras.append("Informo que o local é uma zona rural com difícil acesso...")
                 if st.checkbox("Condomínio s/ Porteiro", key="cert_blocos_det_n"):
-                    cert_extras.append("Informo que o local é um condomínio de edifícios com vários blocos de apartamentos em seu interior; possui portaria na entrada do condomínio, mas não existe nenhum porteiro no local em nenhum horário; possui um interfone na entrada que é o único meio de contato com os apartamentos dentro do condomínio, mas aparentemente esse interfone não está funcionando, pois toquei várias vezes e ninguém atendeu; procurei informações com moradores que estavam saindo do condomínio sobre o possível contato com a pessoa procurada, mas ninguém soube informar se o mesmo reside no condomínio dizendo “são muitos moradores e não conhecemos todo mundo”, afirmando não saber informar também o possível horário para encontrá-la")
+                    cert_extras.append("Informo que o local é um condomínio de edifícios...")
                 if st.checkbox("Chuva Forte", key="cert_chuva_det_n"):
-                    cert_extras.append("Informo que a execução da diligência restou dificultada em virtude das adversas condições meteorológicas no momento do ato, caracterizadas por intensa precipitação pluviométrica. Ressalto que tal circunstância, além de elevar significativamente o ruído ambiental comprometendo a audibilidade do chamamento realizado no portão, bem como ocasiona o natural recolhimento dos moradores no interior da residência com janelas e portas cerradas, o que obstaculizou a percepção da minha presença e, consequentemente, impediu o efetivo atendimento")
+                    cert_extras.append("Informo que a execução da diligência restou dificultada...")
 
             observacoes_det = st.text_area("Observações Livres:", key="obs_livres_det_n")
 
@@ -872,7 +851,6 @@ elif menu == "📝 Gerar Certidão":
 
                 if motivos_selecionados:
                     frases_motivos = []
-                    
                     mapa_motivos = {
                         "local fechado": "o imóvel encontrava-se fechado",
                         "número não localizado": "o número do imóvel não foi localizado",
@@ -883,11 +861,9 @@ elif menu == "📝 Gerar Certidão":
                         "guarnecem a residência amparados pela Lei 8.009/90": "os bens que guarnecem a residência estão amparados pela Lei 8.009/90",
                         "sem condições psíquicas de entender conteúdo mandado": "a pessoa procurada encontra-se sem condições psíquicas de compreender o conteúdo do mandado"
                     }
-
                     for m in motivos_selecionados:
                         frases_motivos.append(mapa_motivos.get(m, f"a pessoa procurada {m}"))
                     
-                    # Lógica para não repetir o sujeito "a pessoa procurada"
                     frases_motivos_limpas = []
                     suj_motivo_usado = False
                     for f in frases_motivos:
@@ -909,12 +885,7 @@ elif menu == "📝 Gerar Certidão":
                     if texto_motivos:
                         paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
 
-                # ==========================================
-                # BLOCO MELHORADO DO INFORMANTE - Frase Contínua e Integrada
-                # ==========================================
                 if nome_inf_det_n or relacoes_selecionadas or informacoes_informante_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
-                    
-                    # Trata as relações para ficarem com "e" no final (ex: vizinho e pai)
                     if relacoes_selecionadas:
                         if len(relacoes_selecionadas) > 1:
                             relacoes_str = ", ".join(relacoes_selecionadas[:-1]) + " e " + relacoes_selecionadas[-1]
@@ -928,7 +899,6 @@ elif menu == "📝 Gerar Certidão":
                         txt_informante += f", na qualidade de {relacoes_str}," if relacoes_str else ","
                     else:
                         if relacoes_str: 
-                            # Removido o segundo "no local" para evitar cacofonia
                             txt_informante = f"por uma pessoa que se apresentou como {relacoes_str}, mas preferiu não se identificar, "
                         else: 
                             txt_informante = "por pessoa que preferiu não se identificar, "
@@ -936,10 +906,7 @@ elif menu == "📝 Gerar Certidão":
                     paragrafo += f"Conforme informações prestadas no local {txt_informante}"
                     
                     partes_informacao = []
-
-                    # 1. Informações afirmativas do informante
                     if informacoes_informante_selecionadas:
-                        # Dicionário com sujeitos explícitos para garantir gramática ao usar a conjunção "que"
                         mapa_inf_info = {
                             "mudou-se": "a pessoa procurada mudou-se dali",
                             "não trabalha no local": "a pessoa procurada não trabalha no local",
@@ -962,10 +929,7 @@ elif menu == "📝 Gerar Certidão":
                             "internado": "a pessoa procurada encontra-se internada",
                             "faleceu": "a pessoa procurada já é falecida"
                         }
-                        
                         frases_inf_info = [mapa_inf_info.get(inf, inf) for inf in informacoes_informante_selecionadas]
-                        
-                        # Lógica para não repetir o sujeito nas falas do informante
                         frases_inf_limpas = []
                         suj_inf_usado = False
                         for f in frases_inf_info:
@@ -983,7 +947,6 @@ elif menu == "📝 Gerar Certidão":
                         
                         partes_informacao.append(f"o(a) mesmo(a) declarou que {texto_inf_info}")
 
-                    # 2. Informações negativas (Não sabe)
                     if nao_sabe_selecionados:
                         if len(nao_sabe_selecionados) > 1: 
                             texto_ns = ", ".join(nao_sabe_selecionados[:-1]) + f" e nem {nao_sabe_selecionados[-1]}"
@@ -995,7 +958,6 @@ elif menu == "📝 Gerar Certidão":
                         else:
                             partes_informacao.append(f"a qual declarou não saber informar {texto_ns}")
 
-                    # 3. Informações positivas adicionais (Telefone / Endereço)
                     if sabe_tel or sabe_end:
                         sabes_list = []
                         if sabe_tel: sabes_list.append(f"o telefone de contato {sabe_tel}")
@@ -1007,7 +969,6 @@ elif menu == "📝 Gerar Certidão":
                         else:
                             partes_informacao.append(f"a qual soube indicar {texto_sabe}")
                     
-                    # Unindo todas as partes do informante de forma contínua
                     if not partes_informacao:
                         paragrafo += "que nada mais declarou. "
                     else:
@@ -1020,48 +981,42 @@ elif menu == "📝 Gerar Certidão":
                 if cert_extras: paragrafo += f"{'; '.join(cert_extras)}. "
                 if observacoes_det: paragrafo += f"{observacoes_det.strip()} "
 
-                doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
-                try:
-                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
-                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
-                except: pass
-                if processo:
-                    texto_processo = f"Processo: {processo}"
-                    if ano: texto_processo += f".{ano}.8.13.{comarca}"
-                    doc.add_paragraph(texto_processo)
-                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
-                doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                
-                try:
-                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(5))
-                except: pass 
-                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
-                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
-                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
-                
+                # Backup em DOCX (caso necessário)
+                doc = Document()
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
-                
+
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%Mm%Ss")
                 sufixo_unico = str(uuid.uuid4())[:6]
                 nome_base = f"Certidao_Negativa_Detalhada_{processo}_{data_arquivo}_{sufixo_unico}"
                 
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
                 if formato_saida == "PDF (.pdf)":
-                    arquivo_final_bytes = converter_docx_para_pdf(docx_bytes)
+                    dados_cab = {
+                         "titulo": "CERTIDÃO",
+                         "processo": f"{processo}.{ano}.8.13.{comarca}",
+                         "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
+                    }
+                    dados_ass = {"nome": dados_usuario['nome'], "cargo": dados_usuario['cargo'], "matricula": dados_usuario['matricula']}
+                    
+                    try:
+                        cab_b = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    except:
+                        cab_b = None
+                        
+                    try:
+                        ass_b = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    except:
+                        ass_b = None
+    
+                    arquivo_final_bytes = gerar_pdf_nativo(paragrafo, dados_cab, dados_ass, ass_b, cab_b)
                     nome_final = nome_base + ".pdf"
                     mime_final = "application/pdf"
-                    if not arquivo_final_bytes:
-                        st.error("Erro na conversão PDF. Baixando DOCX.")
-                        arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 else:
-                    arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    arquivo_final_bytes = docx_bytes
+                    nome_final = nome_base + ".docx"
+                    mime_final = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
                 supabase.storage.from_("certidoes_usuarios").upload(file=arquivo_final_bytes, path=f"{usuario_atual}/{nome_final}", file_options={"content-type": mime_final})
                 
@@ -1205,7 +1160,7 @@ elif menu == "📝 Gerar Certidão":
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
                     paragrafo += "aceitou, não exarando, contudo, no mandado sua nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
-                    paragrafo += "aceitou, deixando eu de colher a assinatura física como medida de precaução contra a propagação de doenças infectocontagiosas, diante das circunstâncias verificadas no local ou das condições apresentadas pela pessoa. "
+                    paragrafo += "aceitou, deixando eu de colher a assinatura física como medida de precaução contra a propagação de doenças infectocontagiosas... "
                 elif mod_recebimento_pos == "Não aceitou a contrafé":
                     paragrafo += "não aceitou, exarando no mandado sua nota de ciência. "
                 else:
@@ -1227,17 +1182,15 @@ elif menu == "📝 Gerar Certidão":
                 if adv_pos_novo == "Tem condições financeiras (advogado constituído)": 
                     infos_adicionais.append("tem condições financeiras de apresentar sua defesa através de advogado constituído")
                 elif adv_pos_novo == "Não tem condições (hipossuficiente / defensor)": 
-                    infos_adicionais.append("não tem condições financeiras de apresentar sua defesa através de advogado constituído, declarando sua hipossuficiência e requerendo a nomeação de um defensor público ou dativo para fazê-la")
+                    infos_adicionais.append("não tem condições financeiras de apresentar sua defesa...")
 
                 contatos = []
                 if tel_pos: contatos.append(f"telefone de contato ({tel_pos})")
                 if email_pos: contatos.append(f"e-mail ({email_pos})")
 
-                # Ajuste no Bloco da Positiva para fundir as informações em uma única frase fluida
                 if infos_adicionais:
                     txt_infos = ", ".join(infos_adicionais[:-1]) + " e " + infos_adicionais[-1] if len(infos_adicionais) > 1 else infos_adicionais[0]
                     paragrafo += f"Certifico, ainda, que o(a) supracitado(a) informou que {txt_infos}"
-                    
                     if contatos:
                         paragrafo += f", bem como indicou seu {' e '.join(contatos)}. "
                     else:
@@ -1248,72 +1201,50 @@ elif menu == "📝 Gerar Certidão":
                 
                 if tipo_realizacao_pos == "Representante legal":
                     rep_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
-                    # Ajusta a concordância dependendo se o nome foi digitado ou não
                     txt_alvo = f"do(a) Sr(a). {pessoa}" if pessoa else "da pessoa referida no mandado"
                     paragrafo += f"Certifico também que o ato foi realizado na pessoa {txt_alvo}, que se apresentou como representante legal ({rep_txt}). "
                 elif tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
                     enq_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
-                    paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fórum Permanente de Juízes Coordenadores dos Juizados Especiais. "
+                    paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fonaje. "
 
                 if obs_pos:
                     paragrafo += f"{obs_pos.strip()} "
 
-                doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
-                try:
-                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
-                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
-                except: pass
-                
-                if processo:
-                    texto_processo = f"Processo: {processo}"
-                    if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
-                    doc.add_paragraph(texto_processo)
-                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
-                
-                doc.add_paragraph("")
-                p_titulo = doc.add_paragraph()
-                run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA")
-                run_titulo.bold = True
-                run_titulo.font.size = Pt(16)
-                p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                doc.add_paragraph("")
-
-                p_Linha = doc.add_paragraph(paragrafo.strip())
-                p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                p_Linha.paragraph_format.first_line_indent = Pt(35.4) 
-
-                doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                doc.add_paragraph("")
-                
-                try:
-                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
-                except: pass 
-                
-                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
-                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
-                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
-                
+                # Backup em DOCX
+                doc = Document()
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_base = f"Certidao_Positiva_{processo}_{data_arquivo}"
                 
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
                 if formato_saida == "PDF (.pdf)":
-                    arquivo_final_bytes = converter_docx_para_pdf(docx_bytes)
-                    nome_final = nome_base + ".pdf"
+                    dados_cab = {
+                         "titulo": "CERTIDÃO POSITIVA",
+                         "processo": f"{processo}.{ano}.8.13.{comarca}",
+                         "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
+                    }
+                    dados_ass = {"nome": dados_usuario['nome'], "cargo": dados_usuario['cargo'], "matricula": dados_usuario['matricula']}
+                    
+                    try:
+                        cab_b = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    except:
+                        cab_b = None
+                        
+                    try:
+                        ass_b = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    except:
+                        ass_b = None
+                    
+                    arquivo_final_bytes = gerar_pdf_nativo(paragrafo, dados_cab, dados_ass, ass_b, cab_b)
+                    nome_final = f"Certidao_Positiva_{processo}_{uuid.uuid4().hex[:4]}.pdf"
                     mime_final = "application/pdf"
-                    if not arquivo_final_bytes:
-                        st.error("Erro na conversão PDF. Baixando DOCX.")
-                        arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 else:
-                    arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    arquivo_final_bytes = docx_bytes
+                    nome_final = nome_base + ".docx"
+                    mime_final = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
                 supabase.storage.from_("certidoes_usuarios").upload(file=arquivo_final_bytes, path=f"{usuario_atual}/{nome_final}", file_options={"content-type": mime_final})
                 
@@ -1414,7 +1345,7 @@ elif menu == "📝 Gerar Certidão":
                 if hc_aceitou == "Sim":
                     if hc_assinou == "Sim": txt_final = "a qual aceitou o documento e exarou sua assinatura no respectivo mandado."
                     elif hc_assinou == "Não": txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no respectivo mandado."
-                    else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de prevenção sanitária/Covid-19."
+                    else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física..."
                 else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
                 paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
@@ -1422,46 +1353,41 @@ elif menu == "📝 Gerar Certidão":
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
 
-                doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
-                try:
-                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
-                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
-                except: pass
-                if processo:
-                    texto_processo = f"Processo: {processo}"
-                    if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
-                    doc.add_paragraph(texto_processo)
-                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
-                doc.add_paragraph(""); p_titulo = doc.add_paragraph(); run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA POR HORA CERTA"); run_titulo.bold = True; run_titulo.font.size = Pt(16); p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY; doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4); doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
-                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER; doc.add_paragraph("")
-                try:
-                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
-                except: pass 
-                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
-                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
-                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
-                
+                # Backup em DOCX
+                doc = Document()
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_base = f"Certidao_HoraCerta_{processo}_{data_arquivo}"
                 
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+
                 if formato_saida == "PDF (.pdf)":
-                    arquivo_final_bytes = converter_docx_para_pdf(docx_bytes)
-                    nome_final = nome_base + ".pdf"
+                    dados_cab = {
+                         "titulo": "CERTIDÃO POSITIVA POR HORA CERTA",
+                         "processo": f"{processo}.{ano}.8.13.{comarca}",
+                         "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
+                    }
+                    dados_ass = {"nome": dados_usuario['nome'], "cargo": dados_usuario['cargo'], "matricula": dados_usuario['matricula']}
+                    
+                    try:
+                        cab_b = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    except:
+                        cab_b = None
+                        
+                    try:
+                        ass_b = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    except:
+                        ass_b = None
+                    
+                    arquivo_final_bytes = gerar_pdf_nativo(paragrafo, dados_cab, dados_ass, ass_b, cab_b)
+                    nome_final = f"Certidao_HoraCerta_{processo}_{uuid.uuid4().hex[:4]}.pdf"
                     mime_final = "application/pdf"
-                    if not arquivo_final_bytes:
-                        st.error("Erro na conversão PDF. Baixando DOCX.")
-                        arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 else:
-                    arquivo_final_bytes, nome_final, mime_final = docx_bytes, nome_base + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    arquivo_final_bytes = docx_bytes
+                    nome_final = nome_base + ".docx"
+                    mime_final = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
                 supabase.storage.from_("certidoes_usuarios").upload(file=arquivo_final_bytes, path=f"{usuario_atual}/{nome_final}", file_options={"content-type": mime_final})
                 
