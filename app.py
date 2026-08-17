@@ -868,10 +868,8 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
                 # Verbo conjugado adequado gramaticalmente
-                if finalidade_pos == "Citação": verbo_ato = "citei"
-                elif finalidade_pos == "Intimação": verbo_ato = "intimei"
-                elif finalidade_pos == "Notificação": verbo_ato = "notifiquei"
-                else: verbo_ato = "citei/intimei/notifiquei"
+                verbo_ato = "citei/intimei/notifiquei"
+                
 
                 # Construção do parágrafo principal alinhado ao modelo anexado
                 paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, neste último, {verbo_ato} o destinatário, para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe contrafé, que:\n"
