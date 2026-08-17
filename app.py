@@ -1029,13 +1029,12 @@ elif menu == "📝 Gerar Certidão":
                 
                 texto_data_hora = ""
                 if len(dias_validos) == 1: 
-                texto_data_hora = f"no dia {dias_validos[0]}, por volta das {horas_validas[0]},"
+                    texto_data_hora = f"no dia {dias_validos[0]}, por volta das {horas_validas[0]},"
                 elif len(dias_validos) > 1:
                     str_horas = ", ".join(horas_validas[:-1]) + f" e {horas_validas[-1]}"
                     str_dias = ", ".join(dias_validos[:-1]) + f" e {dias_validos[-1]}"
-                    # Adiciona a palavra "respectivamente" apenas se houver mais de uma diligência
-                    sufixo_resp = ", respectivamente," if len(dias_validos) > 1 else ""
-                    texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}{sufixo_resp}"
+                    # A palavra respectivamente só aparece se houver mais de uma data
+                    texto_data_hora = f"nos dias {str_dias}, por volta das {str_horas}, respectivamente,"
                 
                 
                 hr_limpo = hc_hora_retorno.strip()
