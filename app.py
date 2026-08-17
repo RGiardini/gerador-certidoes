@@ -491,7 +491,7 @@ elif menu == "📝 Gerar Certidão":
 
     data_certidao = st.date_input("Data que sairá no rodapé da certidão:", value=data_padrao_calculada, format="DD/MM/YYYY", key="data_certidao_geral")
     
-    st.write("**Informe os Dias e Horários (o 'h' será adicionado automaticamente se esquecer):**")
+    st.write("**Informe os Dias e Horários**")
     
     cd1, cd2, cd3 = st.columns(3)
 
@@ -838,8 +838,8 @@ elif menu == "📝 Gerar Certidão":
                     h_limpo = h.strip()
                     if ":" in h_limpo:
                         partes_h = h_limpo.split(":")
-                        horas_formatadas.append(f"{partes_h[0]}h {partes_h[1]}min")
-                    elif not h_limpo.lower().endswith(('h', 'min')):
+                        horas_formatadas.append(f"{partes_h[0]}hs {partes_h[1]}min")
+                    elif not h_limpo.lower().endswith(('hs', 'min')):
                         horas_formatadas.append(f"{h_limpo}h 00min")
                     else:
                         horas_formatadas.append(h_limpo)
