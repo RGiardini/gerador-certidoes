@@ -767,7 +767,6 @@ elif menu == "📝 Gerar Certidão":
             st.session_state['limpar_positiva'] = False
             
         st.subheader("Detalhes da Certidão Positiva")
-        finalidade_pos = st.selectbox("Finalidade do Mandado:", ["Citação", "Intimação", "Notificação", "Penhora", "Avaliação"], key="fin_pos")
         st.markdown("---")
         
         st.write("**1. Condnções do Recebimento:**")
@@ -828,6 +827,8 @@ elif menu == "📝 Gerar Certidão":
         
         if st.button("Salvar na Nuvem / Gerar Documento", type="primary", use_container_width=True, key="btn_gerar_positiva"):
             with st.spinner("Gerando certidão positiva..."):
+                
+                verbo_ato = "citei/intimei/notifiquei"
                 
                 # Tratamento de dias e horas conforme o padrão do modelo da imagem
                 dias_validos = [d for d in [d1, d2, d3] if d]
