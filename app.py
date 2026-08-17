@@ -844,58 +844,61 @@ elif menu == "📝 Gerar Certidão":
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, neste último, {verbo_ato} o destinatário, para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe contrafé, que:\n"
+                # --- MONTAGEM DO TEXTO CONTÍNUO ---
+                paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, respectivamente, onde, neste último, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Na oportunidade, ofereci-lhe a contrafé, a qual a parte "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
-                    paragrafo += "aceitou\nexarando no mandado sua nota de ciência"
+                    paragrafo += "aceitou, exarando no mandado sua respectiva nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
-                    paragrafo += "aceitou\nnão exarando no mandado sua nota de ciência"
+                    paragrafo += "aceitou, não exarando, contudo, no mandado sua nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
-                    paragrafo += "aceitou\ndeixando de colher a assinatura como medida de precaução contra a propagação de doenças infectocontagiosas, diante das circunstâncias verificadas no local ou das condições apresentadas pela pessoa"
+                    paragrafo += "aceitou, deixando eu de colher a assinatura física como medida de precaução contra a propagação de doenças infectocontagiosas, diante das circunstâncias verificadas no local ou das condições apresentadas pela pessoa. "
                 elif mod_recebimento_pos == "Não aceitou a contrafé":
-                    paragrafo += "não aceitou\nexarando no mandado sua nota de ciência"
+                    paragrafo += "não aceitou, exarando no mandado sua nota de ciência. "
                 else:
-                    paragrafo += "não aceitou\nnão exarando no mandado sua nota de ciência"
+                    paragrafo += "não aceitou e não exarou no mandado sua nota de ciência. "
 
-                paragrafo += "\n\nCertifico, ainda, que, o(a) supracitado(a) informou que:\n"
+                infos_adicionais = []
+                if recurso_pos == "Deseja recorrer": infos_adicionais.append("deseja recorrer")
+                elif recurso_pos == "Não deseja recorrer": infos_adicionais.append("não deseja recorrer")
                 
-                if recurso_pos == "Deseja recorrer": paragrafo += "<u>deseja</u> recorrer.\n"
-                elif recurso_pos == "Não deseja recorrer": paragrafo += "<u>não</u> deseja recorrer.\n"
-                
-                if ciencia_pos == "Tem ciência da ação em curso": paragrafo += "<u>tem</u> ciência do ajuizamento da ação em curso.\n"
-                elif ciencia_pos == "Não tem ciência da ação em curso": paragrafo += "<u>não tem</u> ciência do ajuizamento da ação em curso.\n"
+                if ciencia_pos == "Tem ciência da ação em curso": infos_adicionais.append("tem ciência do ajuizamento da ação em curso")
+                elif ciencia_pos == "Não tem ciência da ação em curso": infos_adicionais.append("não tem ciência do ajuizamento da ação em curso")
 
-                if reconhece_pos == "Reconhece como suas as assinaturas": paragrafo += "<u>reconhece</u> como suas as assinaturas constantes nos documentos juntados no processo.\n"
-                elif reconhece_pos == "Não reconhece as assinaturas": paragrafo += "<u>não reconhece</u> como suas as assinaturas constantes nos documentos juntados no processo.\n"
+                if reconhece_pos == "Reconhece como suas as assinaturas": infos_adicionais.append("reconhece como suas as assinaturas constantes nos documentos juntados no processo")
+                elif reconhece_pos == "Não reconhece as assinaturas": infos_adicionais.append("não reconhece como suas as assinaturas constantes nos documentos juntados no processo")
 
-                if interesse_pos == "Tem interesse no prosseguimento": paragrafo += "<u>tem interesse</u> no prosseguimento do feito/demanda.\n"
-                elif interesse_pos == "Não tem interesse no prosseguimento": paragrafo += "<u>não tem interesse</u> no prosseguimento do feito/demanda.\n"
+                if interesse_pos == "Tem interesse no prosseguimento": infos_adicionais.append("tem interesse no prosseguimento do feito/demanda")
+                elif interesse_pos == "Não tem interesse no prosseguimento": infos_adicionais.append("não tem interesse no prosseguimento do feito/demanda")
 
                 if adv_pos_novo == "Tem condições financeiras (advogado constituído)": 
-                    paragrafo += "<u>tem</u> condições financeiras de apresentar sua defesa através de advogado constituído.\n"
+                    infos_adicionais.append("tem condições financeiras de apresentar sua defesa através de advogado constituído")
                 elif adv_pos_novo == "Não tem condições (hipossuficiente / defensor)": 
-                    paragrafo += "<u>não tem</u> condições financeiras de apresentar sua defesa através de advogado constituído, declarando sua hipossuficiência e requerendo a nomeação de um defensor público ou dativo para fazê-la.\n"
+                    infos_adicionais.append("não tem condições financeiras de apresentar sua defesa através de advogado constituído, declarando sua hipossuficiência e requerendo a nomeação de um defensor público ou dativo para fazê-la")
 
-                if tel_pos: paragrafo += f"o seu telefone de contato: ({tel_pos}).\n"
-                else: paragrafo += "o seu telefone de contato: (___) ___________________________________.\n"
+                if infos_adicionais:
+                    txt_infos = ", ".join(infos_adicionais[:-1]) + " e " + infos_adicionais[-1] if len(infos_adicionais) > 1 else infos_adicionais[0]
+                    paragrafo += f"Certifico, ainda, que o(a) supracitado(a) informou que {txt_infos}. "
 
-                if email_pos: paragrafo += f"o seu e-mail: {email_pos}.\n"
-                else: paragrafo += "o seu e-mail: ____________________________________________________.\n"
-
-                paragrafo += "\nCertifico também que:\n"
+                contatos = []
+                if tel_pos: contatos.append(f"telefone de contato ({tel_pos})")
+                if email_pos: contatos.append(f"e-mail ({email_pos})")
+                if contatos:
+                    paragrafo += f"Informou também seu {' e '.join(contatos)}. "
                 
-                nome_alvo_txt = pessoa if pessoa else "__________________________________________________"
+                nome_alvo_txt = pessoa if pessoa else "a pessoa referida no mandado"
                 if tipo_realizacao_pos == "Pessoa procurada":
-                    paragrafo += f"a Citação/Intimação/Notificação foi realizada na pessoa do(a) Sr(a). {nome_alvo_txt}."
+                    paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {nome_alvo_txt}. "
                 elif tipo_realizacao_pos == "Representante legal":
-                    rep_txt = nome_rep_pos if nome_rep_pos else "__________________________________"
-                    paragrafo += f"a Citação/Intimação/Notificação foi realizada na pessoa do(a) Sr(a). {nome_alvo_txt}, que se apresentou como representante legal ({rep_txt})."
+                    rep_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
+                    paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {nome_alvo_txt}, que se apresentou como representante legal ({rep_txt}). "
                 elif tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
-                    enq_txt = nome_rep_pos if nome_rep_pos else "__________________________________________________"
-                    paragrafo += f"a Citação/Intimação/Notificação foi realizada na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fórum Permanente de Juízes Coordenadores dos Juizados Especiais."
+                    enq_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
+                    paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fórum Permanente de Juízes Coordenadores dos Juizados Especiais. "
 
                 if obs_pos:
-                    paragrafo += f"\n\n{obs_pos.strip()}"
+                    paragrafo += f"{obs_pos.strip()} "
+                # --- FIM DA MONTAGEM DO TEXTO CONTÍNUO ---
 
                 doc = Document(); style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 try:
@@ -917,9 +920,10 @@ elif menu == "📝 Gerar Certidão":
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 doc.add_paragraph("")
 
-                for linha_texto in paragrafo.split("\n"):
-                    p_Linha = doc.add_paragraph(linha_texto)
-                    p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                # Adiciona o texto contínuo como um parágrafo justificado (removido o loop que quebrava em linhas)
+                p_Linha = doc.add_paragraph(paragrafo.strip())
+                p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_Linha.paragraph_format.first_line_indent = Pt(35.4) # Adiciona parágrafo na primeira linha
 
                 doc.add_paragraph("")
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
