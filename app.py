@@ -194,8 +194,65 @@ if st.session_state["usuario_logado"] is None:
                 st.warning("Preencha a senha.")
                 
     with aba_cadastro:
-        pass
+        st.subheader("Criar Nova Conta")
+        st.write("Preencha os dados abaixo para iniciar seu período gratuito.")
         
+        cpf_cad_bruto = st.text_input("CPF (Apenas números):", key="cad_cpf_input")
+        senha_cad = st.text_input("Crie uma Senha:", type="password", key="cad_pwd_input")
+        senha_cad_conf = st.text_input("Confirme a Senha:", type="password", key="cad_pwd_conf_input")
+        
+        st.markdown("---")
+        
+        # O texto claro do Termo de Aceite e Regra do 1 Ano
+        texto_termos = """
+        **Termos de Uso e Assinatura:**
+        Declaro que li e concordo com as normas de uso do sistema. 
+        Estou ciente de que esta ferramenta será oferecida de forma **100% gratuita pelo prazo de 1 (um) ano** a partir da data deste cadastro. 
+        Após este período de testes, para continuar utilizando o sistema, será cobrada uma mensalidade no valor de **R$ 30,00**. Não haverá cobrança automática sem aviso prévio.
+        """
+        st.info(texto_termos)
+        aceite_termos = st.checkbox("Li e aceito os Termos de Uso e o período de gratuidade de 1 ano.", key="chk_termos")
+        
+        if st.button("Criar Conta e Iniciar Teste", type="primary", use_container_width=True, key="btn_cadastrar"):
+            usuario_cad = limpar_cpf(cpf_cad_bruto)
+            
+            if not usuario_cad or len(usuario_cad) != 11:
+                st.error("⚠️ O CPF deve conter 11 números válidos.")
+            elif not senha_cad or len(senha_cad) < 6:
+                st.error("⚠️ A senha deve ter pelo menos 6 caracteres.")
+            elif senha_cad != senha_cad_conf:
+                st.error("⚠️ As senhas não coincidem.")
+            elif not aceite_termos:
+                st.error("⚠️ Você deve marcar a caixa aceitando os Termos de Uso para criar a conta.")
+            else:
+                # 1. Verifica se o CPF já existe
+                busca = supabase.table("banco_usuarios").select("usuario").eq("usuario", usuario_cad).execute()
+                if len(busca.data) > 0:
+                    st.error("❌ Este CPF já está cadastrado no sistema.")
+                else:
+                    # 2. Calcula as datas
+                    hoje = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
+                    data_cadastro = hoje.date()
+                    # Adiciona 365 dias (1 ano)
+                    vencimento_trial = data_cadastro + datetime.timedelta(days=365)
+                    
+                    # 3. Insere no banco
+                    senha_cripto = gerar_hash_senha(senha_cad)
+                    novo_usuario = {
+                        "usuario": usuario_cad,
+                        "senha": senha_cripto,
+                        "data_cadastro": str(data_cadastro),
+                        "vencimento_trial": str(vencimento_trial),
+                        "status_assinatura": "trial",
+                        "aceitou_termos": True
+                    }
+                    
+                    supabase.table("banco_usuarios").insert(novo_usuario).execute()
+                    
+                    st.success("✅ Conta criada com sucesso! Faça login na aba ao lado para configurar seu perfil.")
+                    time.sleep(3)
+                    st.rerun()
+                    
     st.stop()
 
 # ==========================================
@@ -211,6 +268,33 @@ if not resposta_usuario.data:
     st.rerun()
 
 dados_usuario = resposta_usuario.data[0]
+
+# ==========================================
+# VERIFICAÇÃO DE ASSINATURA / TRIAL
+# ==========================================
+hoje_verificacao = (datetime.datetime.utcnow() - datetime.timedelta(hours=3)).date()
+vencimento_str = dados_usuario.get("vencimento_trial")
+
+# Se o usuário tiver data de vencimento preenchida, verificamos
+if vencimento_str:
+    try:
+        vencimento_obj = datetime.datetime.strptime(vencimento_str, "%Y-%m-%d").date()
+        if hoje_verificacao > vencimento_obj and dados_usuario.get("status_assinatura") != "ativo":
+            st.warning("⚠️ **Seu período de 1 ano gratuito expirou.**")
+            st.write("Obrigado por utilizar o Gerador de Certidões - TJMG durante este último ano!")
+            st.write("Para continuar economizando tempo e gerando suas certidões com facilidade, ative sua assinatura mensal por apenas **R$ 30,00**.")
+            
+            # Futuramente, aqui você colocará o link/botão do Mercado Pago ou Stripe
+            st.button("Assinar agora via PIX / Cartão", type="primary")
+            
+            if st.button("Sair da conta"):
+                st.session_state["usuario_logado"] = None
+                st.query_params.clear()
+                st.rerun()
+                
+            st.stop() # Isso impede que o resto do sistema e o menu lateral carreguem
+    except:
+        pass # Caso haja erro de conversão de data, permite o acesso temporário
 
 with st.sidebar:
     st.write(f"👤 Olá, **{usuario_atual}**!")
@@ -756,7 +840,7 @@ elif menu == "📝 Gerar Certidão":
                     frases_motivos = []
                     
                     mapa_motivos = {
-                        "local fechado": "o imóvel encontrava-se fechado nas ocasiões das diligências",
+                        "local fechado": "o imóvel encontrava-se fechado",
                         "número não localizado": "o número do imóvel não foi localizado",
                         "ap/bloco não localizado": "o apartamento ou bloco indicado não foi localizado",
                         "local inabitado": "o local encontra-se inabitado",
@@ -863,7 +947,7 @@ elif menu == "📝 Gerar Certidão":
                         else:
                             texto_inf_info = frases_inf_limpas[0]
                         
-                        partes_informacao.append(f"a qual declarou que {texto_inf_info}")
+                        partes_informacao.append(f"o(a) mesmo(a) declarou que {texto_inf_info}")
 
                     # 2. Informações negativas (Não sabe)
                     if nao_sabe_selecionados:
