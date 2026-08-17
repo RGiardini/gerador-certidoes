@@ -649,7 +649,7 @@ elif menu == "📝 Gerar Certidão":
 
             st.write("**Não sabendo o informante indicar:**")
             nao_sabe_list = [
-                "endereço completo", "o paradeiro da pessoa procurada", "o dia/horário exato para encontrá-lo(a)", 
+                "endereço completo", "o paradeiro da mesma", "o dia/horário exato para encontrá-lo(a)", 
                 "telefone", "dia/horário de retorno", "o presídio", 
                 "dados do óbito", "previsão de alta", "o paradeiro do bem procurado"
             ]
@@ -740,7 +740,7 @@ elif menu == "📝 Gerar Certidão":
                     # Mapeamento para garantir a gramática perfeita de cada opção
                     mapa_motivos = {
                         "local fechado": "o imóvel encontrava-se fechado nas ocasiões das diligências",
-                        "mudou-se": "a pessoa procurada não reside mais no local",
+                        "mudou-se": "a pessoa procurada mudou-se",
                         "é desconhecida": "a pessoa procurada é desconhecida no endereço",
                         "não reside no local": "a pessoa procurada não reside no local",
                         "dificilmente fica ali": "a pessoa procurada dificilmente se encontra no local",
