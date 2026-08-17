@@ -495,12 +495,12 @@ elif menu == "📝 Gerar Certidão":
             ]
         )
     with c_formato:
-            formato_saida = st.radio(
-                "Formato de exportação:", 
-                ["Word (.docx)", "PDF (.pdf)"], 
-                key="formato_global"
-            )
-            
+        formato_saida = st.radio(
+            "Formato de exportação:", 
+            ["Word (.docx)", "PDF (.pdf)"], 
+            key="formato_global"
+        )
+        
     st.divider()
 
     c_mandado, c_proc, c_ano, c_comarca = st.columns([1, 2.5, 1, 1])
