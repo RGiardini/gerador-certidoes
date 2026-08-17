@@ -49,7 +49,6 @@ def gerar_pdf_nativo(texto_conteudo, dados_cabecalho, dados_assinatura, assinatu
     story = []
     styles = getSampleStyleSheet()
 
-    # Estilos de formatação jurídica
     estilo_corpo = ParagraphStyle('Corpo', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, leading=16, alignment=TA_JUSTIFY, firstLineIndent=35.4)
     estilo_centro = ParagraphStyle('Centro', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, alignment=TA_CENTER)
     estilo_titulo = ParagraphStyle('Titulo', parent=styles['Normal'], fontName='Times-Bold', fontSize=16, alignment=TA_CENTER)
@@ -228,7 +227,7 @@ if st.session_state["usuario_logado"] is None:
         
         texto_termos = """
         **Termos de Uso e Assinatura:**
-        Declaro que li e concordo com las normas de uso do sistema. 
+        Declaro que li e concordo com as normas de uso do sistema. 
         Estou ciente de que esta ferramenta será oferecida de forma **100% gratuita pelo prazo de 1 (um) ano** a partir da data deste cadastro. 
         Após este período de testes, para continuar utilizando o sistema, será cobrada uma mensalidade no valor de **R$ 30,00**. Não haverá cobrança automática sem aviso prévio.
         """
@@ -981,16 +980,54 @@ elif menu == "📝 Gerar Certidão":
                 if cert_extras: paragrafo += f"{'; '.join(cert_extras)}. "
                 if observacoes_det: paragrafo += f"{observacoes_det.strip()} "
 
-                # Backup em DOCX (caso necessário)
+                # Geração do arquivo Word (.docx) formatado corretamente
                 doc = Document()
+                style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
+                try:
+                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
+                except: pass
+                
+                if processo:
+                    texto_processo = f"Processo: {processo}"
+                    if ano: texto_processo += f".{ano}.8.13.{comarca}"
+                    doc.add_paragraph(texto_processo)
+                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
+                
+                doc.add_paragraph("")
+                p_titulo = doc.add_paragraph()
+                run_titulo = p_titulo.add_run("CERTIDÃO")
+                run_titulo.bold = True
+                run_titulo.font.size = Pt(16)
+                p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+                
+                doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4)
+                doc.add_paragraph("")
+                
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+                
+                try:
+                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(5))
+                except: pass 
+                
+                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
+                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
+                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
+                
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
 
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%Mm%Ss")
                 sufixo_unico = str(uuid.uuid4())[:6]
                 nome_base = f"Certidao_Negativa_Detalhada_{processo}_{data_arquivo}_{sufixo_unico}"
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
 
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
@@ -1210,15 +1247,54 @@ elif menu == "📝 Gerar Certidão":
                 if obs_pos:
                     paragrafo += f"{obs_pos.strip()} "
 
-                # Backup em DOCX
+                # Geração do arquivo Word (.docx) formatado corretamente para a Positiva
                 doc = Document()
+                style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
+                try:
+                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
+                except: pass
+                
+                if processo:
+                    texto_processo = f"Processo: {processo}"
+                    if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
+                    doc.add_paragraph(texto_processo)
+                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
+                
+                doc.add_paragraph("")
+                p_titulo = doc.add_paragraph()
+                run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA")
+                run_titulo.bold = True
+                run_titulo.font.size = Pt(16)
+                p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+
+                p_Linha = doc.add_paragraph(paragrafo.strip())
+                p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_Linha.paragraph_format.first_line_indent = Pt(35.4) 
+
+                doc.add_paragraph("")
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+                
+                try:
+                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
+                except: pass 
+                
+                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
+                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
+                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
+                
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_base = f"Certidao_Positiva_{processo}_{data_arquivo}"
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
 
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
@@ -1348,20 +1424,59 @@ elif menu == "📝 Gerar Certidão":
                     else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física..."
                 else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
-                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, where {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
 
-                # Backup em DOCX
+                # Geração do arquivo Word (.docx) formatado corretamente para Hora Certa
                 doc = Document()
+                style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
+                try:
+                    cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
+                    p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
+                except: pass
+                
+                if processo:
+                    texto_processo = f"Processo: {processo}"
+                    if ano: texto_processo += f".{ano or '2026'}.8.13.{comarca}"
+                    doc.add_paragraph(texto_processo)
+                if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
+                
+                doc.add_paragraph("")
+                p_titulo = doc.add_paragraph()
+                run_titulo = p_titulo.add_run("CERTIDÃO POSITIVA POR HORA CERTA")
+                run_titulo.bold = True
+                run_titulo.font.size = Pt(16)
+                p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+
+                p_Linha = doc.add_paragraph(paragrafo.strip())
+                p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                p_Linha.paragraph_format.first_line_indent = Pt(35.4)
+
+                doc.add_paragraph("")
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                
+                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
+                doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("")
+                
+                try:
+                    assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+                    p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(6))
+                except: pass 
+                
+                p_assinatura = doc.add_paragraph(); p_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run_nome = p_assinatura.add_run(f"{dados_usuario['nome']}\n"); run_nome.bold = True; run_nome.font.size = Pt(8)
+                run_cargo = p_assinatura.add_run(f"{dados_usuario['cargo']}\n"); run_cargo.font.size = Pt(8)
+                run_matricula = p_assinatura.add_run(f"{dados_usuario['matricula']}"); run_matricula.font.size = Pt(8)
+                
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
                 data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
                 nome_base = f"Certidao_HoraCerta_{processo}_{data_arquivo}"
-                
-                meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
 
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
