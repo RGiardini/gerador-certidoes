@@ -890,7 +890,7 @@ elif menu == "📝 Gerar Certidão":
                 if motivos_selecionados:
                     frases_motivos = []
                     mapa_motivos = {
-                        "local fechado": "o imóvel encontrava-se fechado",
+                        "local fechado": "o imóvel encontrava-se fechado e mesmo após chamar várias vezes ninguém atendeu",
                         "número não localizado": "o número do imóvel não foi localizado no logradouro e bairro informado",
                         "ap/bloco não localizado": "o apartamento ou bloco indicado não foi localizado",
                         "local inabitado": "o local encontra-se inabitado",
