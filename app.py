@@ -182,7 +182,7 @@ if "usuario_logado" not in st.session_state or st.session_state["usuario_logado"
         st.session_state["usuario_logado"] = None
 
 if st.session_state["usuario_logado"] is None:
-    st.title("⚖️ Sistema de Certidões - TJMG")
+    st.title("⚖️ Sistema de Certidões")
     
     aba_login, aba_cadastro = st.tabs(["Entrar", "Criar Nova Conta"])
     
@@ -225,12 +225,17 @@ if st.session_state["usuario_logado"] is None:
         
         st.markdown("---")
         
-        texto_termos = """
+texto_termos = """
         **Termos de Uso e Assinatura:**
+        Declaro que li e concordo com as normas de uso do sistema. 
+        Estou ciente de que esta ferramenta será oferecida de forma **100% gratuita pelo prazo de 1 (um) ano** a partir da data deste cadastro. 
+        Após este período de testes, para continuar utilizando o sistema, será cobrada uma mensalidade no valor de **R$ 30,00**. Não haverá cobrança automática sem aviso prévio.
         """
-        st.info(texto_termos)
-        aceite_termos = st.checkbox("Li e aceito os Termos de Uso e o período de gratuidade de 1 ano.", key="chk_termos")
         
+        with st.expander("📄 Clique aqui para ler os Termos de Uso e Período de Gratuidade"):
+            st.info(texto_termos)
+            
+        aceite_termos = st.checkbox("Li e aceito os Termos de Uso e o período de gratuidade de 1 ano.", key="chk_termos")        
         if st.button("Criar Conta e Iniciar Teste", type="primary", use_container_width=True, key="btn_cadastrar"):
             usuario_cad = limpar_cpf(cpf_cad_bruto)
             
@@ -879,7 +884,7 @@ elif menu == "📝 Gerar Certidão":
                         texto_motivos = ""
                         
                     if texto_motivos:
-                        paragrafo += f"Constatou-se na diligência que {texto_motivos}. "
+                        paragrafo += f"sendo que {texto_motivos}. "
 
                 if nome_inf_det_n or relacoes_selecionadas or informacoes_informante_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
                     if relacoes_selecionadas:
@@ -1421,7 +1426,7 @@ elif menu == "📝 Gerar Certidão":
                     else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física..."
                 else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
-                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, where {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
