@@ -692,7 +692,7 @@ elif menu == "📝 Gerar Certidão":
             partes = ultimo_dia_str.split('/')
             if len(partes) == 2:
                 dia_num, mes_num = int(partes[0]), int(partes[1])
-                ano_num = int(ano) if ano and ano.isdigit() else hoje_real.year
+                ano_base = str(data_certidao.year)
                 data_padrao_calculada = datetime.date(ano_num, mes_num, dia_num)
         except:
             pass
@@ -842,7 +842,7 @@ elif menu == "📝 Gerar Certidão":
             with st.spinner("Construindo certidão e preparando arquivo..."):
                 salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3)
                 
-                ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
+                ano_base = str(data_certidao.year)
                 dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
                 
                 horas_cruas = [h for h in [h1, h2, h3] if h]
@@ -1198,7 +1198,7 @@ elif menu == "📝 Gerar Certidão":
                 
                 verbo_ato = "citei/intimei/notifiquei"
                 
-                ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
+                ano_base = str(data_certidao.year)
                 dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
                 
                 horas_cruas = [h for h in [h1, h2, h3] if h]
@@ -1421,7 +1421,7 @@ elif menu == "📝 Gerar Certidão":
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" de {pessoa}" if pessoa else " da pessoa referida no mandado"
                 
-                ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
+                ano_base = str(data_certidao.year)
                 dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
                 
                 hc_data_retorno_formatada = formatar_data_completa(hc_data_retorno.strip(), ano_base) if hc_data_retorno else ""
