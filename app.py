@@ -839,11 +839,16 @@ elif menu == "📝 Gerar Certidão":
                 txt_pessoa = f" em face de {pessoa}" if pessoa else ""
                 
                 texto_data_hora_formatado = f"{texto_data_hora} " if texto_data_hora else ""
-                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, {texto_data_hora_formatado}ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}, uma vez que "
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, {texto_data_hora_formatado}ocasião em que deixei de cumprir a ordem descrita{txt_pessoa}"
+
                 sits = []
                 if nao_loc_dest_n: sits.append("o destinatário não foi localizado")
                 if nao_loc_bens_n: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
-                paragrafo += " e ".join(sits) + ". " if sits else "não foi possível a sua realização. "
+                
+                if sits:
+                    paragrafo += f", uma vez que {' e '.join(sits)}"
+                else:
+                    paragrafo += ", não sendo possível a sua realização"
 
                 if motivos_selecionados:
                     frases_motivos = []
@@ -879,7 +884,9 @@ elif menu == "📝 Gerar Certidão":
                         texto_motivos = ""
                         
                     if texto_motivos:
-                        paragrafo += f"sendo que {texto_motivos}. "
+                        paragrafo += f", sendo que {texto_motivos}"
+                
+                paragrafo += ". "
 
                 if nome_inf_det_n or relacoes_selecionadas or informacoes_informante_selecionadas or nao_sabe_selecionados or sabe_tel or sabe_end:
                     if relacoes_selecionadas:
