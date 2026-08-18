@@ -225,7 +225,7 @@ if st.session_state["usuario_logado"] is None:
         
         st.markdown("---")
         
-        texto_termos = """"""
+        texto_termos = ""
         
         with st.expander("📄 Clique aqui para ler os Termos de Uso e Período de Gratuidade"):
             st.info(texto_termos)
