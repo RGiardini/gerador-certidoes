@@ -50,7 +50,7 @@ def gerar_pdf_nativo(texto_conteudo, dados_cabecalho, dados_assinatura, assinatu
     story = []
     styles = getSampleStyleSheet()
 
-    estilo_corpo = ParagraphStyle('Corpo', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, leading=16, alignment=TA_JUSTIFY, firstLineIndent=35.4)
+    estilo_corpo = ParagraphStyle('Corpo', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, leading=18, alignment=TA_JUSTIFY, firstLineIndent=35.4)
     estilo_centro = ParagraphStyle('Centro', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, alignment=TA_CENTER)
     estilo_titulo = ParagraphStyle('Titulo', parent=styles['Normal'], fontName='Times-Bold', fontSize=16, alignment=TA_CENTER)
     estilo_ass = ParagraphStyle('Ass', parent=styles['Normal'], fontName='Times-Bold', fontSize=8, alignment=TA_CENTER)
