@@ -1466,7 +1466,8 @@ elif menu == "📝 Gerar Certidão":
                 if hc_aceitou == "Sim":
                     if hc_assinou == "Sim": txt_final = "a qual aceitou o documento e exarou sua assinatura no respectivo mandado."
                     elif hc_assinou == "Não": txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no respectivo mandado."
-                    else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de estrita precaução sanitária, visando mitigar o risco de contágio e propagação de doenças infectocontagiosas, tendo em vista as circunstâncias observadas no local da diligência e o estado de saúde aparente da pessoa contatada."                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
+                    else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de estrita precaução sanitária, visando mitigar o risco de contágio e propagação de doenças infectocontagiosas, tendo em vista as circunstâncias observadas no local da diligência e o estado de saúde aparente da pessoa contatada."                
+                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
                 paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
