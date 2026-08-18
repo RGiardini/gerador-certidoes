@@ -1240,7 +1240,7 @@ elif menu == "📝 Gerar Certidão":
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
                     paragrafo += "aceitou, não exarando, contudo, no mandado sua nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
-                    paragrafo += "aceitou, deixando eu de colher a assinatura física como medida de precaução contra a propagação de doenças infectocontagiosas... "
+                    paragrafo += "aceitou. Contudo, abstive-me de colher a assinatura física como medida de estrita precaução sanitária, visando mitigar o risco de contágio e propagação de doenças infectocontagiosas, tendo em vista as características ambientais observadas no local da diligência e o estado de saúde aparente da pessoa contatada. "
                 elif mod_recebimento_pos == "Não aceitou a contrafé":
                     paragrafo += "não aceitou, exarando no mandado sua nota de ciência. "
                 else:
@@ -1262,7 +1262,7 @@ elif menu == "📝 Gerar Certidão":
                 if adv_pos_novo == "Tem condições financeiras (advogado constituído)": 
                     infos_adicionais.append("tem condições financeiras de apresentar sua defesa através de advogado constituído")
                 elif adv_pos_novo == "Não tem condições (hipossuficiente / defensor)": 
-                    infos_adicionais.append("não tem condições financeiras de apresentar sua defesa...")
+                    infos_adicionais.append("não tem condições financeiras para arcar com as custas processuais e honorários advocatícios sem o prejuízo de seu próprio sustento e de sua família, necessitando, portanto, do amparo e patrocínio da Defensoria Pública para a apresentação de sua defesa")
 
                 contatos = []
                 if tel_pos: contatos.append(f"telefone de contato ({tel_pos})")
@@ -1466,8 +1466,7 @@ elif menu == "📝 Gerar Certidão":
                 if hc_aceitou == "Sim":
                     if hc_assinou == "Sim": txt_final = "a qual aceitou o documento e exarou sua assinatura no respectivo mandado."
                     elif hc_assinou == "Não": txt_final = "a qual aceitou o documento, mas recusou-se a exarar sua assinatura no respectivo mandado."
-                    else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física..."
-                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
+                    else: txt_final = "a qual aceitou o documento, deixando eu de colher a assinatura física como medida de cautela e profilaxia contra a propagação de doenças infectocontagiosas, considerando as condições fáticas do ambiente e o quadro clínico aparente do receptor."                else: txt_final = "a qual se recusou a receber a contrafé e a assinar o respectivo mandado."
 
                 paragrafo = f"Certifico que, em cumprimento ao presente mandado, dirigi-me {txt_endereco}, onde {texto_data_hora} não encontrei a pessoa procurada. Diante das diligências frustradas e havendo fundada suspeita de ocultação, efetuei o agendamento de HORA CERTA {txt_terceiro}{txt_relacao} intimando-o(a) de que retornaria no dia {hc_data_retorno_formatada}, pontualmente às {hr_limpo}, para efetivar o ato judicial. Retornando no dia e hora estritamente designados, {txt_retorno_alvo}, dei por realizada a {nome_ato}{txt_pessoa}, deixando a respectiva contrafé com a pessoa mencionada, {txt_final}"
                 
