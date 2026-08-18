@@ -740,7 +740,7 @@ elif menu == "📝 Gerar Certidão":
                     st.session_state[k] = ""
             st.session_state['limpar_detalhada_nova'] = False
 
-        st.write("**Deixei de cumprir a ordem descrita uma vez que:**")
+        st.write("**Deixei de cumprir a ordem descrita porque:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
             nao_loc_dest_n = st.checkbox("O destinatário não foi localizado", key="nao_loc_dest_n")
