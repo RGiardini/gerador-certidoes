@@ -891,7 +891,7 @@ elif menu == "📝 Gerar Certidão":
                     frases_motivos = []
                     mapa_motivos = {
                         "local fechado": "o imóvel encontrava-se fechado",
-                        "número não localizado": "o número do imóvel não foi localizado",
+                        "número não localizado": "o número do imóvel não foi localizado no logradouro e bairro informado",
                         "ap/bloco não localizado": "o apartamento ou bloco indicado não foi localizado",
                         "local inabitado": "o local encontra-se inabitado",
                         "rua/av não localizada": "a rua ou avenida indicada não foi localizada",
@@ -921,7 +921,7 @@ elif menu == "📝 Gerar Certidão":
                         texto_motivos = ""
                         
                     if texto_motivos:
-                        paragrafo += f", sendo que {texto_motivos}"
+                        paragrafo += f", uma vez que {texto_motivos}"
                 
                 paragrafo += ". "
 
