@@ -698,7 +698,8 @@ elif menu == "📝 Gerar Certidão":
         
         if st.session_state.get('limpar_detalhada_nova'):
             for k in list(st.session_state.keys()):
-                if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "inf_informante_det_", "cert_n_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
+                # O prefixo foi corrigido de "cert_n_" para "cert_" para limpar todas as certificações adicionais
+                if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "inf_informante_det_", "cert_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
                     st.session_state[k] = False 
                 elif k in ["nome_inf_det_n", "sabe_tel_det_n", "sabe_end_det_n", "obs_livres_det_n"]:
                     st.session_state[k] = ""
