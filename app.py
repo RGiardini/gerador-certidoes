@@ -6,6 +6,7 @@ import tempfile
 import re
 import time
 import uuid
+import json
 from io import BytesIO
 import datetime
 from docx import Document
@@ -81,6 +82,25 @@ def gerar_pdf_nativo(texto_conteudo, dados_cabecalho, dados_assinatura, assinatu
     
     doc.build(story)
     return buffer.getvalue()
+
+def salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3):
+    """Salva os dias e horários em um arquivo JSON na pasta do usuário para preenchimento futuro."""
+    dados = {"d1": d1, "h1": h1, "d2": d2, "h2": h2, "d3": d3, "h3": h3}
+    caminho_arquivo = f"{usuario_atual}/.ultima_diligencia.json"
+    
+    try:
+        supabase.storage.from_("certidoes_usuarios").remove([caminho_arquivo])
+    except:
+        pass
+        
+    try:
+        supabase.storage.from_("certidoes_usuarios").upload(
+            file=json.dumps(dados).encode('utf-8'),
+            path=caminho_arquivo,
+            file_options={"content-type": "application/json"}
+        )
+    except:
+        pass
 
 # ==========================================
 # CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
@@ -396,7 +416,7 @@ elif menu == "📂 Minhas Certidões":
     except:
         arquivos_nuvem = []
     
-    arquivos = [arq for arq in arquivos_nuvem if arq["name"] != ".emptyFolder" and arq["name"] != ""]
+    arquivos = [arq for arq in arquivos_nuvem if arq["name"] != ".emptyFolder" and arq["name"] != "" and not arq["name"].endswith(".json")]
     
     if not arquivos:
         st.info("Nenhuma certidão salva ainda.")
@@ -554,7 +574,7 @@ elif menu == "🛡️ Painel do Administrador":
                     except:
                         arquivos_oficial = []
                         
-                    certioes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != ""]
+                    certioes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != "" and not f["name"].endswith(".json")]
                     
                     if not certioes_validas:
                         st.caption("Nenhuma certidão gerada por este oficial ainda.")
@@ -604,6 +624,21 @@ elif menu == "📝 Gerar Certidão":
     if not (dados_usuario.get("nome") and dados_usuario.get("cargo") and dados_usuario.get("matricula") and dados_usuario.get("email") and dados_usuario.get("cidade") and dados_usuario.get("estado")):
         st.warning("⚠️ Acesso restrito! Vá em 'Meu Perfil' e preencha **todos os dados obrigatórios** (Nome, Cargo, Matrícula, E-mail, Comarca e Estado) para liberar a geração de certidões.")
         st.stop()
+        
+    # RECUPERAÇÃO DAS DILIGÊNCIAS ANTERIORES DO USUÁRIO
+    if f"dil_carregadas_{usuario_atual}" not in st.session_state:
+        try:
+            res_dil = supabase.storage.from_("certidoes_usuarios").download(f"{usuario_atual}/.ultima_diligencia.json")
+            dados_anteriores = json.loads(res_dil.decode('utf-8'))
+            st.session_state["d1_geral"] = dados_anteriores.get("d1", "")
+            st.session_state["h1_geral"] = dados_anteriores.get("h1", "")
+            st.session_state["d2_geral"] = dados_anteriores.get("d2", "")
+            st.session_state["h2_geral"] = dados_anteriores.get("h2", "")
+            st.session_state["d3_geral"] = dados_anteriores.get("d3", "")
+            st.session_state["h3_geral"] = dados_anteriores.get("h3", "")
+        except:
+            pass
+        st.session_state[f"dil_carregadas_{usuario_atual}"] = True
 
     cidade_certidao = dados_usuario.get("cidade").strip().title()
     estado_certidao = dados_usuario.get("estado").strip().upper()
@@ -698,7 +733,7 @@ elif menu == "📝 Gerar Certidão":
         
         if st.session_state.get('limpar_detalhada_nova'):
             for k in list(st.session_state.keys()):
-                # O prefixo foi corrigido de "cert_n_" para "cert_" para limpar todas as certificações adicionais
+                # Correção feita aqui: mudamos de 'cert_n_' para 'cert_' para limpar todas as certificações extras
                 if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "inf_informante_det_", "cert_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
                     st.session_state[k] = False 
                 elif k in ["nome_inf_det_n", "sabe_tel_det_n", "sabe_end_det_n", "obs_livres_det_n"]:
@@ -805,6 +840,7 @@ elif menu == "📝 Gerar Certidão":
 
         if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_docx_det_n"):
             with st.spinner("Construindo certidão e preparando arquivo..."):
+                salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3)
                 
                 ano_base = ano if (ano and ano.isdigit()) else str(datetime.datetime.utcnow().year)
                 dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
@@ -1158,6 +1194,7 @@ elif menu == "📝 Gerar Certidão":
         
         if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_positiva"):
             with st.spinner("Gerando certidão positiva..."):
+                salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3)
                 
                 verbo_ato = "citei/intimei/notifiquei"
                 
@@ -1379,6 +1416,7 @@ elif menu == "📝 Gerar Certidão":
 
         if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_horacerta"):
             with st.spinner("Construindo certidão de Hora Certa..."):
+                salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3)
                 
                 txt_endereco = f"à {endereco}" if endereco else "ao endereço indicado"
                 txt_pessoa = f" de {pessoa}" if pessoa else " da pessoa referida no mandado"
