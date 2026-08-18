@@ -1240,7 +1240,7 @@ elif menu == "📝 Gerar Certidão":
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
                     paragrafo += "aceitou, não exarando, contudo, no mandado sua nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
-                    paragrafo += "aceitou. Contudo, abstive-me de colher a assinatura física como medida de estrita precaução sanitária, visando mitigar o risco de contágio e propagação de doenças infectocontagiosas, tendo em vista as características ambientais observadas no local da diligência e o estado de saúde aparente da pessoa contatada. "
+                    paragrafo += "aceitou. Contudo, abstive-me de colher a assinatura física como medida de estrita precaução sanitária, visando mitigar o risco de contágio e propagação de doenças infectocontagiosas, tendo em vista as circunstâncias observadas no local da diligência e o estado de saúde aparente da pessoa contatada. "
                 elif mod_recebimento_pos == "Não aceitou a contrafé":
                     paragrafo += "não aceitou, exarando no mandado sua nota de ciência. "
                 else:
