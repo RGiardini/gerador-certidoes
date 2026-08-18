@@ -227,7 +227,7 @@ if st.session_state["usuario_logado"] is None:
         
         texto_termos = ""
         
-        with st.expander("📄 Clique aqui para ler os Termos de Uso e Período de Gratuidade"):
+        with st.expander("📄 Clique aqui para ler os Termos de Uso"):
             st.info(texto_termos)
             
         aceite_termos = st.checkbox("Li e aceito os Termos de Uso e o período de gratuidade de 1 ano.", key="chk_termos")        
