@@ -226,7 +226,6 @@ if st.session_state["usuario_logado"] is None:
         st.markdown("---")
         
 texto_termos = """
-        **Termos de Uso e Assinatura:**
         
         """
         
