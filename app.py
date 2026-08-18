@@ -692,7 +692,7 @@ elif menu == "📝 Gerar Certidão":
             partes = ultimo_dia_str.split('/')
             if len(partes) == 2:
                 dia_num, mes_num = int(partes[0]), int(partes[1])
-                ano_base = str(data_certidao.year)
+                ano_num = hoje_real.year
                 data_padrao_calculada = datetime.date(ano_num, mes_num, dia_num)
         except:
             pass
