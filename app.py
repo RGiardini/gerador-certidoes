@@ -764,7 +764,7 @@ elif menu == "📝 Gerar Certidão":
             motivos_list = [
                 "local fechado", "número não localizado", "ap/bloco não localizado", 
                 "local inabitado", "rua/av não localizada", "são insuficientes para saldar o débito",  
-                "guarnecem a residência amparados pela Lei 8.009/90", "sem condições psíquicas de entender conteúdo mandado"
+                "guarnecem a residência amparados pela Lei 8.009/90", "sem condições psíquicas de entender conteúdo mandado", "impossibilidade de localizar bens"
             ]
             cols_mot = st.columns(3)
             for idx, m in enumerate(motivos_list):
@@ -906,6 +906,7 @@ elif menu == "📝 Gerar Certidão":
                         "número não localizado": "o número do imóvel não foi localizado no logradouro e bairro informado",
                         "ap/bloco não localizado": "o apartamento ou bloco indicado não foi localizado",
                         "local inabitado": "o local encontra-se inabitado",
+                        "impossibilidade de localizar bens": "o que impossibilitou o acesso aos bens, bem como a devida localização/avaliação dos mesmos",
                         "rua/av não localizada": "a rua ou avenida indicada não foi localizada",
                         "são insuficientes para saldar o débito": "os bens encontrados são insuficientes para saldar o débito",
                         "guarnecem a residência amparados pela Lei 8.009/90": "os bens que guarnecem a residência estão amparados pela Lei 8.009/90",
