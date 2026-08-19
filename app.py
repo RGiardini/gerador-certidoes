@@ -1087,7 +1087,7 @@ elif menu == "📝 Gerar Certidão":
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
                          "titulo": "CERTIDÃO",
-                         "processo": f"{processo}.{ano}.8.13.{comarca}",
+                         "processo": f"{processo}.{ano}.8.13.{comarca}" if processo else "",
                          "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
                     }
                     dados_ass = {"nome": dados_usuario['nome'], "cargo": dados_usuario['cargo'], "matricula": dados_usuario['matricula']}
@@ -1355,9 +1355,9 @@ elif menu == "📝 Gerar Certidão":
 
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
-                         "titulo": "CERTIDÃO POSITIVA",
-                         "processo": f"{processo}.{ano}.8.13.{comarca}",
-                         "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
+                        "titulo": "CERTIDÃO POSITIVA",
+                        "processo": f"{processo}.{ano}.8.13.{comarca}" if processo else "",
+                        "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
                     }
                     dados_ass = {"nome": dados_usuario['nome'], "cargo": dados_usuario['cargo'], "matricula": dados_usuario['matricula']}
                     
@@ -1540,9 +1540,9 @@ elif menu == "📝 Gerar Certidão":
 
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
-                         "titulo": "CERTIDÃO POSITIVA POR HORA CERTA",
-                         "processo": f"{processo}.{ano}.8.13.{comarca}",
-                         "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
+                        "titulo": "CERTIDÃO POSITIVA POR HORA CERTA",
+                        "processo": f"{processo}.{ano}.8.13.{comarca}" if processo else "",
+                        "data_local": f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month-1]} de {data_certidao.year}."
                     }
                     dados_ass = {"nome": dados_usuario['nome'], "cargo": dados_usuario['cargo'], "matricula": dados_usuario['matricula']}
                     
