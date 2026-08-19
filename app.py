@@ -895,7 +895,7 @@ elif menu == "📝 Gerar Certidão":
                 if nao_loc_bens_n: sits.append("o(s) bem(ns) indicados não foi(ram) localizado(s)")
                 
                 if sits:
-                    paragrafo += f", uma vez que {' e '.join(sits)}"
+                    paragrafo += f"porque {' e '.join(sits)}"
                 else:
                     paragrafo += ", não sendo possível a sua realização"
 
