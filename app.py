@@ -785,8 +785,8 @@ elif menu == "📝 Gerar Certidão":
             relacoes_list = [
                 "morador", "proprietário", "inquilino", "funcionário", "vizinho", "pai", "mãe",
                 "padrasto", "madrasta", "filho", "irmão", "tio", "avô(ó)", "neto", "sobrinho",
-                "primo", "transeunte", "viúvo", "ex", "esposo", "companheiro", "sogro", "enteado",
-                "genro", "nora", "cunhado", "concunhado", "amigo"
+                "primo", "transeunte", "viúvo", "esposo", "companheiro", "sogro", "enteado",
+                "genro", "nora", "cunhado", "concunhado", "amigo", "porteiro"
             ]
             cols_rel = st.columns(4)
             for idx, r in enumerate(relacoes_list):
@@ -800,7 +800,7 @@ elif menu == "📝 Gerar Certidão":
                 "dificilmente fica ali", "antigo inquilino", "rotatividade de inquilinos", 
                 "trabalha em tempo integral", "transferido", "faliu", "aparece esporadicamente", 
                 "está viajando", "antigo morador", "repassado a terceiros", "encontra-se preso", 
-                "não exerce atividades", "utiliza endereço para correspondências", "antigo proprietário", "internado", "faleceu"
+                "não exerce atividades", "utiliza endereço para correspondências", "antigo proprietário", "internado", "faleceu", "mesma rua outro bairro"
             ]
             cols_inf_info = st.columns(3)
             for idx, inf_item in enumerate(info_informantes_list):
@@ -980,7 +980,8 @@ elif menu == "📝 Gerar Certidão":
                             "utiliza endereço para correspondências": "o endereço é utilizado apenas para o recebimento de correspondências",
                             "antigo proprietário": "a pessoa procurada trata-se do antigo proprietário",
                             "internado": "a pessoa procurada encontra-se internada",
-                            "faleceu": "a pessoa procurada já é falecida"
+                            "faleceu": "a pessoa procurada já é falecida",
+                            "mesma rua outro bairro": "existe um logradouro com o mesmo nome em outro bairro. Então em ato contínuo, dirigi-me ao endereço informado, mas o local foi encontrado fechado e mesmo após chamar várias vezes, ninguém atendeu"
                         }
                         frases_inf_info = [mapa_inf_info.get(inf, inf) for inf in informacoes_informante_selecionadas]
                         frases_inf_limpas = []
@@ -1009,7 +1010,7 @@ elif menu == "📝 Gerar Certidão":
                         if partes_informacao:
                             partes_informacao.append(f"acrescentando não saber informar {texto_ns}")
                         else:
-                            partes_informacao.append(f"a qual declarou não saber informar {texto_ns}")
+                            partes_informacao.append(f"essa declarou não saber informar {texto_ns}")
 
                     if sabe_tel or sabe_end:
                         sabes_list = []
