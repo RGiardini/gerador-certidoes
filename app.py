@@ -186,8 +186,16 @@ st.markdown("""
 
 @st.cache_resource
 def iniciar_conexao():
-    url = st.secrets["SUPABASE_URL"]
-    key = st.secrets["SUPABASE_KEY"]
+    # 1. Tenta buscar das Variáveis de Ambiente (Painel do Render)
+    url = os.environ.get("SUPABASE_URL")
+    key = os.environ.get("SUPABASE_KEY")
+    
+    # 2. Se não encontrar (ex: quando você for testar localmente no seu computador), usa o arquivo secrets.toml
+    if not url:
+        url = st.secrets["SUPABASE_URL"]
+    if not key:
+        key = st.secrets["SUPABASE_KEY"]
+        
     return create_client(url, key)
 
 supabase: Client = iniciar_conexao()
