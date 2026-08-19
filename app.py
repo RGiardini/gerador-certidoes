@@ -105,7 +105,11 @@ def salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3):
 # ==========================================
 # CONFIGURAÇÃO DA PÁGINA E BANCO DE DADOS
 # ==========================================
-st.set_page_config(page_title="Sistema de Certidões", layout="wide")
+st.set_page_config(
+    page_title="Sistema de Certidões", 
+    page_icon="⚖️", # Adiciona o emoji de balança na aba do navegador
+    layout="wide"
+)
 
 st.markdown("""
     <style>
