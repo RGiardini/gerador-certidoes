@@ -1249,9 +1249,9 @@ elif menu == "📝 Gerar Certidão":
                 
                 alvo_citacao = "o destinatário"
                 if tipo_realizacao_pos == "Representante legal":
-                    alvo_citacao = "o destinatário, na pessoa de seu representante legal"
+                    alvo_citacao = "o destinatário, na pessoa de seu representante legal,"
                     if nome_rep_pos:
-                        alvo_citacao += f" ({nome_rep_pos})"
+                        alvo_citacao += f" {nome_rep_pos},"
                 
                 paragrafo = f"Certifico que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} {alvo_citacao} para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
