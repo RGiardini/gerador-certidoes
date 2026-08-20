@@ -1134,6 +1134,7 @@ elif menu == "📝 Gerar Certidão":
     elif tipo_certidao == "Certidão Positiva":
         
         if st.session_state.get('limpar_positiva'):
+            st.session_state["modalidade_pos"] = "Presencial"
             st.session_state["mod_recebimento_pos"] = "Aceitou e assinou"
             st.session_state["recurso_pos"] = "Não informado"
             st.session_state["ciencia_pos"] = "Não informado"
@@ -1151,7 +1152,15 @@ elif menu == "📝 Gerar Certidão":
         st.subheader("Detalhes da Certidão Positiva")
         st.markdown("---")
         
-        st.write("**1. Condições do Recebimento:**")
+        st.write("**1. Modalidade e Condições do Recebimento:**")
+        
+        modalidade_pos = st.radio(
+            "Modalidade de cumprimento:",
+            ["Presencial", "Via remota (Telefone / App de mensagens)"],
+            key="modalidade_pos",
+            horizontal=True
+        )
+
         mod_recebimento_pos = st.radio(
             "Selecione a opção de recebimento e assinatura:",
             [
@@ -1232,11 +1241,11 @@ elif menu == "📝 Gerar Certidão":
                 
                 str_horarios_dias = ""
                 if len(dias_formatados) == 1 and len(horas_formatadas) == 1:
-                    str_horarios_dias = f"por volta das {horas_formatadas[0]}, do dia {dias_formatados[0]}"
+                    str_horarios_dias = f"às {horas_formatadas[0]}, do dia {dias_formatados[0]}"
                 elif len(dias_formatados) > 1 and len(horas_formatadas) > 1:
                     pares = []
                     for i in range(min(len(horas_formatadas), len(dias_formatados))):
-                        pares.append(f"por volta das {horas_formatadas[i]}, do(s) dia(s) {dias_formatados[i]}")
+                        pares.append(f"às {horas_formatadas[i]}, do(s) dia(s) {dias_formatados[i]}")
                     if len(pares) == 2:
                         str_horarios_dias = f"{pares[0]} e {pares[1]}"
                     else:
@@ -1244,22 +1253,25 @@ elif menu == "📝 Gerar Certidão":
                 else:
                      h_f = horas_formatadas[0] if horas_formatadas else "___hs 00min"
                      d_f = dias_formatados[0] if dias_formatados else f"___/___/{ano_base}"
-                     str_horarios_dias = f"por volta das {h_f}, do(s) dia(s) {d_f}"
+                     str_horarios_dias = f"às {h_f}, do(s) dia(s) {d_f}"
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                alvo_citacao = "o destinatário"
+                alvo_citacao = "a pessoa indicada" se tipo_realizacao_pos == "Pessoa procurada" else "o destinatário"
                 if tipo_realizacao_pos == "Representante legal":
                     alvo_citacao = "o destinatário, na pessoa de seu representante legal,"
                     if nome_rep_pos:
                         alvo_citacao += f" {nome_rep_pos},"
                 
-                paragrafo = f"Certifico que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} {alvo_citacao} para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
+                if modalidade_pos == "Via remota (Telefone / App de mensagens)":
+                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, onde {str_horarios_dias}, {verbo_ato} {alvo_citacao}, por via remota, através de ligação telefônica/aplicativo de mensagens, cientificando de todos os termos e conteúdo do mandado e seus documentos anexos, que li e lhe dei para ler, sendo que ficou bem ciente. Dei-lhe a contrafé, mediante aplicativo de mensagens, que "
+                else:
+                    paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, onde {str_horarios_dias}, {verbo_ato} {alvo_citacao} para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou, exarando no mandado sua nota de ciência. "
                 elif mod_recebimento_pos == "Aceitou, mas não exarou sua assinatura":
-                    paragrafo += "aceitou, não exarando, contudo, no mandado sua nota de ciência. "
+                    paragrafo += "aceitou, não exarando sua assinatura no mandado. "
                 elif mod_recebimento_pos == "Aceitou a contrafé, contudo, deixei de colher a assinatura por medida de precaução sanitária":
                     paragrafo += "aceitou. Contudo, abstive-me de colher a assinatura física como medida de estrita precaução sanitária, visando mitigar o risco de contágio e propagação de doenças infectocontagiosas, tendo em vista as circunstâncias observadas no local da diligência e o estado de saúde aparente da pessoa contatada. "
                 elif mod_recebimento_pos == "Não aceitou a contrafé":
@@ -1299,7 +1311,7 @@ elif menu == "📝 Gerar Certidão":
                 else:
                     if contatos:
                         paragrafo += f"Certifico, ainda, que o(a) supracitado(a) indicou seu {' e '.join(contatos)}. "
-                # Trecho atual que gera a frase extra
+                
                 if tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
                     enq_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
                     paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fonaje. "
@@ -1335,7 +1347,7 @@ elif menu == "📝 Gerar Certidão":
                 p_Linha.paragraph_format.first_line_indent = Pt(35.4) 
 
                 doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1399,7 +1411,7 @@ elif menu == "📝 Gerar Certidão":
                 st.session_state['piscar_tela'] = False
             st.success("✅ Certidão salva na Nuvem!")
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_c'], file_name=st.session_state['doc_pronto_nome_c'], mime=st.session_state['doc_pronto_mime_c'], type="primary", use_container_width=True)
-
+            
     # ==========================================
     # OPÇÃO C: CERTIDÃO POSITIVA POR HORA CERTA
     # ==========================================
