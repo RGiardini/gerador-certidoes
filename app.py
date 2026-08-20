@@ -1247,7 +1247,13 @@ elif menu == "📝 Gerar Certidão":
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                paragrafo = f"Certifico que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} o destinatário para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
+                alvo_citacao = "o destinatário"
+                if tipo_realizacao_pos == "Representante legal":
+                    alvo_citacao = "o destinatário, na pessoa de seu representante legal"
+                    if nome_rep_pos:
+                        alvo_citacao += f" ({nome_rep_pos})"
+                
+                paragrafo = f"Certifico que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, {str_horarios_dias}, onde, {verbo_ato} {alvo_citacao} para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou, exarando no mandado sua nota de ciência. "
@@ -1292,12 +1298,8 @@ elif menu == "📝 Gerar Certidão":
                 else:
                     if contatos:
                         paragrafo += f"Certifico, ainda, que o(a) supracitado(a) indicou seu {' e '.join(contatos)}. "
-                
-                if tipo_realizacao_pos == "Representante legal":
-                    rep_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
-                    txt_alvo = f"do(a) Sr(a). {pessoa}" if pessoa else "da pessoa referida no mandado"
-                    paragrafo += f"Certifico também que o ato foi realizado na pessoa {txt_alvo}, que se apresentou como representante legal ({rep_txt}). "
-                elif tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
+                # Trecho atual que gera a frase extra
+                if tipo_realizacao_pos == "Enunciados 5 e 38 do Fonaje":
                     enq_txt = nome_rep_pos if nome_rep_pos else "quem de direito"
                     paragrafo += f"Certifico também que o ato foi realizado na pessoa do(a) Sr(a). {enq_txt}, de acordo com os Enunciados 5 e 38 do Fonaje. "
 
