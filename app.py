@@ -68,7 +68,7 @@ def gerar_pdf_nativo(texto_conteudo, dados_cabecalho, dados_assinatura, assinatu
     story.append(Spacer(1, 20))
     story.append(Paragraph(texto_conteudo, estilo_corpo))
     story.append(Spacer(1, 30))
-    story.append(Paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.", estilo_centro))
+    story.append(Paragraph("Devolvo o mandado para os devidos fins. Dou fé.", estilo_centro))
     story.append(Spacer(1, 20))
     story.append(Paragraph(dados_cabecalho['data_local'], estilo_centro))
     story.append(Spacer(1, 20))
@@ -1063,7 +1063,7 @@ elif menu == "📝 Gerar Certidão":
                 doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4)
                 doc.add_paragraph("")
                 
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1224,36 +1224,29 @@ elif menu == "📝 Gerar Certidão":
                 verbo_ato = "citei/intimei/notifiquei"
                 
                 ano_base = str(data_certidao.year)
-                dias_formatados = [formatar_data_completa(d.strip(), ano_base) for d in [d1, d2, d3] if d.strip()]
                 
-                horas_cruas = [h for h in [h1, h2, h3] if h]
-                horas_formatadas = []
+                # 1. Agrupar apenas as diligências preenchidas em pares (dia, hora)
+                diligencias = []
+                if d1.strip(): diligencias.append((d1.strip(), h1.strip()))
+                if d2.strip(): diligencias.append((d2.strip(), h2.strip()))
+                if d3.strip(): diligencias.append((d3.strip(), h3.strip()))
                 
-                for h in horas_cruas:
-                    h_limpo = h.strip()
-                    if ":" in h_limpo:
-                        partes_h = h_limpo.split(":")
-                        horas_formatadas.append(f"{partes_h[0]}h{partes_h[1]}min")
-                    elif not h_limpo.lower().endswith(('h', 'min')):
-                        horas_formatadas.append(f"{h_limpo}h00min")
+                # 2. Verificar se há alguma diligência e isolar a ÚLTIMA
+                tem_diligencia = False
+                if diligencias:
+                    ultimo_d, ultimo_h = diligencias[-1]
+                    
+                    d_f = formatar_data_completa(ultimo_d, ano_base)
+                    
+                    if ":" in ultimo_h:
+                        partes_h = ultimo_h.split(":")
+                        h_f = f"{partes_h[0]}h{partes_h[1]}min"
+                    elif ultimo_h and not ultimo_h.lower().endswith(('h', 'min')):
+                        h_f = f"{ultimo_h}h00min"
                     else:
-                        horas_formatadas.append(h_limpo)
-                
-                str_horarios_dias = ""
-                if len(dias_formatados) == 1 and len(horas_formatadas) == 1:
-                    str_horarios_dias = f"às {horas_formatadas[0]}, do dia {dias_formatados[0]}"
-                elif len(dias_formatados) > 1 and len(horas_formatadas) > 1:
-                    pares = []
-                    for i in range(min(len(horas_formatadas), len(dias_formatados))):
-                        pares.append(f"às {horas_formatadas[i]}, do(s) dia(s) {dias_formatados[i]}")
-                    if len(pares) == 2:
-                        str_horarios_dias = f"{pares[0]} e {pares[1]}"
-                    else:
-                        str_horarios_dias = ", ".join(pares[:-1]) + f" e {pares[-1]}"
-                else:
-                     h_f = horas_formatadas[0] if horas_formatadas else "___hs 00min"
-                     d_f = dias_formatados[0] if dias_formatados else f"___/___/{ano_base}"
-                     str_horarios_dias = f"às {h_f}, do(s) dia(s) {d_f}"
+                        h_f = ultimo_h if ultimo_h else "___hs 00min"
+                    
+                    tem_diligencia = True
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
@@ -1263,10 +1256,21 @@ elif menu == "📝 Gerar Certidão":
                     if nome_rep_pos:
                         alvo_citacao += f" {nome_rep_pos},"
                 
+                # 3. Construção Inteligente do Parágrafo
                 if modalidade_pos == "Via remota (Telefone / App de mensagens)":
-                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo, onde {str_horarios_dias}, {verbo_ato} {alvo_citacao}, por via remota, através de ligação telefônica/aplicativo de mensagens, cientificando de todos os termos e conteúdo do mandado e seus documentos anexos, que li e lhe dei para ler, sendo que ficou bem ciente. Dei-lhe a contrafé, mediante aplicativo de mensagens, que "
+                    if tem_diligencia:
+                        trecho_tempo = f", onde às {h_f}, do dia {d_f},"
+                    else:
+                        trecho_tempo = "," # Apenas uma vírgula para fluidez se não houver data
+                        
+                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo{trecho_tempo} {verbo_ato} {alvo_citacao}, por via remota, através de ligação telefônica/aplicativo de mensagens, cientificando-a de todos os termos e conteúdo do mandado e seus documentos anexos, que li e lhe dei para ler, sendo que ficou bem ciente. Dei-lhe a contrafé, mediante aplicativo de mensagens, que "
                 else:
-                    paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}, onde {str_horarios_dias}, {verbo_ato} {alvo_citacao} para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
+                    if tem_diligencia:
+                        trecho_tempo = f", onde, às {h_f}, do dia {d_f},"
+                    else:
+                        trecho_tempo = ", onde"
+                        
+                    paragrafo = f"Certifico e dou fé que, em cumprimento ao presente mandado, desloquei-me {txt_endereco}{trecho_tempo} {verbo_ato} {alvo_citacao} para todos os termos e conteúdo do mandado referido, que li e lhe dei para ler, do que ficou bem ciente. Dei-lhe a contrafé, que "
                 
                 if mod_recebimento_pos == "Aceitou e exarou sua assinatura no mandado":
                     paragrafo += "aceitou, exarando no mandado sua nota de ciência. "
@@ -1347,7 +1351,7 @@ elif menu == "📝 Gerar Certidão":
                 p_Linha.paragraph_format.first_line_indent = Pt(35.4) 
 
                 doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. O referido é verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1533,7 +1537,7 @@ elif menu == "📝 Gerar Certidão":
                 p_Linha.paragraph_format.first_line_indent = Pt(35.4)
 
                 doc.add_paragraph("")
-                doc.add_paragraph("Devolvo o mandado para os devidos fins. É verdade. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
+                doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
