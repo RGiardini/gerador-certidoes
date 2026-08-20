@@ -1,0 +1,4 @@
+[server]
+fileWatcherType = "none"
+headless = true
+address = "0.0.0.0"
