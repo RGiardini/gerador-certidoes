@@ -1353,8 +1353,9 @@ elif menu == "📝 Gerar Certidão":
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
-                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
-                nome_base = f"Certidao_Positiva_{processo}_{data_arquivo}"
+                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%Mm%Ss")
+                sufixo_unico = str(uuid.uuid4())[:6]
+                nome_base = f"Certidao_Positiva_{processo}_{data_arquivo}_{sufixo_unico}"
 
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
@@ -1538,8 +1539,9 @@ elif menu == "📝 Gerar Certidão":
                 buffer = BytesIO(); doc.save(buffer); buffer.seek(0)
                 docx_bytes = buffer.getvalue()
                 
-                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%M")
-                nome_base = f"Certidao_HoraCerta_{processo}_{data_arquivo}"
+                data_arquivo = hoje_real.strftime("%d-%m-%Y_%Hh%Mm%Ss")
+                sufixo_unico = str(uuid.uuid4())[:6]
+                nome_base = f"Certidao_HoraCerta_{processo}_{data_arquivo}_{sufixo_unico}"
 
                 if formato_saida == "PDF (.pdf)":
                     dados_cab = {
