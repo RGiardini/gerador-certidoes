@@ -829,7 +829,7 @@ elif menu == "📝 Gerar Certidão":
             c_extra1, c_extra2 = st.columns(2)
 
             with c_extra1:
-                if st.checkbox("Procurei informações com moradores", key="cert_vizinhos_det_n"):
+                if st.checkbox("Sem Informaçoes", key="cert_vizinhos_det_n"):
                     cert_extras.append("Procurei obter informações junto aos moradores/vizinhos locais e não obtive êxito")
                 if st.checkbox("Cópia do mandado com informante", key="cert_copia_det_n"):
                     cert_extras.append("Devido à importância do mandado e da dificuldade de encontrar a pessoa procurada, deixei a cópia do mandado com o(a) senhor(a) acima mencionado(a)")
