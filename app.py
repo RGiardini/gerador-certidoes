@@ -1257,7 +1257,7 @@ elif menu == "📝 Gerar Certidão":
 
                 txt_endereco = f"ao endereço indicado" if not endereco else f"à {endereco}"
                 
-                alvo_citacao = "a pessoa indicada" se tipo_realizacao_pos == "Pessoa procurada" else "o destinatário"
+                alvo_citacao = "a pessoa indicada" if tipo_realizacao_pos == "Pessoa procurada" else "o destinatário"
                 if tipo_realizacao_pos == "Representante legal":
                     alvo_citacao = "o destinatário, na pessoa de seu representante legal,"
                     if nome_rep_pos:
@@ -1411,7 +1411,7 @@ elif menu == "📝 Gerar Certidão":
                 st.session_state['piscar_tela'] = False
             st.success("✅ Certidão salva na Nuvem!")
             st.download_button("📥 Baixar Arquivo", data=st.session_state['doc_pronto_bytes_c'], file_name=st.session_state['doc_pronto_nome_c'], mime=st.session_state['doc_pronto_mime_c'], type="primary", use_container_width=True)
-            
+
     # ==========================================
     # OPÇÃO C: CERTIDÃO POSITIVA POR HORA CERTA
     # ==========================================
