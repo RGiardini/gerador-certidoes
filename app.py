@@ -746,16 +746,17 @@ elif menu == "📝 Gerar Certidão":
         if st.session_state.get('limpar_detalhada_nova'):
             for k in list(st.session_state.keys()):
                 # Correção feita aqui: mudamos de 'cert_n_' para 'cert_' para limpar todas as certificações extras
-                if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "inf_informante_det_", "cert_")) or k in ["nao_loc_dest_n", "nao_loc_bens_n"]:
+                if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "inf_informante_det_", "cert_")) or k == "nao_loc_bens_n":
                     st.session_state[k] = False 
                 elif k in ["nome_inf_det_n", "sabe_tel_det_n", "sabe_end_det_n", "obs_livres_det_n"]:
                     st.session_state[k] = ""
+            st.session_state["nao_loc_dest_n"] = True
             st.session_state['limpar_detalhada_nova'] = False
 
         st.write("**Deixei de cumprir a ordem descrita porque:**")
         sit_c1, sit_c2 = st.columns(2)
         with sit_c1:
-            nao_loc_dest_n = st.checkbox("O destinatário não foi localizado", key="nao_loc_dest_n")
+            nao_loc_dest_n = st.checkbox("O destinatário não foi localizado", value=True, key="nao_loc_dest_n")
         with sit_c2:
             nao_loc_bens_n = st.checkbox("Bem(ns) não localizado(s)", key="nao_loc_bens_n")
 
