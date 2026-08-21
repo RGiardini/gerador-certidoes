@@ -107,7 +107,7 @@ def salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3):
 # ==========================================
 st.set_page_config(
     page_title="Sistema de Certidões", 
-    page_icon="⚖️", # Adiciona o emoji de balança na aba do navegador
+    page_icon="⚖️", 
     layout="wide"
 )
 
@@ -186,11 +186,9 @@ st.markdown("""
 
 @st.cache_resource
 def iniciar_conexao():
-    # 1. Tenta buscar das Variáveis de Ambiente (Painel do Render)
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_KEY")
     
-    # 2. Se não encontrar (ex: quando você for testar localmente no seu computador), usa o arquivo secrets.toml
     if not url:
         url = st.secrets["SUPABASE_URL"]
     if not key:
@@ -564,60 +562,92 @@ elif menu == "🛡️ Painel do Administrador":
 
     with aba_adm2:
         st.subheader("Certidões Geradas por Todos os Oficiais")
-        st.write("Selecione os arquivos que deseja apagar e utilize o botão ao final da lista.")
+        st.write("Utilize os filtros abaixo para localizar certidões por oficial ou data, selecione os arquivos e utilize o botão ao final da lista para apagá-los.")
         
         try:
             pastas_usuarios = supabase.storage.from_("certidoes_usuarios").list()
         except:
             pastas_usuarios = []
             
-        arquivos_selecionados_adm = []
-            
         if not pastas_usuarios:
             st.info("Nenhuma pasta de certidão encontrada na nuvem.")
         else:
-            for pasta in pastas_usuarios:
-                nome_oficial = pasta["name"]
-                if nome_oficial and nome_oficial != ".emptyFolder":
+            # Filtros do Administrador
+            lista_cpfs_disponiveis = [p["name"] for p in pastas_usuarios if p["name"] and p["name"] != ".emptyFolder"]
+            
+            col_f1, col_f2, col_f3 = st.columns([2, 1.5, 1.5])
+            with col_f1:
+                oficial_selecionado_filtro = st.selectbox("Filtrar por Oficial (CPF):", ["Todos os oficiais"] + lista_cpfs_disponiveis)
+            with col_f2:
+                ativar_filtro_data_adm = st.checkbox("Filtrar por data específica", key="ativar_filtro_data_adm")
+            with col_f3:
+                hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
+                data_filtro_adm = st.date_input("Data:", value=hoje_real.date(), format="DD/MM/YYYY", disabled=not ativar_filtro_data_adm, label_visibility="collapsed")
+            
+            st.divider()
+            
+            arquivos_selecionados_adm = []
+            pastas_para_exibir = lista_cpfs_disponiveis if oficial_selecionado_filtro == "Todos os oficiais" else [oficial_selecionado_filtro]
+            
+            algum_arquivo_exibido = False
+            
+            for nome_oficial in pastas_para_exibir:
+                try:
+                    arquivos_oficial = supabase.storage.from_("certidoes_usuarios").list(nome_oficial)
+                except:
+                    arquivos_oficial = []
+                    
+                certioes_validas = []
+                for f in arquivos_oficial:
+                    if f["name"] != ".emptyFolder" and f["name"] != "" and not f["name"].endswith(".json"):
+                        # Processar data para o filtro opcional
+                        try:
+                            data_str = f["created_at"].replace("Z", "+00:00")
+                            data_obj = datetime.datetime.fromisoformat(data_str)
+                            data_br_date = (data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)).date()
+                        except:
+                            data_br_date = None
+                        
+                        f['data_br_date'] = data_br_date
+                        
+                        if ativar_filtro_data_adm and data_br_date != data_filtro_adm:
+                            continue
+                        certioes_validas.append(f)
+                
+                if certioes_validas:
+                    algum_arquivo_exibido = True
                     st.markdown(f"### 📂 Oficial (CPF): `{nome_oficial}`")
                     
-                    try:
-                        arquivos_oficial = supabase.storage.from_("certidoes_usuarios").list(nome_oficial)
-                    except:
-                        arquivos_oficial = []
-                        
-                    certioes_validas = [f for f in arquivos_oficial if f["name"] != ".emptyFolder" and f["name"] != "" and not f["name"].endswith(".json")]
+                    c_sel, c_arq_nome, c_btn_dl = st.columns([1, 4, 2])
+                    c_sel.write("**Excluir**")
+                    c_arq_nome.write("**Nome do Arquivo**")
                     
-                    if not certioes_validas:
-                        st.caption("Nenhuma certidão gerada por este oficial ainda.")
-                    else:
-                        c_sel, c_arq_nome, c_btn_dl = st.columns([1, 4, 2])
-                        c_sel.write("**Excluir**")
-                        c_arq_nome.write("**Nome do Arquivo**")
+                    for arq in certioes_validas:
+                        c1, c2, c3 = st.columns([1, 4, 2])
                         
-                        for arq in certioes_validas:
-                            c1, c2, c3 = st.columns([1, 4, 2])
+                        with c1:
+                            if st.checkbox("", key=f"chk_adm_{nome_oficial}_{arq['name']}"):
+                                arquivos_selecionados_adm.append(f"{nome_oficial}/{arq['name']}")
+                                
+                        with c2:
+                            st.text(arq["name"])
                             
-                            with c1:
-                                if st.checkbox("", key=f"chk_adm_{nome_oficial}_{arq['name']}"):
-                                    arquivos_selecionados_adm.append(f"{nome_oficial}/{arq['name']}")
-                                    
-                            with c2:
-                                st.text(arq["name"])
-                                
-                            with c3:
-                                file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
-                                mime_tipo = "application/pdf" if arq["name"].endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                
-                                st.download_button(
-                                    label="📥 Baixar",
-                                    data=file_bytes,
-                                    file_name=arq["name"],
-                                    mime=mime_tipo,
-                                    key=f"btn_dl_real_{nome_oficial}_{arq['name']}",
-                                    use_container_width=True
-                                )
+                        with c3:
+                            file_bytes = supabase.storage.from_("certidoes_usuarios").download(f"{nome_oficial}/{arq['name']}")
+                            mime_tipo = "application/pdf" if arq["name"].endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            
+                            st.download_button(
+                                label="📥 Baixar",
+                                data=file_bytes,
+                                file_name=arq["name"],
+                                mime=mime_tipo,
+                                key=f"btn_dl_real_{nome_oficial}_{arq['name']}",
+                                use_container_width=True
+                            )
                     st.divider()
+            
+            if not algum_arquivo_exibido:
+                st.info("Nenhuma certidão encontrada com os filtros selecionados.")
             
             if arquivos_selecionados_adm:
                 st.warning(f"⚠️ **{len(arquivos_selecionados_adm)} arquivo(s) selecionado(s) para exclusão.**")
@@ -745,7 +775,6 @@ elif menu == "📝 Gerar Certidão":
         
         if st.session_state.get('limpar_detalhada_nova'):
             for k in list(st.session_state.keys()):
-                # Correção feita aqui: mudamos de 'cert_n_' para 'cert_' para limpar todas as certificações extras
                 if k.startswith(("mot_detn_", "rel_detn_", "ns_detn_", "inf_informante_det_", "cert_")) or k == "nao_loc_bens_n":
                     st.session_state[k] = False 
                 elif k in ["nome_inf_det_n", "sabe_tel_det_n", "sabe_end_det_n", "obs_livres_det_n"]:
@@ -1036,7 +1065,6 @@ elif menu == "📝 Gerar Certidão":
                 if cert_extras: paragrafo += f"{'; '.join(cert_extras)}. "
                 if observacoes_det: paragrafo += f"{observacoes_det.strip()} "
 
-                # Geração do arquivo Word (.docx) formatado corretamente
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 style.paragraph_format.line_spacing = 1.5
@@ -1222,20 +1250,16 @@ elif menu == "📝 Gerar Certidão":
                 salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3)
                 
                 verbo_ato = "citei/intimei/notifiquei"
-                
                 ano_base = str(data_certidao.year)
                 
-                # 1. Agrupar apenas as diligências preenchidas em pares (dia, hora)
                 diligencias = []
                 if d1.strip(): diligencias.append((d1.strip(), h1.strip()))
                 if d2.strip(): diligencias.append((d2.strip(), h2.strip()))
                 if d3.strip(): diligencias.append((d3.strip(), h3.strip()))
                 
-                # 2. Verificar se há alguma diligência e isolar a ÚLTIMA
                 tem_diligencia = False
                 if diligencias:
                     ultimo_d, ultimo_h = diligencias[-1]
-                    
                     d_f = formatar_data_completa(ultimo_d, ano_base)
                     
                     if ":" in ultimo_h:
@@ -1256,12 +1280,11 @@ elif menu == "📝 Gerar Certidão":
                     if nome_rep_pos:
                         alvo_citacao += f" {nome_rep_pos},"
                 
-                # 3. Construção Inteligente do Parágrafo
                 if modalidade_pos == "Via remota (Telefone / App de mensagens)":
                     if tem_diligencia:
                         trecho_tempo = f", onde às {h_f}, do dia {d_f},"
                     else:
-                        trecho_tempo = "," # Apenas uma vírgula para fluidez se não houver data
+                        trecho_tempo = ","
                         
                     paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo{trecho_tempo} {verbo_ato} {alvo_citacao}, por via remota, através de ligação telefônica/aplicativo de mensagens, cientificando-a de todos os termos e conteúdo do mandado e seus documentos anexos, que li e lhe dei para ler, sendo que ficou bem ciente. Dei-lhe a contrafé, mediante aplicativo de mensagens, que "
                 else:
@@ -1323,7 +1346,6 @@ elif menu == "📝 Gerar Certidão":
                 if obs_pos:
                     paragrafo += f"{obs_pos.strip()} "
 
-                # Geração do arquivo Word (.docx) formatado corretamente para a Positiva
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 style.paragraph_format.line_spacing = 1.5
@@ -1509,7 +1531,6 @@ elif menu == "📝 Gerar Certidão":
                 if not paragrafo.endswith(". "):
                     paragrafo = paragrafo.rstrip() + ". "
 
-                # Geração do arquivo Word (.docx) formatado corretamente para Hora Certa
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
                 style.paragraph_format.line_spacing = 1.5
