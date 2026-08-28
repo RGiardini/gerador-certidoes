@@ -780,25 +780,7 @@ elif menu == "📝 Gerar Certidão":
     else:
         data_certidao = st.date_input("Escolha a data da certidão:", value=data_padrao_calculada, format="DD/MM/YYYY", key="data_certidao_manual_escolha")
     
-    st.write("**Informe os Dias e Horários**")
     
-    cd1, cd2, cd3 = st.columns(3)
-
-    with cd1:
-        st.write("**Diligência 1**")
-        d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
-        h1 = st.text_input("Hora 1", placeholder="Ex: 14:55", key="h1_geral")
-        
-    with cd2:
-        st.write("**Diligência 2**")
-        d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
-        h2 = st.text_input("Hora 2", placeholder="Ex: 16:58", key="h2_geral")
-        
-    with cd3:
-        st.write("**Diligência 3**")
-        d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
-        h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
-
     st.write("**Informe os Dias e Horários**")
 
     # 1. Fazemos backup da memória das diligências
