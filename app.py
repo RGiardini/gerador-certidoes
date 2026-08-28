@@ -798,9 +798,7 @@ elif menu == "📝 Gerar Certidão":
         st.write("**Diligência 3**")
         d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
         h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
-Substitua todo esse bloco acima pelo código abaixo. Ele usa um if / else para verificar se a certidão é a "Positiva" e, se for, exibe apenas um campo (atribuindo valores vazios aos outros para evitar erros).
 
-Python
     st.write("**Informe os Dias e Horários**")
 
     # 1. Fazemos backup da memória das diligências
@@ -821,7 +819,6 @@ Python
         c_unica, _ = st.columns([1, 2])
         with c_unica:
             st.write("**Data e Hora da Diligência**")
-            # Usamos chaves DIFERENTES (d_pos_geral) para não alterar o "Dia 1" da certidão negativa!
             d1 = st.text_input("Dia", value=sugestao_d, placeholder="Ex: 08/08", key="d_pos_geral")
             h1 = st.text_input("Hora", value=sugestao_h, placeholder="Ex: 14:55", key="h_pos_geral")
             
@@ -841,8 +838,8 @@ Python
             st.write("**Diligência 3**")
             d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
             h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
+            
     st.divider()
-
     # ==========================================
     # OPÇÃO A: CERTIDÃO DETALHADA
     # ==========================================
@@ -1324,9 +1321,6 @@ Python
             with st.spinner("Gerando certidão positiva..."):
                 # O salvamento na nuvem foi removido daqui para não sobrescrever
                 # as datas da certidão negativa no arquivo .json
-                
-                verbo_ato = "citei/intimei/notifiquei"
-                ano_base = str(data_certidao.year)
                 
                 verbo_ato = "citei/intimei/notifiquei"
                 ano_base = str(data_certidao.year)
