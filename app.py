@@ -810,16 +810,24 @@ elif menu == "📝 Gerar Certidão":
         cd1, cd2, cd3 = st.columns(3)
         with cd1:
             st.write("**Diligência 1**")
-            d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
-            h1 = st.text_input("Hora 1", placeholder="Ex: 14:55", key="h1_geral")
+            d1 = st.text_input("Dia 1", value=st.session_state.get("d1_geral", ""), placeholder="Ex: 08/08", key="input_d1")
+            h1 = st.text_input("Hora 1", value=st.session_state.get("h1_geral", ""), placeholder="Ex: 14:55", key="input_h1")
         with cd2:
             st.write("**Diligência 2**")
-            d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
-            h2 = st.text_input("Hora 2", placeholder="Ex: 16:58", key="h2_geral")
+            d2 = st.text_input("Dia 2", value=st.session_state.get("d2_geral", ""), placeholder="Ex: 11/08", key="input_d2")
+            h2 = st.text_input("Hora 2", value=st.session_state.get("h2_geral", ""), placeholder="Ex: 16:58", key="input_h2")
         with cd3:
             st.write("**Diligência 3**")
-            d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
-            h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
+            d3 = st.text_input("Dia 3", value=st.session_state.get("d3_geral", ""), placeholder="Ex: 12/08", key="input_d3")
+            h3 = st.text_input("Hora 3", value=st.session_state.get("h3_geral", ""), placeholder="Ex: 11:15", key="input_h3")
+            
+        # Salva os valores de forma independente para que o Streamlit não os apague ao ocultar os campos
+        st.session_state["d1_geral"] = d1
+        st.session_state["h1_geral"] = h1
+        st.session_state["d2_geral"] = d2
+        st.session_state["h2_geral"] = h2
+        st.session_state["d3_geral"] = d3
+        st.session_state["h3_geral"] = h3
             
     st.divider()
     # ==========================================
