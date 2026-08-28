@@ -802,37 +802,45 @@ Substitua todo esse bloco acima pelo código abaixo. Ele usa um if / else para v
 
 Python
     st.write("**Informe os Dias e Horários**")
-    
-    # Inicializa variáveis vazias para evitar erros no resto do código (caso fiquem ocultas)
-    d1, h1, d2, h2, d3, h3 = "", "", "", "", "", ""
-    
+
+    # 1. Fazemos backup da memória das diligências
+    mem_d1 = st.session_state.get("d1_geral", "")
+    mem_h1 = st.session_state.get("h1_geral", "")
+    mem_d2 = st.session_state.get("d2_geral", "")
+    mem_h2 = st.session_state.get("h2_geral", "")
+    mem_d3 = st.session_state.get("d3_geral", "")
+    mem_h3 = st.session_state.get("h3_geral", "")
+
     if tipo_certidao == "Certidão Positiva":
-        # Mostra apenas um campo de diligência, que o código da Positiva lerá corretamente como o ato final
-        st.info("📌 Para Certidão Positiva, informe a data/hora em que o ato foi efetivamente realizado.")
-        c_unica, _ = st.columns([1, 2]) # Cria colunas para não deixar o campo muito esticado
+        st.info("📌 Para Certidão Positiva, informe apenas a data/hora em que o ato foi efetivamente realizado.")
+        
+        # Puxa inteligentemente a última data preenchida para facilitar a digitação
+        sugestao_d = mem_d3 if mem_d3 else (mem_d2 if mem_d2 else mem_d1)
+        sugestao_h = mem_h3 if mem_h3 else (mem_h2 if mem_h2 else mem_h1)
+        
+        c_unica, _ = st.columns([1, 2])
         with c_unica:
             st.write("**Data e Hora da Diligência**")
-            d1 = st.text_input("Dia", placeholder="Ex: 08/08", key="d1_geral")
-            h1 = st.text_input("Hora", placeholder="Ex: 14:55", key="h1_geral")
+            # Usamos chaves DIFERENTES (d_pos_geral) para não alterar o "Dia 1" da certidão negativa!
+            d1 = st.text_input("Dia", value=sugestao_d, placeholder="Ex: 08/08", key="d_pos_geral")
+            h1 = st.text_input("Hora", value=sugestao_h, placeholder="Ex: 14:55", key="h_pos_geral")
+            
+        d2, h2, d3, h3 = "", "", "", ""
+        
     else:
-        # Mostra os três campos normalmente para as outras certidões
         cd1, cd2, cd3 = st.columns(3)
-    
         with cd1:
             st.write("**Diligência 1**")
             d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
             h1 = st.text_input("Hora 1", placeholder="Ex: 14:55", key="h1_geral")
-            
         with cd2:
             st.write("**Diligência 2**")
             d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
             h2 = st.text_input("Hora 2", placeholder="Ex: 16:58", key="h2_geral")
-            
         with cd3:
             st.write("**Diligência 3**")
             d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
             h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
-
     st.divider()
 
     # ==========================================
@@ -1314,7 +1322,11 @@ Python
         
         if st.button("Gerar Certidão", type="primary", use_container_width=True, key="btn_gerar_positiva"):
             with st.spinner("Gerando certidão positiva..."):
-                salvar_diligencias_nuvem(usuario_atual, d1, h1, d2, h2, d3, h3)
+                # O salvamento na nuvem foi removido daqui para não sobrescrever
+                # as datas da certidão negativa no arquivo .json
+                
+                verbo_ato = "citei/intimei/notifiquei"
+                ano_base = str(data_certidao.year)
                 
                 verbo_ato = "citei/intimei/notifiquei"
                 ano_base = str(data_certidao.year)
