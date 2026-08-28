@@ -552,6 +552,17 @@ elif menu == "🛡️ Painel do Administrador":
                     st.write(f"**Comarca/Cidade:** {u.get('cidade') or 'Não informada'} / {u.get('estado') or '-'}")
                     
                     st.markdown("---")
+                    st.write("**Assinatura Atual do Usuário:**")
+                    
+                    # Tenta baixar e exibir a assinatura salva do usuário específico
+                    try:
+                        assinatura_salva_adm = supabase.storage.from_("assinaturas_usuarios").download(f"{u['usuario']}.png")
+                        if assinatura_salva_adm:
+                            st.image(assinatura_salva_adm, width=250)
+                    except:
+                        st.warning("⚠️ Nenhuma assinatura foi enviada por este usuário até o momento.")
+                    
+                    st.markdown("---")
                     st.write("**Substituir Assinatura deste usuário:**")
                     nova_ass_adm = st.file_uploader(f"Envie a nova assinatura", type=["png", "jpg", "jpeg"], key=f"up_adm_ass_{u['usuario']}")
                     
