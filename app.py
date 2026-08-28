@@ -74,7 +74,8 @@ def gerar_pdf_nativo(texto_conteudo, dados_cabecalho, dados_assinatura, assinatu
     story.append(Spacer(1, 20))
 
     if assinatura_bytes:
-        img_ass = Image(BytesIO(assinatura_bytes), width=5*cm, height=2*cm)
+        # A propriedade kind='proportional' impede que a imagem seja esticada ou esmagada
+        img_ass = Image(BytesIO(assinatura_bytes), width=5*cm, height=2*cm, kind='proportional')
         img_ass.hAlign = 'CENTER'
         story.append(img_ass)
     
@@ -542,13 +543,34 @@ elif menu == "🛡️ Painel do Administrador":
             st.dataframe(usuarios_cadastrados, use_container_width=True)
             
             st.divider()
-            st.write("**Ações Individuais (Excluir Conta):**")
+            st.write("**Ações Individuais (Editar Assinatura e Excluir Conta):**")
             for u in usuarios_cadastrados:
                 with st.expander(f"👤 Usuário/CPF: {u['usuario']} — Nome: {u.get('nome') or 'Não preenchido'}"):
                     st.write(f"**Cargo:** {u.get('cargo')}")
                     st.write(f"**Matrícula:** {u.get('matricula')}")
                     st.write(f"**E-mail:** {u.get('email') or 'Não informado'}")
                     st.write(f"**Comarca/Cidade:** {u.get('cidade') or 'Não informada'} / {u.get('estado') or '-'}")
+                    
+                    st.markdown("---")
+                    st.write("**Substituir Assinatura deste usuário:**")
+                    nova_ass_adm = st.file_uploader(f"Envie a nova assinatura", type=["png", "jpg", "jpeg"], key=f"up_adm_ass_{u['usuario']}")
+                    
+                    if nova_ass_adm is not None:
+                        if st.button(f"💾 Salvar Nova Assinatura", key=f"btn_salvar_ass_adm_{u['usuario']}", type="primary"):
+                            try:
+                                supabase.storage.from_("assinaturas_usuarios").remove([f"{u['usuario']}.png"])
+                            except:
+                                pass
+                            supabase.storage.from_("assinaturas_usuarios").upload(
+                                file=nova_ass_adm.getvalue(),
+                                path=f"{u['usuario']}.png",
+                                file_options={"content-type": nova_ass_adm.type}
+                            )
+                            st.success("✅ Assinatura substituída com sucesso!")
+                            time.sleep(2)
+                            st.rerun()
+                            
+                    st.markdown("---")
                     
                     if u['usuario'] != usuario_atual:
                         if st.button(f"🗑️ Excluir usuário {u['usuario']}", key=f"del_adm_usr_{u['usuario']}"):
