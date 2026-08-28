@@ -798,6 +798,40 @@ elif menu == "📝 Gerar Certidão":
         st.write("**Diligência 3**")
         d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
         h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
+Substitua todo esse bloco acima pelo código abaixo. Ele usa um if / else para verificar se a certidão é a "Positiva" e, se for, exibe apenas um campo (atribuindo valores vazios aos outros para evitar erros).
+
+Python
+    st.write("**Informe os Dias e Horários**")
+    
+    # Inicializa variáveis vazias para evitar erros no resto do código (caso fiquem ocultas)
+    d1, h1, d2, h2, d3, h3 = "", "", "", "", "", ""
+    
+    if tipo_certidao == "Certidão Positiva":
+        # Mostra apenas um campo de diligência, que o código da Positiva lerá corretamente como o ato final
+        st.info("📌 Para Certidão Positiva, informe a data/hora em que o ato foi efetivamente realizado.")
+        c_unica, _ = st.columns([1, 2]) # Cria colunas para não deixar o campo muito esticado
+        with c_unica:
+            st.write("**Data e Hora da Diligência**")
+            d1 = st.text_input("Dia", placeholder="Ex: 08/08", key="d1_geral")
+            h1 = st.text_input("Hora", placeholder="Ex: 14:55", key="h1_geral")
+    else:
+        # Mostra os três campos normalmente para as outras certidões
+        cd1, cd2, cd3 = st.columns(3)
+    
+        with cd1:
+            st.write("**Diligência 1**")
+            d1 = st.text_input("Dia 1", placeholder="Ex: 08/08", key="d1_geral")
+            h1 = st.text_input("Hora 1", placeholder="Ex: 14:55", key="h1_geral")
+            
+        with cd2:
+            st.write("**Diligência 2**")
+            d2 = st.text_input("Dia 2", placeholder="Ex: 11/08", key="d2_geral")
+            h2 = st.text_input("Hora 2", placeholder="Ex: 16:58", key="h2_geral")
+            
+        with cd3:
+            st.write("**Diligência 3**")
+            d3 = st.text_input("Dia 3", placeholder="Ex: 12/08", key="d3_geral")
+            h3 = st.text_input("Hora 3", placeholder="Ex: 11:15", key="h3_geral")
 
     st.divider()
 
