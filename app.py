@@ -263,12 +263,50 @@ if st.session_state["usuario_logado"] is None:
         
         st.markdown("---")
         
-        texto_termos = ""
+        texto_termos = """
+**Termos e Condições de Uso - Sistema de Certidões**
+
+Ao acessar e utilizar o Sistema de Certidões, você concorda expressamente com as condições descritas neste documento. Leia atentamente todas as diretrizes antes de prosseguir com o seu cadastro.
+
+**1. Descrição do Sistema**
+O Sistema de Certidões é uma plataforma desenvolvida para automatizar e facilitar a criação de documentos processuais, oferecendo modelos padronizados como a Certidão Negativa Detalhada, a Certidão Positiva e a Certidão Positiva por Hora Certa.
+* O sistema permite a exportação dos documentos gerados nos formatos Word (.docx) e PDF (.pdf).
+* Todos os arquivos criados são armazenados automaticamente em um banco de dados em nuvem, permitindo a gestão, download ou exclusão posterior através do painel do usuário.
+* A plataforma possui recursos de automação que salvam os dias e horários da última diligência realizada, facilitando o preenchimento de documentos futuros.
+
+**2. Acesso, Cadastro e Sigilo de Dados**
+A segurança e a privacidade das suas informações são prioridades fundamentais da nossa plataforma.
+* O login no sistema é estritamente individual e realizado exclusivamente por meio do seu Cadastro de Pessoa Física (CPF), não sendo permitida a utilização de e-mails ou nomes de usuário personalizados para a autenticação.
+* As senhas cadastradas são confidenciais e armazenadas de forma segura utilizando criptografia de hash (SHA-256), o que garante que sua senha original não seja exposta nem mesmo para os administradores do sistema.
+* É possível realizar o envio de uma foto da sua assinatura para inclusão automática nos documentos. Este arquivo é de uso exclusivo nas suas certidões e mantido em sigilo na nuvem.
+* O usuário compromete-se a manter sua senha em segurança e a não compartilhar suas credenciais de acesso com terceiros.
+
+**3. Gratuidade **
+* O sistema é oferecido de forma gratuita nessa versão e não será cobrado nenhuma taxa para acesso e utilização do mesmo.
+* O sistema também disponibiliza uma modalidade de acesso como "Convidado". Esta opção permite a exploração da interface e a geração de certidões de teste utilizando dados fictícios, sem a necessidade de um cadastro prévio.
+
+**4. Responsabilidade pelos Documentos Gerados**
+* O usuário declara estar plenamente ciente de que é o único e exclusivo responsável pelo teor, veracidade, exatidão e legalidade das informações inseridas na plataforma e dos documentos gerados.
+* A plataforma funciona estritamente como uma ferramenta de formatação e automação de textos. Não realizamos auditoria legal, revisão ortográfica ou qualquer tipo de validação jurídica do conteúdo inserido pelo usuário.
+* É de inteira responsabilidade do usuário conferir todos os dados, datas, horários e narrativas das diligências antes de assinar e protocolar o documento final nos sistemas do respectivo tribunal.
+
+**5. Obrigatoriedade de Dados do Perfil**
+* Para o pleno funcionamento do gerador de certidões, é obrigatório o preenchimento completo e correto dos dados do perfil, que incluem: Nome Completo, Cargo, Matrícula, E-mail Profissional, Comarca de Lotação e Estado.
+* Estes dados são utilizados exclusivamente para o preenchimento automático de cabeçalhos, textos de identificação e rodapés dos documentos processuais.
+
+**6. Disponibilidade e Gestão de Arquivos**
+* Os documentos gerados podem ser acessados na aba "Minhas Certidões", onde o usuário tem total autonomia para realizar o download individual, baixar múltiplos arquivos compactados em formato ZIP ou excluí-los permanentemente da nuvem.
+* Embora o sistema utilize armazenamento em nuvem, recomendamos que o usuário mantenha um backup local de suas certidões, uma vez que a plataforma não se responsabiliza por eventuais perdas de dados decorrentes de instabilidades técnicas.
+
+**7. Disposições Finais**
+* A criação da conta exige a aceitação explícita destes Termos de Uso.
+* O descumprimento de qualquer cláusula aqui estabelecida, bem como a utilização do sistema para fins ilícitos, poderá resultar na suspensão temporária ou na exclusão definitiva da conta do usuário.
+        """
         
         with st.expander("📄 Clique aqui para ler os Termos de Uso"):
             st.info(texto_termos)
             
-        aceite_termos = st.checkbox("Li e aceito os Termos de Uso e o período de gratuidade de 1 ano.", key="chk_termos")        
+        aceite_termos = st.checkbox("Li e aceito os Termos de Uso.", key="chk_termos")        
         if st.button("Criar Conta e Iniciar Teste", type="primary", use_container_width=True, key="btn_cadastrar"):
             usuario_cad = limpar_cpf(cpf_cad_bruto)
             
