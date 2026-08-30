@@ -281,7 +281,7 @@ A segurança e a privacidade das suas informações são prioridades fundamentai
 * É possível realizar o envio de uma foto da sua assinatura para inclusão automática nos documentos. Este arquivo é de uso exclusivo nas suas certidões e mantido em sigilo na nuvem.
 * O usuário compromete-se a manter sua senha em segurança e a não compartilhar suas credenciais de acesso com terceiros.
 
-**3. Gratuidade **
+**3. Gratuidade**
 * O sistema é oferecido de forma gratuita nessa versão e não será cobrado nenhuma taxa para acesso e utilização do mesmo.
 * O sistema também disponibiliza uma modalidade de acesso como "Convidado". Esta opção permite a exploração da interface e a geração de certidões de teste utilizando dados fictícios, sem a necessidade de um cadastro prévio.
 
