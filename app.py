@@ -215,7 +215,7 @@ if "usuario_logado" not in st.session_state or st.session_state["usuario_logado"
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões")
     
-    aba_login, aba_cadastro = st.tabs(["Entrar", "Criar Nova Conta"])
+    aba_login, aba_cadastro, aba_recuperar = st.tabs(["Entrar", "Criar Nova Conta", "Esqueci a Senha"])
     
     with aba_login:
         st.info("🔒 **Acesso Restrito:** O login no sistema é feito exclusivamente utilizando o seu **CPF** (apenas números).")
@@ -304,6 +304,62 @@ if st.session_state["usuario_logado"] is None:
                     st.success("✅ Conta criada com sucesso! O seu CPF será o seu login. Faça o acesso na aba ao lado.")
                     time.sleep(3)
                     st.rerun()
+
+    with aba_recuperar:
+        st.subheader("Redefinir Senha")
+        st.write("Informe seu CPF e o E-mail cadastrado no seu perfil para receber uma senha temporária.")
+        
+        rec_cpf_bruto = st.text_input("Seu CPF:", key="rec_cpf")
+        rec_email = st.text_input("Seu E-mail Profissional:", key="rec_email")
+        
+        if st.button("Enviar Senha Temporária", type="primary", use_container_width=True):
+            usuario_rec = limpar_cpf(rec_cpf_bruto)
+            
+            if not usuario_rec or not rec_email:
+                st.warning("Preencha todos os campos.")
+            else:
+                # 1. Verifica se o CPF e o e-mail coincidem no Supabase
+                resposta = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_rec).eq("email", rec_email).execute()
+                
+                if len(resposta.data) > 0:
+                    import string
+                    import random
+                    import smtplib
+                    from email.mime.text import MIMEText
+                    
+                    # 2. Gera uma senha temporária aleatória de 6 caracteres
+                    caracteres = string.ascii_letters + string.digits
+                    senha_temporaria = ''.join(random.choice(caracteres) for i in range(6))
+                    
+                    # 3. Atualiza a senha no Supabase
+                    senha_temporaria_hash = gerar_hash_senha(senha_temporaria)
+                    supabase.table("banco_usuarios").update({"senha": senha_temporaria_hash}).eq("usuario", usuario_rec).execute()
+                    
+                    # 4. Envia o e-mail 
+                    try:
+                        # USANDO SEGURANÇA (st.secrets) EM VEZ DE TEXTO ABERTO
+                        remetente = os.environ.get("EMAIL_REMETENTE")
+                        if not remetente:
+                            remetente = st.secrets["EMAIL_REMETENTE"]
+
+                        senha_app = os.environ.get("SENHA_APP_EMAIL")       
+                        if not senha_app:
+                            senha_app = st.secrets["SENHA_APP_EMAIL"]
+                        
+                        msg = MIMEText(f"Sua nova senha temporária é: {senha_temporaria}\nRecomendamos que você altere sua senha imediatamente na aba 'Meu Perfil' após realizar o login.")
+                        msg['Subject'] = "Recuperação de Senha - Sistema de Certidões"
+                        msg['From'] = remetente
+                        msg['To'] = rec_email
+                        
+                        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                            server.login(remetente, senha_app)
+                            server.sendmail(remetente, rec_email, msg.as_string())
+                            
+                        st.success("✅ Uma nova senha temporária foi enviada para o seu e-mail!")
+                    except Exception as e:
+                        st.error(f"Erro ao enviar o e-mail: {e}. Verifique as configurações do servidor ou contate o administrador.")
+                else:
+                    st.error("❌ CPF ou E-mail incorretos (ou não cadastrados).")
                     
     st.stop()
 
@@ -449,6 +505,41 @@ if menu == "⚙️ Meu Perfil":
                 st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
                 time.sleep(2) 
                 st.rerun()
+
+        # -----------------------------------------
+        # NOVO BLOCO: ALTERAR SENHA
+        # -----------------------------------------
+        st.markdown("---")
+        st.subheader("🔐 Alterar Senha")
+        st.write("Se você utilizou uma senha temporária ou deseja atualizar sua senha, utilize os campos abaixo.")
+        
+        senha_atual = st.text_input("Senha Atual:", type="password", key="alt_pwd_atual")
+        nova_senha = st.text_input("Nova Senha:", type="password", key="alt_pwd_nova")
+        confirma_nova_senha = st.text_input("Confirme a Nova Senha:", type="password", key="alt_pwd_conf")
+        
+        if st.button("🔄 Atualizar Senha", type="primary", use_container_width=True, key="btn_alterar_senha"):
+            if not senha_atual or not nova_senha or not confirma_nova_senha:
+                st.warning("⚠️ Preencha todos os campos de senha.")
+            elif nova_senha != confirma_nova_senha:
+                st.error("⚠️ As novas senhas não coincidem.")
+            elif len(nova_senha) < 6:
+                st.error("⚠️ A nova senha deve ter pelo menos 6 caracteres.")
+            else:
+                # 1. Busca a senha atual no banco para ter certeza que não está desatualizada na sessão
+                busca_senha = supabase.table("banco_usuarios").select("senha").eq("usuario", usuario_atual).execute()
+                senha_hash_bd = busca_senha.data[0]["senha"]
+                
+                # 2. Verifica se a senha atual digitada bate com a do banco
+                if gerar_hash_senha(senha_atual) != senha_hash_bd:
+                    st.error("❌ A senha atual está incorreta.")
+                else:
+                    # 3. Atualiza para a nova senha no banco
+                    nova_senha_hash = gerar_hash_senha(nova_senha)
+                    supabase.table("banco_usuarios").update({"senha": nova_senha_hash}).eq("usuario", usuario_atual).execute()
+                    
+                    st.success("✅ Senha alterada com sucesso! Utilize a nova senha no seu próximo login.")
+                    time.sleep(2)
+                    st.rerun()
 
 # ==========================================
 # TELA: MINHAS CERTIDÕES
