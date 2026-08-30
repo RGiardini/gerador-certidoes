@@ -215,7 +215,7 @@ if "usuario_logado" not in st.session_state or st.session_state["usuario_logado"
 if st.session_state["usuario_logado"] is None:
     st.title("⚖️ Sistema de Certidões")
     
-    aba_login, aba_cadastro, aba_recuperar = st.tabs(["Entrar", "Criar Nova Conta", "Esqueci a Senha"])
+    aba_login, aba_cadastro, aba_recuperar, aba_tutorial = st.tabs(["Entrar", "Criar Nova Conta", "Esqueci a Senha", "Como Funciona"])
     
     with aba_login:
         st.info("🔒 **Acesso Restrito:** O login no sistema é feito exclusivamente utilizando o seu **CPF** (apenas números).")
@@ -330,6 +330,7 @@ A segurança e a privacidade das suas informações são prioridades fundamentai
                     senha_cripto = gerar_hash_senha(senha_cad)
                     novo_usuario = {
                         "usuario": usuario_cad,
+                        "email": email_cad,
                         "senha": senha_cripto,
                         "data_cadastro": str(data_cadastro),
                         "vencimento_trial": str(vencimento_trial),
@@ -375,14 +376,13 @@ A segurança e a privacidade das suas informações são prioridades fundamentai
                     
                     # 4. Envia o e-mail 
                     try:
-                        # USANDO SEGURANÇA (st.secrets) EM VEZ DE TEXTO ABERTO
-                        remetente = os.environ.get("EMAIL_REMETENTE")
-                        if not remetente:
-                            remetente = st.secrets["EMAIL_REMETENTE"]
-
-                        senha_app = os.environ.get("SENHA_APP_EMAIL")       
-                        if not senha_app:
-                            senha_app = st.secrets["SENHA_APP_EMAIL"]
+                        # USANDO SEGURANÇA COM PREVENÇÃO DE FALHAS
+                        remetente = os.environ.get("EMAIL_REMETENTE") or st.secrets.get("EMAIL_REMETENTE")
+                        senha_app = os.environ.get("SENHA_APP_EMAIL") or st.secrets.get("SENHA_APP_EMAIL")
+                        
+                        if not remetente or not senha_app:
+                            st.error("Erro interno: Credenciais de envio de e-mail não configuradas no servidor.")
+                            st.stop()
                         
                         msg = MIMEText(f"Sua nova senha temporária é: {senha_temporaria}\nRecomendamos que você altere sua senha imediatamente na aba 'Meu Perfil' após realizar o login.")
                         msg['Subject'] = "Recuperação de Senha - Sistema de Certidões"
@@ -398,7 +398,16 @@ A segurança e a privacidade das suas informações são prioridades fundamentai
                         st.error(f"Erro ao enviar o e-mail: {e}. Verifique as configurações do servidor ou contate o administrador.")
                 else:
                     st.error("❌ CPF ou E-mail incorretos (ou não cadastrados).")
-                    
+    with aba_tutorial:
+        st.subheader("Conheça o Sistema de Certidões")
+        st.write("Veja como a plataforma pode automatizar o seu trabalho diário.")
+        
+        # Cole seu código embed aqui
+        codigo_embed = """
+        <iframe src="https://www.canva.com/design/DAHTxl2Galw/3avwVyC1nwEOOaYa8evVVQ/view" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
+        """
+        components.html(codigo_embed, height=520)
+
     st.stop()
 
 
