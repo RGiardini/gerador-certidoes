@@ -244,6 +244,13 @@ if st.session_state["usuario_logado"] is None:
                     st.error("CPF não cadastrado no sistema.")
             else:
                 st.warning("Preencha a senha.")
+
+        st.markdown("---")
+        st.info("💡 **Deseja apenas testar o sistema?** \n\nEntre como convidado para explorar a interface e gerar certidões de teste. Como convidado, seus arquivos serão salvos em uma pasta temporária compartilhada.")
+        if st.button("Entrar como Convidado", use_container_width=True):
+            st.session_state["usuario_logado"] = "convidado"
+            st.query_params["user"] = "convidado"
+            st.rerun()
                 
     with aba_cadastro:
         st.subheader("Criar Nova Conta")
@@ -312,6 +319,35 @@ if not resposta_usuario.data:
     st.rerun()
 
 dados_usuario = resposta_usuario.data[0]
+Substitua esse bloco inteiro por este:
+
+Python
+# ==========================================
+# DADOS DO USUÁRIO E MENU LATERAL
+# ==========================================
+usuario_atual = st.session_state["usuario_logado"]
+
+# Injeta dados falsos se for o usuário convidado
+if usuario_atual == "convidado":
+    dados_usuario = {
+        "nome": "Usuário Convidado",
+        "cargo": "Oficial de Justiça (Teste)",
+        "matricula": "000000",
+        "email": "convidado@tjmg.jus.br",
+        "cidade": "Belo Horizonte",
+        "estado": "MG",
+        "vencimento_trial": "2099-12-31",
+        "status_assinatura": "trial"
+    }
+else:
+    resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
+    
+    if not resposta_usuario.data:
+        st.session_state["usuario_logado"] = None
+        st.query_params.clear()
+        st.rerun()
+        
+    dados_usuario = resposta_usuario.data[0]
 
 # ==========================================
 # VERIFICAÇÃO DE ASSINATURA / TRIAL
