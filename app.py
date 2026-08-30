@@ -244,6 +244,13 @@ if st.session_state["usuario_logado"] is None:
                     st.error("CPF não cadastrado no sistema.")
             else:
                 st.warning("Preencha a senha.")
+
+        st.markdown("---")
+        st.info("💡 **Deseja apenas testar o sistema?** \n\nEntre como convidado para explorar a interface e gerar certidões de teste. Como convidado, seus arquivos serão salvos em uma pasta temporária compartilhada.")
+        if st.button("Entrar como Convidado", use_container_width=True):
+            st.session_state["usuario_logado"] = "convidado"
+            st.query_params["user"] = "convidado"
+            st.rerun()
                 
     with aba_cadastro:
         st.subheader("Criar Nova Conta")
@@ -300,18 +307,33 @@ if st.session_state["usuario_logado"] is None:
                     
     st.stop()
 
+
 # ==========================================
 # DADOS DO USUÁRIO E MENU LATERAL
 # ==========================================
 usuario_atual = st.session_state["usuario_logado"]
-resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
 
-if not resposta_usuario.data:
-    st.session_state["usuario_logado"] = None
-    st.query_params.clear()
-    st.rerun()
+# Injeta dados falsos se for o usuário convidado
+if usuario_atual == "convidado":
+    dados_usuario = {
+        "nome": "Oficial de Justiça",
+        "cargo": "Acesso de Teste",
+        "matricula": "XXXXX",
+        "email": "convidado@tjmg.jus.br",
+        "cidade": "Belo Horizonte",
+        "estado": "MG",
+        "vencimento_trial": "2099-12-31",
+        "status_assinatura": "trial"
+    }
+else:
+    resposta_usuario = supabase.table("banco_usuarios").select("*").eq("usuario", usuario_atual).execute()
+    
+    if not resposta_usuario.data:
+        st.session_state["usuario_logado"] = None
+        st.query_params.clear()
+        st.rerun()
 
-dados_usuario = resposta_usuario.data[0]
+    dados_usuario = resposta_usuario.data[0]
 
 # ==========================================
 # VERIFICAÇÃO DE ASSINATURA / TRIAL
@@ -360,60 +382,73 @@ with st.sidebar:
 # ==========================================
 if menu == "⚙️ Meu Perfil":
     st.title("⚙️ Configurar Meu Perfil")
-    st.write("Estes dados são **obrigatórios** para que você possa gerar certidões.")
     
-    novo_nome = st.text_input("Nome Completo:", value=dados_usuario.get("nome", ""), placeholder="Ex: Rafael", key="input_perfil_nome")
-    novo_cargo = st.text_input("Cargo:", value=dados_usuario.get("cargo", ""), placeholder="Ex: Oficial de Justiça - TJMG", key="input_perfil_cargo")
-    nova_matricula = st.text_input("Matrícula (ex: PJPI: 12345):", value=dados_usuario.get("matricula", ""), key="input_perfil_matricula")
-    novo_email = st.text_input("E-mail Profissional:", value=dados_usuario.get("email", ""), placeholder="Ex: rafael@tjmg.jus.br", key="input_perfil_email")
-    
-    c_cid, c_est = st.columns([3, 1])
-    with c_cid:
-        nova_cidade = st.text_input("Comarca / Cidade de Lotação:", value=dados_usuario.get("cidade", ""), placeholder="Ex: Belo Horizonte", key="input_perfil_cidade")
-    with c_est:
-        novo_estado = st.text_input("Estado (Sigla):", value=dados_usuario.get("estado", ""), max_chars=2, placeholder="Ex: MG", key="input_perfil_estado").upper()
-    
-    st.markdown("---")
-    st.write("**Sua Assinatura (Fundo branco ou transparente):**")
-    
-    try:
-        assinatura_salva = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
-        if assinatura_salva:
-            st.success("✅ **Você já possui uma assinatura salva no sistema:**")
-            st.image(assinatura_salva, width=250)
-            st.write("*(Envie um novo arquivo abaixo apenas se desejar substituí-la)*")
-    except:
-        st.warning("❌ **Nenhuma assinatura salva.** Por favor, envie sua assinatura abaixo.")
+    if usuario_atual == "convidado":
+        # Tela exibida apenas para o convidado
+        st.warning("🔒 **Acesso de Convidado:** A edição de perfil está desabilitada nas contas de teste. Para personalizar as certidões com seus dados reais e incluir sua foto de assinatura, retorne à tela inicial e crie uma conta gratuita.")
+        st.info("""
+        **Dados Fictícios Utilizados nas Certidões:**
+        * **Nome:** Oficial de Justiça
+        * **Cargo:** Acesso de Teste
+        * **Matrícula:** XXXXX
+        * **Comarca:** Belo Horizonte / MG
+        """)
+    else:
+        # Formulário original exibido para usuários reais
+        st.write("Estes dados são **obrigatórios** para que você possa gerar certidões.")
+        
+        novo_nome = st.text_input("Nome Completo:", value=dados_usuario.get("nome", ""), placeholder="Ex: Rafael", key="input_perfil_nome")
+        novo_cargo = st.text_input("Cargo:", value=dados_usuario.get("cargo", ""), placeholder="Ex: Oficial de Justiça - TJMG", key="input_perfil_cargo")
+        nova_matricula = st.text_input("Matrícula (ex: PJPI: 12345):", value=dados_usuario.get("matricula", ""), key="input_perfil_matricula")
+        novo_email = st.text_input("E-mail Profissional:", value=dados_usuario.get("email", ""), placeholder="Ex: rafael@tjmg.jus.br", key="input_perfil_email")
+        
+        c_cid, c_est = st.columns([3, 1])
+        with c_cid:
+            nova_cidade = st.text_input("Comarca / Cidade de Lotação:", value=dados_usuario.get("cidade", ""), placeholder="Ex: Belo Horizonte", key="input_perfil_cidade")
+        with c_est:
+            novo_estado = st.text_input("Estado (Sigla):", value=dados_usuario.get("estado", ""), max_chars=2, placeholder="Ex: MG", key="input_perfil_estado").upper()
+        
+        st.markdown("---")
+        st.write("**Sua Assinatura (Fundo branco ou transparente):**")
+        
+        try:
+            assinatura_salva = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
+            if assinatura_salva:
+                st.success("✅ **Você já possui uma assinatura salva no sistema:**")
+                st.image(assinatura_salva, width=250)
+                st.write("*(Envie um novo arquivo abaixo apenas se desejar substituí-la)*")
+        except:
+            st.warning("❌ **Nenhuma assinatura salva.** Por favor, envie sua assinatura abaixo.")
 
-    arquivo_assinatura = st.file_uploader("Envie a foto da sua assinatura", type=["png", "jpg", "jpeg"], key="uploader_perfil")
-    
-    if st.button("💾 Salvar Perfil", type="primary", use_container_width=True, key="btn_salvar_perfil"):
-        if not (novo_nome and novo_cargo and nova_matricula and novo_email and nova_cidade and novo_estado):
-            st.error("⚠️ Atenção: Todos os campos de texto são obrigatórios. Preencha todos antes de salvar!")
-        else:
-            supabase.table("banco_usuarios").update({
-                "nome": novo_nome,
-                "cargo": novo_cargo,
-                "matricula": nova_matricula,
-                "email": novo_email,
-                "cidade": nova_cidade,
-                "estado": novo_estado
-            }).eq("usuario", usuario_atual).execute()
-            
-            if arquivo_assinatura is not None:
-                try:
-                    supabase.storage.from_("assinaturas_usuarios").remove([f"{usuario_atual}.png"])
-                except:
-                    pass
-                supabase.storage.from_("assinaturas_usuarios").upload(
-                    file=arquivo_assinatura.getvalue(),
-                    path=f"{usuario_atual}.png",
-                    file_options={"content-type": arquivo_assinatura.type}
-                )
-                    
-            st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
-            time.sleep(2) 
-            st.rerun()
+        arquivo_assinatura = st.file_uploader("Envie a foto da sua assinatura", type=["png", "jpg", "jpeg"], key="uploader_perfil")
+        
+        if st.button("💾 Salvar Perfil", type="primary", use_container_width=True, key="btn_salvar_perfil"):
+            if not (novo_nome and novo_cargo and nova_matricula and novo_email and nova_cidade and novo_estado):
+                st.error("⚠️ Atenção: Todos os campos de texto são obrigatórios. Preencha todos antes de salvar!")
+            else:
+                supabase.table("banco_usuarios").update({
+                    "nome": novo_nome,
+                    "cargo": novo_cargo,
+                    "matricula": nova_matricula,
+                    "email": novo_email,
+                    "cidade": nova_cidade,
+                    "estado": novo_estado
+                }).eq("usuario", usuario_atual).execute()
+                
+                if arquivo_assinatura is not None:
+                    try:
+                        supabase.storage.from_("assinaturas_usuarios").remove([f"{usuario_atual}.png"])
+                    except:
+                        pass
+                    supabase.storage.from_("assinaturas_usuarios").upload(
+                        file=arquivo_assinatura.getvalue(),
+                        path=f"{usuario_atual}.png",
+                        file_options={"content-type": arquivo_assinatura.type}
+                    )
+                        
+                st.success("✅ Perfil atualizado e salvo na nuvem com sucesso!")
+                time.sleep(2) 
+                st.rerun()
 
 # ==========================================
 # TELA: MINHAS CERTIDÕES
