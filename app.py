@@ -405,7 +405,7 @@ A segurança e a privacidade das suas informações são prioridades fundamentai
         
         # Cole seu código embed aqui
         codigo_embed = """
-        <iframe src="https://www.canva.com/design/DAHTxl2Galw/3avwVyC1nwEOOaYa8evVVQ/view" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
+        <iframe src="https://www.canva.com/design/DAHTxl2Galw/3avwVyC1nwEOOaYa8evVVQ/view?embed" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
         """
         components.html(codigo_embed, height=520)
 
