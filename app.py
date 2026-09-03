@@ -405,7 +405,7 @@ A segurança e a privacidade das suas informações são prioridades fundamentai
         
         # Cole seu código embed aqui
         codigo_embed = """
-        <iframe src="https://www.canva.com/design/DAHTxl2Galw/3avwVyC1nwEOOaYa8evVVQ/view" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
+        <iframe src="https://www.canva.com/design/DAHTxl2Galw/3avwVyC1nwEOOaYa8evVVQ/view?embed" width="100%" height="500" frameborder="0" allowfullscreen></iframe>
         """
         components.html(codigo_embed, height=520)
 
@@ -1062,7 +1062,7 @@ elif menu == "📝 Gerar Certidão":
 
             st.write("**Informações recebidas pelos informantes (Migradas):**")
             info_informantes_list = [
-                "mudou-se", "não trabalha no local", "é desconhecida", "não reside no local", 
+                "mudou-se", "não trabalha no local", "não conhece a pessoa", "não reside no local", 
                 "dificilmente fica ali", "antigo inquilino", "rotatividade de inquilinos", 
                 "trabalha em tempo integral", "transferido", "faliu", "aparece esporadicamente", 
                 "está viajando", "antigo morador", "repassado a terceiros", "encontra-se preso", 
@@ -1229,7 +1229,7 @@ elif menu == "📝 Gerar Certidão":
                         mapa_inf_info = {
                             "mudou-se": "a pessoa procurada mudou-se dali",
                             "não trabalha no local": "a pessoa procurada não trabalha no local",
-                            "é desconhecida": "a pessoa procurada é desconhecida no local",
+                            "não conhece a pessoa": "não conhece a pessoa procurada",
                             "não reside no local": "a pessoa procurada não reside no endereço",
                             "dificilmente fica ali": "a pessoa procurada dificilmente se encontra ali",
                             "antigo inquilino": "a pessoa procurada trata-se de um antigo inquilino",
