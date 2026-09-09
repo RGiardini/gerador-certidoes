@@ -1523,7 +1523,7 @@ elif menu == "📝 Gerar Certidão":
                     else:
                         trecho_tempo = ","
                         
-                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo{trecho_tempo} {verbo_ato} {alvo_citacao}, por via remota, através de ligação telefônica/aplicativo de mensagens, cientificando-a de todos os termos e conteúdo do mandado e seus documentos anexos, que li e lhe dei para ler, sendo que ficou bem ciente. Dei-lhe a contrafé, mediante aplicativo de mensagens, que "
+                    paragrafo = f"Certifico e dou fé que, em cumprimento ao mandado anexo{trecho_tempo} {verbo_ato} {alvo_citacao}, por via remota, através de ligação telefônica/aplicativo de mensagens, uma vez que a pessoa procurada não foi encontrada no local, cientificando-a de todos os termos e conteúdo do mandado e seus documentos anexos, que li e lhe dei para ler, sendo que ficou bem ciente. Dei-lhe a contrafé, mediante aplicativo de mensagens, que "
                 else:
                     if tem_diligencia:
                         trecho_tempo = f", onde, às {h_f}, do dia {d_f},"
