@@ -47,12 +47,12 @@ def formatar_data_completa(data_str, ano_padrao):
 
 def gerar_pdf_nativo(texto_conteudo, dados_cabecalho, dados_assinatura, assinatura_bytes, cabecalho_bytes):
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=2*cm, leftMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.8*cm, leftMargin=1.8*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     story = []
     styles = getSampleStyleSheet()
 
-    estilo_corpo = ParagraphStyle('Corpo', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, leading=18, alignment=TA_JUSTIFY, firstLineIndent=35.4)
-    estilo_centro = ParagraphStyle('Centro', parent=styles['Normal'], fontName='Times-Roman', fontSize=12, alignment=TA_CENTER)
+    estilo_corpo = ParagraphStyle('Corpo', parent=styles['Normal'], fontName='Times-Roman', fontSize=11, leading=15, alignment=TA_JUSTIFY, firstLineIndent=35.4)
+    estilo_centro = ParagraphStyle('Centro', parent=styles['Normal'], fontName='Times-Roman', fontSize=11, alignment=TA_CENTER)
     estilo_titulo = ParagraphStyle('Titulo', parent=styles['Normal'], fontName='Times-Bold', fontSize=16, alignment=TA_CENTER)
     estilo_ass = ParagraphStyle('Ass', parent=styles['Normal'], fontName='Times-Bold', fontSize=8, alignment=TA_CENTER)
 
@@ -1585,7 +1585,7 @@ elif menu == "📝 Gerar Certidão":
 
                 doc = Document()
                 style = doc.styles['Normal']; font = style.font; font.name = 'Times New Roman'; font.size = Pt(12)
-                style.paragraph_format.line_spacing = 1.5
+                style.paragraph_format.line_spacing = 1.25
                 try:
                     cabecalho_bytes = supabase.storage.from_("imagens_sistema").download("cabecalho.png")
                     p_img_cabecalho = doc.add_paragraph(); p_img_cabecalho.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_cabecalho.add_run().add_picture(BytesIO(cabecalho_bytes), width=Cm(16))
