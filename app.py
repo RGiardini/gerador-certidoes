@@ -597,11 +597,18 @@ elif menu == "📂 Minhas Certidões":
     st.write("Baixe ou exclua seus arquivos salvos na nuvem.")
     
     try:
-        arquivos_nuvem = supabase.storage.from_("certidoes_usuarios").list(usuario_atual)
+        # Traz até 1000 arquivos e ordena pelos mais recentes primeiro
+        arquivos_nuvem = supabase.storage.from_("certidoes_usuarios").list(
+            path=usuario_atual,
+            options={
+                "limit": 1000,
+                "sortBy": {"column": "created_at", "order": "desc"}
+            }
+        )
     except:
         arquivos_nuvem = []
     
-    arquivos = [arq for arq in arquivos_nuvem if arq["name"] != ".emptyFolder" and arq["name"] != "" and not arq["name"].endswith(".json")]
+    arquivos = [arq for arq in arquivos_nuvem if arq.get("name") not in [".emptyFolder", ""] and not arq.get("name", "").endswith(".json")]
     
     if not arquivos:
         st.info("Nenhuma certidão salva ainda.")
@@ -614,21 +621,40 @@ elif menu == "📂 Minhas Certidões":
             
         arquivos_filtrados = []
         for item in arquivos:
-            try:
-                data_str = item["created_at"].replace("Z", "+00:00")
-                data_obj = datetime.datetime.fromisoformat(data_str)
-                data_br_obj = data_obj.replace(tzinfo=None) - datetime.timedelta(hours=3)
-                data_br_date = data_br_obj.date()
-                data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
-            except:
-                data_br_date = None
-                data_br = "Data desconhecida"
+            data_br_date = None
+            data_br = "Data desconhecida"
+
+            # 1. Tenta pegar a data oficial de criação do arquivo
+            campo_data = item.get("created_at") or item.get("updated_at")
+            if campo_data:
+                try:
+                    # Limpa qualquer formato ISO vindo do Supabase
+                    limpo_iso = campo_data.replace("Z", "").split("+")[0]
+                    data_obj = datetime.datetime.fromisoformat(limpo_iso)
+                    data_br_obj = data_obj - datetime.timedelta(hours=3)
+                    data_br_date = data_br_obj.date()
+                    data_br = data_br_obj.strftime("%d/%m/%Y às %H:%M")
+                except:
+                    pass
+
+            # 2. Se a data da nuvem falhar, tenta ler a data gravada no próprio nome do arquivo (ex: 10-09-2026)
+            if not data_br_date:
+                match = re.search(r"(\d{2})-(\d{2})-(\d{4})", item.get("name", ""))
+                if match:
+                    try:
+                        d, m, y = map(int, match.groups())
+                        data_br_date = datetime.date(y, m, d)
+                        data_br = f"{d:02d}/{m:02d}/{y} (via nome)"
+                    except:
+                        pass
                 
             item['data_br_date'] = data_br_date
             item['data_br'] = data_br
             
+            # Se o filtro estiver ativo, compara com a data calculada
             if ativar_filtro and data_br_date != data_filtro:
                 continue
+                
             arquivos_filtrados.append(item)
             
         with c_btn1:
