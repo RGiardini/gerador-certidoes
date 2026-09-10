@@ -668,7 +668,7 @@ elif menu == "📂 Minhas Certidões":
                     st.session_state[f"chk_file_{arq['name']}"] = False
                 st.rerun()
                 
-        arquivos_filtrados.sort(key=lambda x: x["created_at"], reverse=True)
+        arquivos_filtrados.sort(key=lambda x: x.get("created_at") or "", reverse=True)
         st.divider()
         
         c_sel, c_nome, c_data = st.columns([1, 4, 3])
@@ -1678,7 +1678,7 @@ elif menu == "📝 Gerar Certidão":
                         ass_b = None
                     
                     arquivo_final_bytes = gerar_pdf_nativo(paragrafo, dados_cab, dados_ass, ass_b, cab_b)
-                    nome_final = f"Certidao_Positiva_{processo}_{uuid.uuid4().hex[:4]}.pdf"
+                    nome_final = nome_base + ".pdf"
                     mime_final = "application/pdf"
                 else:
                     arquivo_final_bytes = docx_bytes
