@@ -959,8 +959,15 @@ elif menu == "📝 Gerar Certidão":
     
     hoje_real = datetime.datetime.utcnow() - datetime.timedelta(hours=3)
     
-    dias_validos_temp = [d for d in [st.session_state.get("d1_geral"), st.session_state.get("d2_geral"), st.session_state.get("d3_geral")] if d]
+    # Verifica qual certidão está selecionada para ler a chave de estado (session_state) correta
+    if tipo_certidao == "Certidão Positiva":
+        dias_validos_temp = [d for d in [st.session_state.get("d_pos_geral")] if d]
+    else:
+        dias_validos_temp = [d for d in [st.session_state.get("d1_geral"), st.session_state.get("d2_geral"), st.session_state.get("d3_geral")] if d]
+        
     data_padrao_calculada = hoje_real.date()
+    
+    # A linha abaixo estava em falta no app_2.py
     if dias_validos_temp:
         ultimo_dia_str = dias_validos_temp[-1].strip()
         try:
