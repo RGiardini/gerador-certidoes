@@ -1309,7 +1309,7 @@ elif menu == "📝 Gerar Certidão":
                         if partes_informacao:
                             partes_informacao.append(f"acrescentando não saber informar {texto_ns}")
                         else:
-                            partes_informacao.append(f"essa declarou não saber informar {texto_ns}")
+                            partes_informacao.append(f"esse(a) declarou não saber informar {texto_ns}")
 
                     if sabe_tel or sabe_end:
                         sabes_list = []
