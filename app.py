@@ -1358,14 +1358,12 @@ elif menu == "📝 Gerar Certidão":
                 
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4)
-                doc.add_paragraph("")
-                
+                                
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                doc.add_paragraph("")
-                
+                                
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
                     p_img_assinatura = doc.add_paragraph(); p_img_assinatura.alignment = WD_ALIGN_PARAGRAPH.CENTER; p_img_assinatura.add_run().add_picture(BytesIO(assinatura_bytes), width=Cm(5))
