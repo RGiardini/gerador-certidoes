@@ -1348,13 +1348,13 @@ elif menu == "📝 Gerar Certidão":
                     doc.add_paragraph(texto_processo)
                 if mandado: doc.add_paragraph(f"Mandado nº: {mandado}")
                 
-                doc.add_paragraph("")
+                
                 p_titulo = doc.add_paragraph()
                 run_titulo = p_titulo.add_run("CERTIDÃO")
                 run_titulo.bold = True
                 run_titulo.font.size = Pt(16)
                 p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                doc.add_paragraph("")
+              
                 
                 doc.add_paragraph(paragrafo.strip()).alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 doc.paragraphs[-1].paragraph_format.first_line_indent = Pt(35.4)
@@ -1640,12 +1640,12 @@ elif menu == "📝 Gerar Certidão":
                 p_Linha.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                 p_Linha.paragraph_format.first_line_indent = Pt(35.4) 
 
-                doc.add_paragraph("")
+       
                 doc.add_paragraph("Devolvo o mandado para os devidos fins. Dou fé.").alignment = WD_ALIGN_PARAGRAPH.CENTER
                 
                 meses = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"]
                 doc.add_paragraph(f"{cidade_certidao}/{estado_certidao}, {data_certidao.day} de {meses[data_certidao.month - 1]} de {data_certidao.year}.").alignment = WD_ALIGN_PARAGRAPH.CENTER
-                doc.add_paragraph("")
+                
                 
                 try:
                     assinatura_bytes = supabase.storage.from_("assinaturas_usuarios").download(f"{usuario_atual}.png")
