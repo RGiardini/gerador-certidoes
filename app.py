@@ -1478,7 +1478,7 @@ elif menu == "📝 Gerar Certidão":
             reconhece_pos = st.radio("Reconhecimento de assinatura:", ["Não informado", "Reconhece como suas as assinaturas", "Não reconhece as assinaturas"], key="reconhece_pos")
         with c_p2:
             interesse_pos = st.radio("Interesse no prosseguimento:", ["Não informado", "Tem interesse no prosseguimento", "Não tem interesse no prosseguimento"], key="interesse_pos")
-            adv_pos_novo = st.radio("Condições financeiras (Advogado):", ["Não informado", "Tem condições financeiras (advogado constituído)", "Não tem condições (hipossuficiente / defensor)"], key="adv_pos_novo")
+            adv_pos_novo = st.radio("Condições financeiras (Advogado):", ["Não informado", "Tem condições financeiras (advogado constituído)", "Não tem condições (hipossuficiente / defensor)", "Não soube informar"], key="adv_pos_novo")
 
         st.markdown("---")
         c_t1, c_t2 = st.columns(2)
@@ -1752,6 +1752,13 @@ elif menu == "📝 Gerar Certidão":
                 
                 hc_data_retorno_formatada = formatar_data_completa(hc_data_retorno.strip(), ano_base) if hc_data_retorno else ""
                 
+                # Substitui a data do documento pela data do retorno (apenas para Hora Certa)
+                if hc_data_retorno_formatada:
+                    try:
+                        dia_r, mes_r, ano_r = map(int, hc_data_retorno_formatada.split('/'))
+                        data_certidao = datetime.date(ano_r, mes_r, dia_r)
+                    except ValueError:
+                        pass # Se o formato for inválido, mantém a data padrão por segurança
                 horas_cruas = [h for h in [h1, h2, h3] if h]
                 horas_validas = []
                 for h in horas_cruas:
